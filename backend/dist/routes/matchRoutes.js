@@ -1,0 +1,33 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const matchController_1 = __importDefault(require("../controllers/matchController"));
+const matchPlayerController_1 = __importDefault(require("../controllers/matchPlayerController"));
+const scoringController_1 = __importDefault(require("../controllers/scoringController"));
+const auth_1 = require("../middleware/auth");
+const router = (0, express_1.Router)();
+router.get('/public/live-matches', matchController_1.default.getLiveMatches);
+router.get('/public/matches/:id', matchController_1.default.getMatchById);
+router.get('/public/matches/:id/scorecard', matchController_1.default.getScorecard);
+router.get('/public/matches/:id/balls', scoringController_1.default.getBalls);
+router.get('/matches', auth_1.authenticate, matchController_1.default.getMatches);
+router.get('/matches/:id', auth_1.authenticate, matchController_1.default.getMatchById);
+router.post('/matches', auth_1.authenticate, (0, auth_1.authorize)(['feeder']), matchController_1.default.createMatch);
+router.put('/matches/:id', auth_1.authenticate, (0, auth_1.authorize)(['feeder']), matchController_1.default.updateMatch);
+router.get('/matches/:id/scorecard', auth_1.authenticate, matchController_1.default.getScorecard);
+router.post('/matches/:id/join', auth_1.authenticate, (0, auth_1.authorize)(['player']), matchPlayerController_1.default.joinMatch);
+router.get('/matches/:id/players', auth_1.authenticate, matchPlayerController_1.default.getMatchPlayers);
+router.post('/matches/:id/populate-players', auth_1.authenticate, (0, auth_1.authorize)(['feeder']), matchPlayerController_1.default.populateMatchPlayers);
+router.post('/matches/:id/dedupe-players', auth_1.authenticate, (0, auth_1.authorize)(['feeder']), matchPlayerController_1.default.dedupeMatchPlayers);
+router.put('/match-players/:id/approve', auth_1.authenticate, (0, auth_1.authorize)(['feeder']), matchPlayerController_1.default.approveMatchPlayer);
+router.get('/matches/:id/approved-players', auth_1.authenticate, matchPlayerController_1.default.getApprovedPlayers);
+router.post('/matches/:id/ball', auth_1.authenticate, (0, auth_1.authorize)(['feeder']), scoringController_1.default.recordBall);
+router.get('/matches/:id/balls', auth_1.authenticate, scoringController_1.default.getBalls);
+router.delete('/matches/:id/ball/last', auth_1.authenticate, (0, auth_1.authorize)(['feeder']), scoringController_1.default.deleteLastBall);
+router.put('/matches/:matchId/players/:playerId/retired-hurt', auth_1.authenticate, (0, auth_1.authorize)(['feeder']), scoringController_1.default.markRetiredHurt);
+router.delete('/matches/:matchId/players/:playerId/retired-hurt', auth_1.authenticate, (0, auth_1.authorize)(['feeder']), scoringController_1.default.clearRetiredHurt);
+exports.default = router;
+//# sourceMappingURL=matchRoutes.js.map

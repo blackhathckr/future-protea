@@ -1,0 +1,984 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:lottie/lottie.dart';
+import 'package:provider/provider.dart';
+import '../../services/api_service.dart';
+import '../../services/auth_provider.dart';
+import '../../services/theme_provider.dart';
+import '../../theme/app_theme.dart';
+
+class ProfileScreen extends StatefulWidget {
+  const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen>
+    with SingleTickerProviderStateMixin {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _dateOfBirthController = TextEditingController();
+  final _battingStyleController = TextEditingController();
+  final _bowlingStyleController = TextEditingController();
+
+  DateTime? _selectedDateOfBirth;
+
+  final _currentPasswordController = TextEditingController();
+  final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
+  bool _isEditing = false;
+  bool _isChangingPassword = false;
+  bool _loading = false;
+
+  bool _obscureCurrentPassword = true;
+  bool _obscureNewPassword = true;
+  bool _obscureConfirmPassword = true;
+
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _loadUserData();
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    _nameController.dispose();
+    _phoneController.dispose();
+    _dateOfBirthController.dispose();
+    _battingStyleController.dispose();
+    _bowlingStyleController.dispose();
+    _currentPasswordController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  void _loadUserData() {
+    final user = context.read<AuthProvider>().user;
+    if (user != null) {
+      _nameController.text = user.name;
+      _phoneController.text = user.phone ?? '';
+      _selectedDateOfBirth = user.dateOfBirth;
+      if (user.dateOfBirth != null) {
+        _dateOfBirthController.text = _formatDate(user.dateOfBirth!);
+      }
+      _battingStyleController.text = user.battingStyle ?? '';
+      _bowlingStyleController.text = user.bowlingStyle ?? '';
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() => _loading = true);
+      try {
+        final updatedUser = await ApiService.uploadProfilePhoto(pickedFile.path);
+        if (mounted) {
+          context.read<AuthProvider>().setUser(updatedUser);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Profile photo updated successfully')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to upload photo: $e')),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _loading = false);
+      }
+    }
+  }
+
+  Future<void> _deletePhoto() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Photo'),
+        content: const Text('Are you sure you want to delete your profile photo?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete', style: TextStyle(color: AppTheme.wicketRed)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _loading = true);
+    try {
+      final updatedUser = await ApiService.deleteProfilePhoto();
+      if (mounted) {
+        context.read<AuthProvider>().setUser(updatedUser);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Photo deleted successfully')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete photo: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _updateProfile() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _loading = true);
+    try {
+      final user = context.read<AuthProvider>().user;
+      final updatedUser = await ApiService.updateProfile(
+        name: _nameController.text,
+        phone: _phoneController.text.isEmpty ? null : _phoneController.text,
+        dateOfBirth: _selectedDateOfBirth,
+        battingStyle: user?.role == 'player' && _battingStyleController.text.isNotEmpty
+            ? _battingStyleController.text
+            : null,
+        bowlingStyle: user?.role == 'player' && _bowlingStyleController.text.isNotEmpty
+            ? _bowlingStyleController.text
+            : null,
+      );
+      if (mounted) {
+        context.read<AuthProvider>().setUser(updatedUser);
+        setState(() => _isEditing = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile updated successfully')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update profile: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _changePassword() async {
+    if (_newPasswordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('New passwords do not match')),
+      );
+      return;
+    }
+
+    if (_newPasswordController.text.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Password must be at least 6 characters')),
+      );
+      return;
+    }
+
+    setState(() => _loading = true);
+    try {
+      await ApiService.changePassword(
+        currentPassword: _currentPasswordController.text,
+        newPassword: _newPasswordController.text,
+      );
+      if (mounted) {
+        setState(() => _isChangingPassword = false);
+        _currentPasswordController.clear();
+        _newPasswordController.clear();
+        _confirmPasswordController.clear();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Password changed successfully')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = context.watch<AuthProvider>().user;
+    if (user == null) {
+      return const SizedBox.shrink();
+    }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Scaffold(
+      body: NestedScrollView(
+        headerSliverBuilder: (context, _) => [
+          SliverAppBar(
+            expandedHeight: 260,
+            pinned: true,
+            automaticallyImplyLeading: false,
+            backgroundColor: AppTheme.darkGreen,
+            actions: [
+              Consumer<ThemeProvider>(
+                builder: (_, theme, __) => IconButton(
+                  icon: Icon(
+                    theme.isDark ? Icons.light_mode : Icons.dark_mode,
+                    color: Colors.white,
+                  ),
+                  onPressed: theme.toggle,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.logout, color: Colors.white),
+                onPressed: () => _confirmLogout(context),
+              ),
+            ],
+            flexibleSpace: FlexibleSpaceBar(
+              collapseMode: CollapseMode.pin,
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: AppTheme.headerGradient,
+                ),
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 52),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Avatar with gold border + camera overlay
+                        GestureDetector(
+                          onTap: _pickImage,
+                          child: Stack(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: AppTheme.accentGold, width: 3),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.3),
+                                      blurRadius: 12,
+                                      spreadRadius: 2,
+                                    ),
+                                  ],
+                                ),
+                                child: CircleAvatar(
+                                  radius: 44,
+                                  backgroundColor: AppTheme.primaryGreen,
+                                  backgroundImage: user.photoUrl != null &&
+                                          user.photoUrl!.isNotEmpty
+                                      ? NetworkImage(ApiService.getPhotoUrl(user.photoUrl!))
+                                      : null,
+                                  child: user.photoUrl == null || user.photoUrl!.isEmpty
+                                      ? Text(
+                                          user.name[0].toUpperCase(),
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 32,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        )
+                                      : null,
+                                ),
+                              ),
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                  padding: const EdgeInsets.all(5),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.accentGold,
+                                    shape: BoxShape.circle,
+                                    border: Border.all(color: Colors.white, width: 2),
+                                  ),
+                                  child: const Icon(
+                                    Icons.camera_alt,
+                                    color: AppTheme.darkGreen,
+                                    size: 14,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          user.name,
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        _RoleBadge(role: user.role),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            bottom: TabBar(
+              controller: _tabController,
+              indicatorColor: AppTheme.accentGold,
+              indicatorWeight: 3,
+              labelColor: AppTheme.accentGold,
+              unselectedLabelColor: Colors.white70,
+              labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13),
+              tabs: const [
+                Tab(icon: Icon(Icons.person_outline, size: 18), text: 'Profile'),
+                Tab(icon: Icon(Icons.lock_outline, size: 18), text: 'Security'),
+              ],
+            ),
+          ),
+        ],
+        body: _loading
+            ? Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Lottie.asset('assets/images/lottie/Bat ball.json', width: 120, height: 120),
+                    const SizedBox(height: 12),
+                    Text('Saving...', style: GoogleFonts.poppins(fontSize: 14, color: AppTheme.ts(context))),
+                  ],
+                ),
+              )
+            : TabBarView(
+                controller: _tabController,
+                children: [
+                  // ── Tab 1: Profile ──────────────────────────────────────
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Remove photo button (only when photo exists)
+                        if (user.photoUrl != null && user.photoUrl!.isNotEmpty)
+                          Align(
+                            alignment: Alignment.center,
+                            child: TextButton.icon(
+                              onPressed: _deletePhoto,
+                              icon: const Icon(Icons.delete_outline,
+                                  color: AppTheme.wicketRed, size: 16),
+                              label: Text('Remove profile photo',
+                                  style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      color: AppTheme.wicketRed,
+                                      fontWeight: FontWeight.w500)),
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 6),
+                                side: const BorderSide(
+                                    color: AppTheme.wicketRed, width: 0.8),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20)),
+                              ),
+                            ),
+                          ),
+                        if (user.photoUrl != null && user.photoUrl!.isNotEmpty)
+                          const SizedBox(height: 12),
+                        // Quick info pills row
+                        Row(
+                          children: [
+                            if (user.email.isNotEmpty)
+                              Flexible(
+                                child: _InfoPill(
+                                  icon: Icons.email_outlined,
+                                  label: user.email,
+                                  isDark: isDark,
+                                ),
+                              ),
+                          ],
+                        ).animate().fadeIn(duration: 300.ms),
+                        if (user.phone != null && user.phone!.isNotEmpty) ...
+                          [
+                            const SizedBox(height: 8),
+                            _InfoPill(
+                              icon: Icons.phone_outlined,
+                              label: user.phone!,
+                              isDark: isDark,
+                            ).animate().fadeIn(duration: 300.ms, delay: 50.ms),
+                          ],
+                        if (user.dateOfBirth != null) ...
+                          [
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _InfoPill(
+                                    icon: Icons.cake_outlined,
+                                    label: _formatDate(user.dateOfBirth!),
+                                    isDark: isDark,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: _InfoPill(
+                                    icon: Icons.person_outline,
+                                    label: '${_calculateAge(user.dateOfBirth!)} yrs old',
+                                    isDark: isDark,
+                                  ),
+                                ),
+                              ],
+                            ).animate().fadeIn(duration: 300.ms, delay: 100.ms),
+                          ],
+                        if (user.createdAt != null) ...
+                          [
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _InfoPill(
+                                    icon: Icons.calendar_today_outlined,
+                                    label: 'Since ${_formatDate(user.createdAt!)}',
+                                    isDark: isDark,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: _InfoPill(
+                                    icon: Icons.access_time,
+                                    label: _getAccountAge(user.createdAt!),
+                                    isDark: isDark,
+                                  ),
+                                ),
+                              ],
+                            ).animate().fadeIn(duration: 300.ms, delay: 150.ms),
+                          ],
+                        if (user.lastLogin != null) ...
+                          [
+                            const SizedBox(height: 8),
+                            _InfoPill(
+                              icon: Icons.login,
+                              label: 'Last login: ${_formatDateTime(user.lastLogin!)}',
+                              isDark: isDark,
+                            ).animate().fadeIn(duration: 300.ms, delay: 200.ms),
+                          ],
+
+                        const SizedBox(height: 24),
+
+                        // Edit form
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Form(
+                              key: _formKey,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text('Edit Information',
+                                          style: GoogleFonts.poppins(
+                                              fontSize: 15, fontWeight: FontWeight.w700, color: AppTheme.tp(context))),
+                                      if (!_isEditing)
+                                        FilledButton.tonal(
+                                          onPressed: () => setState(() => _isEditing = true),
+                                          style: FilledButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                            minimumSize: Size.zero,
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(Icons.edit, size: 15),
+                                              const SizedBox(width: 4),
+                                              Text('Edit', style: GoogleFonts.poppins(fontSize: 13)),
+                                            ],
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 16),
+                                  TextFormField(
+                                    controller: _nameController,
+                                    enabled: _isEditing,
+                                    decoration: InputDecoration(
+                                      labelText: 'Full Name',
+                                      labelStyle: TextStyle(color: AppTheme.ts(context)),
+                                      prefixIcon: Icon(Icons.person_outline, color: AppTheme.ts(context)),
+                                    ),
+                                    validator: (v) => v == null || v.isEmpty ? 'Name is required' : null,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  TextFormField(
+                                    controller: _phoneController,
+                                    enabled: _isEditing,
+                                    keyboardType: TextInputType.phone,
+                                    decoration: InputDecoration(
+                                      labelText: 'Phone Number',
+                                      labelStyle: TextStyle(color: AppTheme.ts(context)),
+                                      prefixIcon: Icon(Icons.phone_outlined, color: AppTheme.ts(context)),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  TextFormField(
+                                    controller: _dateOfBirthController,
+                                    enabled: _isEditing,
+                                    readOnly: true,
+                                    decoration: InputDecoration(
+                                      labelText: 'Date of Birth',
+                                      labelStyle: TextStyle(color: AppTheme.ts(context)),
+                                      prefixIcon: Icon(Icons.cake_outlined, color: AppTheme.ts(context)),
+                                      suffixIcon: Icon(Icons.calendar_today, size: 18, color: AppTheme.ts(context)),
+                                    ),
+                                    onTap: _isEditing
+                                        ? () async {
+                                            final date = await showDatePicker(
+                                              context: context,
+                                              initialDate: _selectedDateOfBirth ??
+                                                  DateTime.now().subtract(const Duration(days: 365 * 18)),
+                                              firstDate: DateTime(1950),
+                                              lastDate: DateTime.now(),
+                                            );
+                                            if (date != null) {
+                                              setState(() {
+                                                _selectedDateOfBirth = date;
+                                                _dateOfBirthController.text = _formatDate(date);
+                                              });
+                                            }
+                                          }
+                                        : null,
+                                  ),
+                                  if (user.role == 'player') ...[
+                                    const SizedBox(height: 12),
+                                    TextFormField(
+                                      controller: _battingStyleController,
+                                      enabled: _isEditing,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Batting Style',
+                                        prefixIcon: Icon(Icons.sports_cricket),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    TextFormField(
+                                      controller: _bowlingStyleController,
+                                      enabled: _isEditing,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Bowling Style',
+                                        prefixIcon: Icon(Icons.sports_baseball),
+                                      ),
+                                    ),
+                                  ],
+                                  if (_isEditing) ...[
+                                    const SizedBox(height: 16),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: OutlinedButton(
+                                            onPressed: () {
+                                              setState(() => _isEditing = false);
+                                              _loadUserData();
+                                            },
+                                            child: const Text('Cancel'),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: ElevatedButton(
+                                            onPressed: _updateProfile,
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: AppTheme.primaryGreen,
+                                              foregroundColor: Colors.white,
+                                            ),
+                                            child: const Text('Save Changes'),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
+                        ).animate().fadeIn(duration: 350.ms, delay: 100.ms),
+                      ],
+                    ),
+                  ),
+
+                  // ── Tab 2: Security ─────────────────────────────────────
+                  SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+                    child: Column(
+                      children: [
+                        // Change Password card
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.accentAmber.withValues(alpha: 0.12),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Icon(Icons.lock_outline, color: AppTheme.accentAmber, size: 20),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Text('Change Password',
+                                          style: GoogleFonts.poppins(
+                                              fontSize: 15, fontWeight: FontWeight.w700, color: AppTheme.tp(context))),
+                                    ),
+                                    if (!_isChangingPassword)
+                                      FilledButton.tonal(
+                                        onPressed: () => setState(() => _isChangingPassword = true),
+                                        style: FilledButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                          minimumSize: Size.zero,
+                                        ),
+                                        child: Text('Change', style: GoogleFonts.poppins(fontSize: 13)),
+                                      ),
+                                  ],
+                                ),
+                                if (!_isChangingPassword) ...[
+                                  const SizedBox(height: 12),
+                                  Text('Keep your account secure with a strong password.',
+                                      style: GoogleFonts.poppins(
+                                          fontSize: 13, color: AppTheme.ts(context))),
+                                ],
+                                if (_isChangingPassword) ...[
+                                  const SizedBox(height: 16),
+                                  TextFormField(
+                                    controller: _currentPasswordController,
+                                    obscureText: _obscureCurrentPassword,
+                                    decoration: InputDecoration(
+                                      labelText: 'Current Password',
+                                      prefixIcon: const Icon(Icons.lock_outline),
+                                      suffixIcon: IconButton(
+                                        icon: Icon(_obscureCurrentPassword
+                                            ? Icons.visibility_off
+                                            : Icons.visibility),
+                                        onPressed: () => setState(
+                                            () => _obscureCurrentPassword = !_obscureCurrentPassword),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  TextFormField(
+                                    controller: _newPasswordController,
+                                    obscureText: _obscureNewPassword,
+                                    decoration: InputDecoration(
+                                      labelText: 'New Password',
+                                      prefixIcon: const Icon(Icons.lock),
+                                      suffixIcon: IconButton(
+                                        icon: Icon(_obscureNewPassword
+                                            ? Icons.visibility_off
+                                            : Icons.visibility),
+                                        onPressed: () => setState(
+                                            () => _obscureNewPassword = !_obscureNewPassword),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  TextFormField(
+                                    controller: _confirmPasswordController,
+                                    obscureText: _obscureConfirmPassword,
+                                    decoration: InputDecoration(
+                                      labelText: 'Confirm New Password',
+                                      prefixIcon: const Icon(Icons.lock),
+                                      suffixIcon: IconButton(
+                                        icon: Icon(_obscureConfirmPassword
+                                            ? Icons.visibility_off
+                                            : Icons.visibility),
+                                        onPressed: () => setState(
+                                            () => _obscureConfirmPassword = !_obscureConfirmPassword),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: OutlinedButton(
+                                          onPressed: () {
+                                            setState(() => _isChangingPassword = false);
+                                            _currentPasswordController.clear();
+                                            _newPasswordController.clear();
+                                            _confirmPasswordController.clear();
+                                          },
+                                          child: const Text('Cancel'),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: ElevatedButton(
+                                          onPressed: _changePassword,
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: AppTheme.primaryGreen,
+                                            foregroundColor: Colors.white,
+                                          ),
+                                          child: const Text('Update'),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ).animate().fadeIn(duration: 350.ms),
+
+                        const SizedBox(height: 16),
+
+                        // Danger zone — logout
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: AppTheme.wicketRed.withValues(alpha: 0.1),
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Icon(Icons.logout, color: AppTheme.wicketRed, size: 20),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text('Sign Out',
+                                        style: GoogleFonts.poppins(
+                                            fontSize: 15, fontWeight: FontWeight.w700)),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Text('You will be returned to the login screen.',
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 13, color: AppTheme.ts(context))),
+                                const SizedBox(height: 12),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: OutlinedButton.icon(
+                                    onPressed: () => _confirmLogout(context),
+                                    icon: const Icon(Icons.logout, color: AppTheme.wicketRed),
+                                    label: Text('Logout',
+                                        style: GoogleFonts.poppins(
+                                            color: AppTheme.wicketRed, fontWeight: FontWeight.w600)),
+                                    style: OutlinedButton.styleFrom(
+                                      side: const BorderSide(color: AppTheme.wicketRed),
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ).animate().fadeIn(duration: 350.ms, delay: 100.ms),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+
+  void _confirmLogout(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              final navigator = Navigator.of(context);
+              navigator.popUntil((route) => route.isFirst);
+              await context.read<AuthProvider>().logout();
+            },
+            child: const Text('Logout', style: TextStyle(color: AppTheme.wicketRed)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${months[date.month - 1]} ${date.day}, ${date.year}';
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    // If within last minute
+    if (difference.inSeconds < 60) {
+      return 'Just now';
+    }
+    // If within last hour
+    else if (difference.inMinutes < 60) {
+      final mins = difference.inMinutes;
+      return '$mins ${mins == 1 ? 'minute' : 'minutes'} ago';
+    }
+    // If within last 24 hours
+    else if (difference.inHours < 24) {
+      final hours = difference.inHours;
+      return '$hours ${hours == 1 ? 'hour' : 'hours'} ago';
+    }
+    // If within last 7 days
+    else if (difference.inDays < 7) {
+      final days = difference.inDays;
+      return '$days ${days == 1 ? 'day' : 'days'} ago';
+    }
+    // Otherwise show full date and time
+    else {
+      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      final hour = dateTime.hour > 12 ? dateTime.hour - 12 : (dateTime.hour == 0 ? 12 : dateTime.hour);
+      final period = dateTime.hour >= 12 ? 'PM' : 'AM';
+      final minute = dateTime.minute.toString().padLeft(2, '0');
+      return '${months[dateTime.month - 1]} ${dateTime.day}, ${dateTime.year} at $hour:$minute $period';
+    }
+  }
+
+  int _calculateAge(DateTime birthDate) {
+    final now = DateTime.now();
+    int age = now.year - birthDate.year;
+    if (now.month < birthDate.month || (now.month == birthDate.month && now.day < birthDate.day)) {
+      age--;
+    }
+    return age;
+  }
+
+  String _getAccountAge(DateTime createdAt) {
+    final now = DateTime.now();
+    final difference = now.difference(createdAt);
+
+    if (difference.inDays < 30) {
+      return '${difference.inDays} days';
+    } else if (difference.inDays < 365) {
+      final months = (difference.inDays / 30).floor();
+      return '$months ${months == 1 ? 'month' : 'months'}';
+    } else {
+      final years = (difference.inDays / 365).floor();
+      final remainingMonths = ((difference.inDays % 365) / 30).floor();
+      if (remainingMonths == 0) {
+        return '$years ${years == 1 ? 'year' : 'years'}';
+      }
+      return '$years ${years == 1 ? 'year' : 'years'}, $remainingMonths ${remainingMonths == 1 ? 'month' : 'months'}';
+    }
+  }
+
+}
+
+class _RoleBadge extends StatelessWidget {
+  final String role;
+  const _RoleBadge({required this.role});
+
+  @override
+  Widget build(BuildContext context) {
+    Color color;
+    IconData icon;
+    switch (role) {
+      case 'feeder':
+        color = AppTheme.primaryGreen;
+        icon = Icons.edit_note;
+        break;
+      case 'player':
+        color = AppTheme.upcomingBlue;
+        icon = Icons.sports_cricket;
+        break;
+      case 'viewer':
+        color = AppTheme.accentAmber;
+        icon = Icons.visibility;
+        break;
+      default:
+        color = AppTheme.textSecondary;
+        icon = Icons.person;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.25),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.6)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: Colors.white),
+          const SizedBox(width: 4),
+          Text(
+            role.toUpperCase(),
+            style: GoogleFonts.poppins(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+              letterSpacing: 0.8,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isDark;
+  const _InfoPill({required this.icon, required this.label, required this.isDark});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: isDark
+            ? AppTheme.darkSurfaceCardLight
+            : AppTheme.surfaceCardLight,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: isDark
+              ? const Color(0xFF424242)
+              : const Color(0xFFE0E0E0),
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: AppTheme.primaryGreen),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: isDark ? AppTheme.darkTextPrimary : AppTheme.textPrimary,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

@@ -1,0 +1,286 @@
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "windows"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  name          String    @db.VarChar(255)
+  email         String    @unique @db.VarChar(255)
+  password      String    @db.VarChar(255)
+  role          String    @db.VarChar(50)
+  phone         String?   @db.VarChar(20)
+  photoUrl      String?   @map("photo_url") @db.VarChar(500)
+  dateOfBirth   DateTime? @map("date_of_birth") @db.Date
+  battingStyle  String?   @map("batting_style") @db.VarChar(50)
+  bowlingStyle  String?   @map("bowling_style") @db.VarChar(50)
+  approved      Boolean   @default(false)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  lastLogin     DateTime? @map("last_login")
+
+  createdMatches        Match[]            @relation("MatchCreator")
+  matchPlayers          MatchPlayer[]
+  playerScores          PlayerScore[]
+  batsmanBalls          Ball[]             @relation("BatsmanBalls")
+  bowlerBalls           Ball[]             @relation("BowlerBalls")
+  createdRegisteredPlayers RegisteredPlayer[]
+  createdTeams          Team[]
+  createdTournaments    Tournament[]
+
+  @@map("users")
+}
+
+model Match {
+  id              Int      @id @default(autoincrement())
+  team1Name       String   @map("team1_name") @db.VarChar(255)
+  team2Name       String   @map("team2_name") @db.VarChar(255)
+  venue           String?  @db.VarChar(255)
+  totalOvers      Int      @default(20) @map("total_overs")
+  status          String   @default("upcoming") @db.VarChar(20)
+  tossWinner      String?  @map("toss_winner") @db.VarChar(255)
+  tossDecision    String?  @map("toss_decision") @db.VarChar(20)
+  winner          String?  @db.VarChar(255)
+  team1Score      Int      @default(0) @map("team1_score")
+  team1Wickets    Int      @default(0) @map("team1_wickets")
+  team1Overs      Float    @default(0) @map("team1_overs")
+  team2Score      Int      @default(0) @map("team2_score")
+  team2Wickets    Int      @default(0) @map("team2_wickets")
+  team2Overs      Float    @default(0) @map("team2_overs")
+  currentInnings  Int      @default(1) @map("current_innings")
+  matchDate       DateTime @map("match_date")
+  createdBy       Int?     @map("created_by")
+  tournamentId    Int?     @map("tournament_id")
+  matchType       String   @default("T20") @map("match_type") @db.VarChar(20)
+  ballsPerOver    Int      @default(6) @map("balls_per_over")
+  umpire          String?  @db.VarChar(255)
+  playerOfMatch   String?  @map("player_of_match") @db.VarChar(255)
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  creator         User?              @relation("MatchCreator", fields: [createdBy], references: [id])
+  tournament      Tournament?        @relation(fields: [tournamentId], references: [id], onDelete: SetNull)
+  matchPlayers    MatchPlayer[]
+  playerScores    PlayerScore[]
+  balls           Ball[]
+  tournamentFixtures TournamentFixture[]
+
+  @@map("matches")
+}
+
+model MatchPlayer {
+  id        Int      @id @default(autoincrement())
+  matchId   Int      @map("match_id")
+  playerId  Int      @map("player_id")
+  team      Int?
+  status    String   @default("pending") @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player    User     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, playerId])
+  @@map("match_players")
+}
+
+model PlayerScore {
+  id           Int      @id @default(autoincrement())
+  matchId      Int      @map("match_id")
+  playerId     Int      @map("player_id")
+  team         Int?
+  runsScored   Int      @default(0) @map("runs_scored")
+  ballsFaced   Int      @default(0) @map("balls_faced")
+  fours        Int      @default(0)
+  sixes        Int      @default(0)
+  isOut        Boolean  @default(false) @map("is_out")
+  outType      String?  @map("out_type") @db.VarChar(50)
+  oversBowled  Float    @default(0) @map("overs_bowled")
+  runsConceded Int      @default(0) @map("runs_conceded")
+  wicketsTaken Int      @default(0) @map("wickets_taken")
+  maidens      Int      @default(0)
+  catches      Int      @default(0)
+  runOuts      Int      @default(0) @map("run_outs")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  match        Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player       User     @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, playerId])
+  @@map("player_scores")
+}
+
+model Ball {
+  id          Int      @id @default(autoincrement())
+  matchId     Int      @map("match_id")
+  innings     Int
+  overNumber  Int      @map("over_number")
+  ballNumber  Int      @map("ball_number")
+  batsmanId   Int?     @map("batsman_id")
+  bowlerId    Int?     @map("bowler_id")
+  runs        Int      @default(0)
+  isWide      Boolean  @default(false) @map("is_wide")
+  isNoball    Boolean  @default(false) @map("is_noball")
+  isBye       Boolean  @default(false) @map("is_bye")
+  isLegbye    Boolean  @default(false) @map("is_legbye")
+  isWicket    Boolean  @default(false) @map("is_wicket")
+  wicketType  String?  @map("wicket_type") @db.VarChar(50)
+  extras      Int      @default(0)
+  overthrows  Int      @default(0)
+  shotDirection String? @map("shot_direction") @db.VarChar(30)
+  commentary  String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  match       Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  batsman     User?    @relation("BatsmanBalls", fields: [batsmanId], references: [id])
+  bowler      User?    @relation("BowlerBalls", fields: [bowlerId], references: [id])
+
+  @@map("balls")
+}
+
+model RegisteredPlayer {
+  id            Int      @id @default(autoincrement())
+  name          String   @db.VarChar(255)
+  playerIdCode  String?  @unique @map("player_id_code") @db.VarChar(50)
+  dateOfBirth   DateTime? @map("date_of_birth") @db.Date
+  
+  // Contact Information
+  email         String?  @db.VarChar(255)
+  phone         String?  @db.VarChar(20)
+  emergencyContact String? @map("emergency_contact") @db.VarChar(20)
+  emergencyContactName String? @map("emergency_contact_name") @db.VarChar(255)
+  
+  // Address
+  address       String?  @db.VarChar(500)
+  city          String?  @db.VarChar(100)
+  state         String?  @db.VarChar(100)
+  country       String?  @db.VarChar(100)
+  postalCode    String?  @map("postal_code") @db.VarChar(20)
+  
+  // Physical Stats
+  height        Float?   // in cm
+  weight        Float?   // in kg
+  bloodGroup    String?  @map("blood_group") @db.VarChar(10)
+  
+  // Cricket Details
+  schoolName    String?  @map("school_name") @db.VarChar(255)
+  clubName      String?  @map("club_name") @db.VarChar(255)
+  battingStyle  String?  @map("batting_style") @db.VarChar(50)
+  bowlingStyle  String?  @map("bowling_style") @db.VarChar(50)
+  playingRole   String?  @map("playing_role") @db.VarChar(50) // Batsman, Bowler, All-rounder, Wicket-keeper
+  jerseyNumber  Int?     @map("jersey_number")
+  
+  // Additional Info
+  photoUrl      String?  @map("photo_url") @db.VarChar(500)
+  fatherName    String?  @map("father_name") @db.VarChar(255)
+  motherName    String?  @map("mother_name") @db.VarChar(255)
+  guardianName  String?  @map("guardian_name") @db.VarChar(255)
+  nationality   String?  @db.VarChar(100)
+  
+  createdBy     Int?     @map("created_by")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  creator       User?    @relation(fields: [createdBy], references: [id])
+  teamPlayers   TeamPlayer[]
+
+  @@map("registered_players")
+}
+
+model Team {
+  id          Int      @id @default(autoincrement())
+  teamName    String   @map("team_name") @db.VarChar(255)
+  teamType    String   @map("team_type") @db.VarChar(20)
+  schoolName  String?  @map("school_name") @db.VarChar(255)
+  clubName    String?  @map("club_name") @db.VarChar(255)
+  logoUrl     String?  @map("logo_url") @db.VarChar(500)
+  createdBy   Int?     @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  creator     User?    @relation(fields: [createdBy], references: [id])
+  teamPlayers TeamPlayer[]
+  tournamentTeams TournamentTeam[]
+
+  @@map("teams")
+}
+
+model TeamPlayer {
+  id              Int      @id @default(autoincrement())
+  teamId          Int      @map("team_id")
+  playerId        Int      @map("player_id")
+  isCaptain       Boolean  @default(false) @map("is_captain")
+  isWicketKeeper  Boolean  @default(false) @map("is_wicket_keeper")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  player    RegisteredPlayer @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, playerId])
+  @@map("team_players")
+}
+
+model Tournament {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(255)
+  type      String   @default("T20") @db.VarChar(20)
+  overs     Int      @default(20)
+  startDate DateTime? @map("start_date") @db.Date
+  endDate   DateTime? @map("end_date") @db.Date
+  venue     String?  @db.VarChar(255)
+  organizer String?  @db.VarChar(255)
+  logoUrl   String?  @map("logo_url") @db.VarChar(500)
+  status    String   @default("upcoming") @db.VarChar(20)
+  createdBy Int?     @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  creator   User?    @relation(fields: [createdBy], references: [id])
+  matches   Match[]
+  tournamentTeams TournamentTeam[]
+  tournamentFixtures TournamentFixture[]
+
+  @@map("tournaments")
+}
+
+model TournamentTeam {
+  id           Int      @id @default(autoincrement())
+  tournamentId Int      @map("tournament_id")
+  teamId       Int      @map("team_id")
+  groupName    String?  @map("group_name") @db.VarChar(50)
+  played       Int      @default(0)
+  won          Int      @default(0)
+  lost         Int      @default(0)
+  noResult     Int      @default(0) @map("no_result")
+  points       Float    @default(0)
+  runsFor      Int      @default(0) @map("runs_for")
+  oversFor     Float    @default(0) @map("overs_for")
+  runsAgainst  Int      @default(0) @map("runs_against")
+  oversAgainst Float    @default(0) @map("overs_against")
+  nrr          Float    @default(0)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([tournamentId, teamId])
+  @@map("tournament_teams")
+}
+
+model TournamentFixture {
+  id           Int      @id @default(autoincrement())
+  tournamentId Int      @map("tournament_id")
+  matchId      Int?     @map("match_id")
+  team1Name    String   @map("team1_name") @db.VarChar(255)
+  team2Name    String   @map("team2_name") @db.VarChar(255)
+  matchDate    DateTime @map("match_date")
+  venue        String?  @db.VarChar(255)
+  status       String   @default("upcoming") @db.VarChar(20)
+  groupName    String?  @map("group_name") @db.VarChar(50)
+  winner       String?  @db.VarChar(255)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  match        Match?   @relation(fields: [matchId], references: [id], onDelete: SetNull)
+
+  @@map("tournament_fixtures")
+}
