@@ -7,7 +7,7 @@ import '../../theme/app_theme.dart';
 import '../viewer/match_detail_screen.dart';
 
 class LiveScoringScreen extends StatefulWidget {
-  final int matchId;
+  final String matchId;
   const LiveScoringScreen({super.key, required this.matchId});
 
   @override
@@ -29,10 +29,10 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
   String? _error;
   bool _matchStarted = false;
   List<String> _overBalls = [];
-  final Set<int> _outBatsmen = {};
-  final Set<int> _retiredHurtBatsmen = {};
+  final Set<String> _outBatsmen = {};
+  final Set<String> _retiredHurtBatsmen = {};
   bool _lastBallWasNoBall = false;
-  final Map<int, double> _bowlerOvers = {};
+  final Map<String, double> _bowlerOvers = {};
   int _partnershipRuns = 0;
   int _partnershipBalls = 0;
   String? _selectedZone; // Wagon wheel shot direction for next ball
@@ -87,7 +87,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
         final batting = (scorecard['batting'] as List);
         for (var b in batting) {
           if (b['out_type'] == 'retired hurt' && b['is_out'] == false) {
-            _retiredHurtBatsmen.add(b['player_id'] as int);
+            _retiredHurtBatsmen.add(b['player_id'] as String);
             print('DEBUG: Loaded retired hurt batsman: ${b['name']}');
           }
         }
@@ -166,7 +166,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
         }
         
         // Find current batsmen - get the last two batsmen who are not out
-        final activeBatsmen = <int>{};
+        final activeBatsmen = <String>{};
         for (final b in balls.reversed) {
           if (b.batsmanId != null && !_outBatsmen.contains(b.batsmanId)) {
             activeBatsmen.add(b.batsmanId!);
@@ -1565,7 +1565,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
     }).toList();
   }
 
-  Map<String, dynamic> _getBatsmanFullStats(int playerId) {
+  Map<String, dynamic> _getBatsmanFullStats(String playerId) {
     if (_match?.scores == null || _match!.scores!.isEmpty) {
       return {'runs': 0, 'balls': 0, 'fours': 0, 'sixes': 0};
     }
@@ -1718,7 +1718,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
     );
   }
 
-  String _getBowlerStats(int playerId) {
+  String _getBowlerStats(String playerId) {
     if (_match?.scores == null || _match!.scores!.isEmpty) {
       final overs = _formatOvers(_bowlerOvers[playerId] ?? 0);
       return '0-0 ($overs) Eco -';
@@ -2253,8 +2253,8 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
                   innings: _currentInnings,
                   overNumber: _currentOver,
                   ballNumber: _currentBall,
-                  batsmanId: _striker?.playerId ?? 0,
-                  bowlerId: _bowler?.playerId ?? 0,
+                  batsmanId: _striker?.playerId,
+                  bowlerId: _bowler?.playerId,
                   runs: 5,
                   isWide: false,
                   isNoball: true, // Record as no-ball so it doesn't count as a legal delivery

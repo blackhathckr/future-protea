@@ -82,7 +82,7 @@ const uploadPlayerPhoto = async (req: AuthRequest, res: Response): Promise<void>
     }
 
     const currentPlayer = await prisma.registeredPlayer.findUnique({
-      where: { id: parseInt(req.params.id as string) },
+      where: { id: req.params.id as string },
       select: { photoUrl: true },
     });
 
@@ -106,7 +106,7 @@ const uploadPlayerPhoto = async (req: AuthRequest, res: Response): Promise<void>
     );
 
     const player = await prisma.registeredPlayer.update({
-      where: { id: parseInt(req.params.id as string) },
+      where: { id: req.params.id as string },
       data: { photoUrl },
     });
 
@@ -153,7 +153,7 @@ const updateRegisteredPlayer = async (req: AuthRequest, res: Response): Promise<
     if (nationality !== undefined) data.nationality = nationality;
 
     const player = await prisma.registeredPlayer.update({
-      where: { id: parseInt(req.params.id as string) },
+      where: { id: req.params.id as string },
       data,
     });
     res.json(toSnake(player));
@@ -169,7 +169,7 @@ const updateRegisteredPlayer = async (req: AuthRequest, res: Response): Promise<
 
 const deletePlayerPhoto = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const playerId = parseInt(req.params.id as string);
+    const playerId = req.params.id as string;
     const player = await prisma.registeredPlayer.findUnique({
       where: { id: playerId },
       select: { photoUrl: true },
@@ -202,7 +202,7 @@ const deletePlayerPhoto = async (req: AuthRequest, res: Response): Promise<void>
 
 const deletePlayer = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const playerId = parseInt(req.params.id as string);
+    const playerId = req.params.id as string;
     const player = await prisma.registeredPlayer.findUnique({
       where: { id: playerId },
       select: { photoUrl: true },

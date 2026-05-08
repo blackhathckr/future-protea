@@ -17,7 +17,7 @@ import '../../widgets/protea_header.dart';
 import '../../widgets/theme_toggle.dart';
 
 class MatchDetailScreen extends StatefulWidget {
-  final int matchId;
+  final String matchId;
   final bool isGuest;
   const MatchDetailScreen({super.key, required this.matchId, this.isGuest = false});
 
@@ -217,6 +217,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen>
           });
         },
         child: FloatingActionButton(
+          heroTag: 'match_detail_share',
           onPressed: () {
             final link = '${ApiService.baseUrl.replaceAll('/api', '')}/public/matches/${widget.matchId}';
             Clipboard.setData(ClipboardData(text: link));
@@ -372,7 +373,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen>
     // Active batsmen
     final teamBattingInnings = _getTeamInnings(isSecondInnings ? (_getBattingFirstTeam(m) == 1 ? 2 : 1) : _getBattingFirstTeam(m));
     final batters = _batting.where((b) => b.team == teamBattingInnings).toList();
-    final activeIds = <int>{};
+    final activeIds = <String>{};
     final ibBalls = _balls.where((b) => b.innings == teamBattingInnings).toList();
     for (final b in ibBalls.reversed) {
       if (b.batsmanId != null) {
@@ -688,7 +689,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen>
       seenNames.add(nameLower);
       return true;
     }).toList();
-    final activeBatsmenIds = <int>{};
+    final activeBatsmenIds = <String>{};
     for (final b in _balls.where((b) => b.innings == teamBattingInnings).toList().reversed) {
       if (b.batsmanId != null) {
         final bs = batters.where((x) => x.playerId == b.batsmanId).firstOrNull;
@@ -2304,7 +2305,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen>
     ]),
   );
 
-  Widget _battingTable(List<PlayerScore> players, Set<int> activeIds) => Card(
+  Widget _battingTable(List<PlayerScore> players, Set<String> activeIds) => Card(
     child: Padding(padding: const EdgeInsets.all(10), child: Column(children: [
       Row(children: [Expanded(flex: 3, child: Text('Batter', style: _colHeaderStyle)), Expanded(child: Text('R', textAlign: TextAlign.center, style: _colHeaderStyle)), Expanded(child: Text('B', textAlign: TextAlign.center, style: _colHeaderStyle)), Expanded(child: Text('4s', textAlign: TextAlign.center, style: _colHeaderStyle)), Expanded(child: Text('6s', textAlign: TextAlign.center, style: _colHeaderStyle)), Expanded(child: Text('SR', textAlign: TextAlign.center, style: _colHeaderStyle))]),
       const Divider(),

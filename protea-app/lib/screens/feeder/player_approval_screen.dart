@@ -7,7 +7,7 @@ import '../../theme/app_theme.dart';
 import 'player_journey_screen.dart';
 
 class PlayerApprovalScreen extends StatefulWidget {
-  final int? matchId;
+  final String? matchId;
   const PlayerApprovalScreen({super.key, this.matchId});
 
   @override

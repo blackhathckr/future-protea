@@ -11,7 +11,7 @@ import 'tournament_points_screen.dart';
 import 'tournament_stats_screen.dart';
 
 class TournamentDetailScreen extends StatefulWidget {
-  final int tournamentId;
+  final String tournamentId;
 
   const TournamentDetailScreen({super.key, required this.tournamentId});
 

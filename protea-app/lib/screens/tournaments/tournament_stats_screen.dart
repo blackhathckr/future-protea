@@ -8,7 +8,7 @@ import '../../widgets/protea_header.dart';
 import '../../widgets/theme_toggle.dart';
 
 class TournamentStatsScreen extends StatefulWidget {
-  final int tournamentId;
+  final String tournamentId;
   final String tournamentName;
   const TournamentStatsScreen({
     super.key,

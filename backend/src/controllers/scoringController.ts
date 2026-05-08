@@ -5,7 +5,7 @@ import { AuthRequest } from '../middleware/auth';
 import LiveScoreService from '../services/liveScoreService';
 
 const recordBall = async (req: AuthRequest, res: Response): Promise<void> => {
-  const matchId = parseInt(req.params.id as string);
+  const matchId = req.params.id as string;
   const {
     innings, over_number, ball_number, batsman_id, bowler_id,
     runs, is_wide, is_noball, is_bye, is_legbye, is_wicket, wicket_type, extras, commentary,
@@ -182,7 +182,7 @@ const getBalls = async (req: Request, res: Response): Promise<void> => {
   try {
     const balls = await prisma.ball.findMany({
       where: {
-        matchId: parseInt(req.params.id as string),
+        matchId: req.params.id as string,
         ...(innings && { innings: parseInt(innings) }),
       },
       include: {
@@ -207,7 +207,7 @@ const getBalls = async (req: Request, res: Response): Promise<void> => {
 };
 
 const deleteLastBall = async (req: AuthRequest, res: Response): Promise<void> => {
-  const matchId = parseInt(req.params.id as string);
+  const matchId = req.params.id as string;
   const { innings } = req.query as { innings?: string };
 
   try {
@@ -334,8 +334,8 @@ const deleteLastBall = async (req: AuthRequest, res: Response): Promise<void> =>
 };
 
 const markRetiredHurt = async (req: AuthRequest, res: Response): Promise<void> => {
-  const matchId = parseInt(req.params.matchId as string);
-  const playerId = parseInt(req.params.playerId as string);
+  const matchId = req.params.matchId as string;
+  const playerId = req.params.playerId as string;
 
   try {
     const playerScore = await prisma.playerScore.update({
@@ -358,8 +358,8 @@ const markRetiredHurt = async (req: AuthRequest, res: Response): Promise<void> =
 };
 
 const clearRetiredHurt = async (req: AuthRequest, res: Response): Promise<void> => {
-  const matchId = parseInt(req.params.matchId as string);
-  const playerId = parseInt(req.params.playerId as string);
+  const matchId = req.params.matchId as string;
+  const playerId = req.params.playerId as string;
 
   try {
     const playerScore = await prisma.playerScore.update({

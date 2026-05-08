@@ -9,7 +9,7 @@ import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
 
 class MyJourneyScreen extends StatefulWidget {
-  final int playerId;
+  final String playerId;
   const MyJourneyScreen({super.key, required this.playerId});
 
   @override
@@ -32,7 +32,7 @@ class _MyJourneyScreenState extends State<MyJourneyScreen> with SingleTickerProv
   }
 
   Future<void> _load() async {
-    if (widget.playerId == 0) {
+    if (widget.playerId.isEmpty) {
       setState(() { _loading = false; _error = 'Invalid player'; });
       return;
     }

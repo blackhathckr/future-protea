@@ -209,6 +209,7 @@ class _PlayersHomeScreenState extends State<PlayersHomeScreen> {
                 ],
               ),
               child: FloatingActionButton.extended(
+                heroTag: 'players_home_register',
                 onPressed: () async {
                   final result = await Navigator.push(
                     context,

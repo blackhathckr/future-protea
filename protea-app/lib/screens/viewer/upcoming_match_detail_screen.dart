@@ -12,7 +12,7 @@ import '../../widgets/theme_toggle.dart';
 import 'match_detail_screen.dart';
 
 class UpcomingMatchDetailScreen extends StatefulWidget {
-  final int matchId;
+  final String matchId;
   const UpcomingMatchDetailScreen({super.key, required this.matchId});
 
   @override

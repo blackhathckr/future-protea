@@ -21,7 +21,7 @@ const getTournaments = async (req: AuthRequest, res: Response): Promise<void> =>
 const getTournamentById = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const tournament = await prisma.tournament.findUnique({
-      where: { id: parseInt(req.params.id as string) },
+      where: { id: req.params.id as string },
     });
     if (!tournament) {
       res.status(404).json({ error: 'Tournament not found' });
@@ -29,7 +29,7 @@ const getTournamentById = async (req: AuthRequest, res: Response): Promise<void>
     }
 
     const teams = await prisma.tournamentTeam.findMany({
-      where: { tournamentId: parseInt(req.params.id as string) },
+      where: { tournamentId: req.params.id as string },
       include: {
         team: {
           select: { teamName: true },
@@ -86,7 +86,7 @@ const addTeamToTournament = async (req: AuthRequest, res: Response): Promise<voi
   try {
     await prisma.tournamentTeam.create({
       data: {
-        tournamentId: parseInt(req.params.id as string),
+        tournamentId: req.params.id as string,
         teamId: team_id,
         groupName: group || null,
       },
@@ -105,12 +105,12 @@ const addTeamToTournament = async (req: AuthRequest, res: Response): Promise<voi
 const getTournamentFixtures = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const fixtures = await prisma.tournamentFixture.findMany({
-      where: { tournamentId: parseInt(req.params.id as string) },
+      where: { tournamentId: req.params.id as string },
       orderBy: { matchDate: 'asc' },
     });
 
     // Batch-fetch linked matches to enrich completed fixtures with score data
-    const matchIds = fixtures.map((f) => f.matchId).filter((id): id is number => id !== null);
+    const matchIds = fixtures.map((f) => f.matchId).filter((id): id is string => id !== null);
     const matches = matchIds.length > 0
       ? await prisma.match.findMany({
           where: { id: { in: matchIds } },
@@ -152,7 +152,7 @@ const getTournamentFixtures = async (req: AuthRequest, res: Response): Promise<v
 const getTournamentStandings = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const standings = await prisma.tournamentTeam.findMany({
-      where: { tournamentId: parseInt(req.params.id as string) },
+      where: { tournamentId: req.params.id as string },
       include: {
         team: {
           select: { teamName: true },
@@ -184,7 +184,7 @@ const getTournamentStandings = async (req: AuthRequest, res: Response): Promise<
 
 const getTournamentStats = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const tournamentId = parseInt(req.params.id as string);
+    const tournamentId = req.params.id as string;
 
     // Get all matches in this tournament
     const matches = await prisma.match.findMany({
@@ -274,7 +274,7 @@ const getTournamentStats = async (req: AuthRequest, res: Response): Promise<void
     });
 
     // Group by player and find their best match
-    const bestByPlayer = new Map<number, { wickets: number; runs: number }>();
+    const bestByPlayer = new Map<string, { wickets: number; runs: number }>();
     for (const score of allBowlingScores) {
       const existing = bestByPlayer.get(score.playerId);
       if (!existing ||
@@ -316,7 +316,7 @@ const getTournamentStats = async (req: AuthRequest, res: Response): Promise<void
 };
 
 const updateTournament = async (req: AuthRequest, res: Response): Promise<void> => {
-  const tournamentId = parseInt(req.params.id as string);
+  const tournamentId = req.params.id as string;
   const { logo_url, name, type, overs, start_date, end_date, venue, organizer, status } = req.body;
   try {
     const data: Record<string, unknown> = {};
@@ -353,7 +353,7 @@ const uploadTournamentLogo = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
-    const tournamentId = parseInt(req.params.id as string);
+    const tournamentId = req.params.id as string;
     const tournament = await prisma.tournament.findUnique({ where: { id: tournamentId } });
     if (!tournament) {
       res.status(404).json({ error: 'Tournament not found' });

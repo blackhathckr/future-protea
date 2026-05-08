@@ -30,7 +30,7 @@ const getPlayers = async (_req: AuthRequest, res: Response): Promise<void> => {
 const approvePlayer = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     await prisma.user.update({
-      where: { id: parseInt(req.params.id as string) },
+      where: { id: req.params.id as string },
       data: { approved: true },
     });
     res.json({ message: 'Player approved' });
@@ -44,7 +44,7 @@ const approvePlayer = async (req: AuthRequest, res: Response): Promise<void> => 
  * Compute extended career stats (50s, 100s, bowling avg, best figures)
  * from individual match scores. Called by both journey endpoints.
  */
-async function computeExtendedStats(playerId: number) {
+async function computeExtendedStats(playerId: string) {
   // Get all individual match scores for this player
   const allScores = await prisma.playerScore.findMany({
     where: { playerId },
@@ -131,7 +131,7 @@ async function computeExtendedStats(playerId: number) {
 }
 
 const getPlayerJourney = async (req: AuthRequest, res: Response): Promise<void> => {
-  const playerId = parseInt(req.params.id as string);
+  const playerId = req.params.id as string;
   try {
     const [user, matches] = await Promise.all([
       prisma.user.findUnique({
@@ -568,13 +568,13 @@ const getAllPlayers = async (_req: AuthRequest, res: Response): Promise<void> =>
       orderBy: { name: 'asc' },
     });
 
-    // Extract registered player IDs from temp emails (player_N@temp.com)
-    const tempIdMap = new Map<number, typeof players[0]>();
+    // Extract registered player IDs from temp emails (player_<cuid>@temp.com)
+    const tempIdMap = new Map<string, typeof players[0]>();
     const realEmailMap = new Map<string, typeof players[0]>();
     for (const p of players) {
-      const tempMatch = p.email.match(/^player_(\d+)@temp\.com$/);
+      const tempMatch = p.email.match(/^player_([a-z0-9]+)@temp\.com$/);
       if (tempMatch) {
-        tempIdMap.set(parseInt(tempMatch[1]), p);
+        tempIdMap.set(tempMatch[1], p);
       } else {
         realEmailMap.set(p.email.toLowerCase(), p);
       }
@@ -609,8 +609,8 @@ const getAllPlayers = async (_req: AuthRequest, res: Response): Promise<void> =>
         return true;
       })
       .map((p) => {
-        const tempMatch = p.email.match(/^player_(\d+)@temp\.com$/);
-        const regId = tempMatch ? parseInt(tempMatch[1]) : null;
+        const tempMatch = p.email.match(/^player_([a-z0-9]+)@temp\.com$/);
+        const regId = tempMatch ? tempMatch[1] : null;
         const fallbackPhoto = regId !== null
           ? (photoByRegId.get(regId) ?? null)
           : (photoByEmail.get(p.email.toLowerCase()) ?? null);

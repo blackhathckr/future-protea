@@ -10,7 +10,7 @@ const router = Router();
  * GET /api/live/match/:id/stream
  */
 router.get('/match/:id/stream', async (req: Request, res: Response) => {
-  const matchId = parseInt(req.params.id as string);
+  const matchId = req.params.id as string;
 
   // Set headers for SSE
   res.setHeader('Content-Type', 'text/event-stream');
@@ -68,7 +68,7 @@ router.get('/match/:id/stream', async (req: Request, res: Response) => {
  */
 router.get('/match/:id/latest', async (req: Request, res: Response) => {
   try {
-    const matchId = parseInt(req.params.id as string);
+    const matchId = req.params.id as string;
     const latestScore = await LiveScoreService.getLatestScore(matchId);
 
     if (!latestScore) {
@@ -88,7 +88,7 @@ router.get('/match/:id/latest', async (req: Request, res: Response) => {
  */
 router.get('/match/:id/scorecard', async (req: Request, res: Response) => {
   try {
-    const matchId = parseInt(req.params.id as string);
+    const matchId = req.params.id as string;
     const scorecard = await LiveScoreService.getCachedScorecard(matchId);
 
     if (!scorecard) {

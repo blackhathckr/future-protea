@@ -9,7 +9,7 @@ import '../../widgets/protea_buttons.dart';
 import '../feeder/live_scoring_screen.dart';
 
 class StartMatchScreen extends StatefulWidget {
-  final int matchId;
+  final String matchId;
   final CricketMatch match;
   final String tossWinner;
   final String tossDecision;

@@ -1,11 +1,11 @@
 class Ball {
-  final int id;
-  final int matchId;
+  final String id;
+  final String matchId;
   final int innings;
   final int overNumber;
   final int ballNumber;
-  final int? batsmanId;
-  final int? bowlerId;
+  final String? batsmanId;
+  final String? bowlerId;
   final String? batsmanName;
   final String? bowlerName;
   final int runs;
@@ -45,13 +45,13 @@ class Ball {
 
   factory Ball.fromJson(Map<String, dynamic> json) {
     return Ball(
-      id: json['id'],
-      matchId: json['match_id'],
+      id: json['id'].toString(),
+      matchId: json['match_id'].toString(),
       innings: json['innings'],
       overNumber: json['over_number'],
       ballNumber: json['ball_number'],
-      batsmanId: json['batsman_id'],
-      bowlerId: json['bowler_id'],
+      batsmanId: json['batsman_id']?.toString(),
+      bowlerId: json['bowler_id']?.toString(),
       batsmanName: json['batsman_name'],
       bowlerName: json['bowler_name'],
       runs: json['runs'] ?? 0,

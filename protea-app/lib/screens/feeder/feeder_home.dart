@@ -291,6 +291,7 @@ class _MatchesHomeTab extends StatelessWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'feeder_home_new_match',
         onPressed: onNewMatch,
         backgroundColor: AppTheme.accentGold,
         foregroundColor: AppTheme.textPrimary,

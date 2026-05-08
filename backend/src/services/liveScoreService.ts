@@ -2,7 +2,7 @@ import { redisPublisher, redisClient } from '../config/redis';
 import logger from '../utils/logger';
 
 export interface LiveScoreUpdate {
-  matchId: number;
+  matchId: string;
   innings: number;
   over: number;
   ball: number;
@@ -22,7 +22,7 @@ export class LiveScoreService {
   /**
    * Publish live score update to Redis channel
    */
-  static async publishScoreUpdate(matchId: number, update: LiveScoreUpdate): Promise<void> {
+  static async publishScoreUpdate(matchId: string, update: LiveScoreUpdate): Promise<void> {
     try {
       const channel = `${this.CHANNEL_PREFIX}${matchId}`;
       const message = JSON.stringify(update);
@@ -42,7 +42,7 @@ export class LiveScoreService {
   /**
    * Cache the latest score for quick retrieval
    */
-  static async cacheLatestScore(matchId: number, update: LiveScoreUpdate): Promise<void> {
+  static async cacheLatestScore(matchId: string, update: LiveScoreUpdate): Promise<void> {
     try {
       const key = `match:${matchId}:latest`;
       await redisClient.setex(key, this.CACHE_TTL, JSON.stringify(update));
@@ -54,7 +54,7 @@ export class LiveScoreService {
   /**
    * Get latest cached score
    */
-  static async getLatestScore(matchId: number): Promise<LiveScoreUpdate | null> {
+  static async getLatestScore(matchId: string): Promise<LiveScoreUpdate | null> {
     try {
       const key = `match:${matchId}:latest`;
       const data = await redisClient.get(key);
@@ -71,7 +71,7 @@ export class LiveScoreService {
   /**
    * Cache match scorecard
    */
-  static async cacheScorecard(matchId: number, scorecard: any): Promise<void> {
+  static async cacheScorecard(matchId: string, scorecard: any): Promise<void> {
     try {
       const key = `match:${matchId}:scorecard`;
       await redisClient.setex(key, this.CACHE_TTL, JSON.stringify(scorecard));
@@ -84,7 +84,7 @@ export class LiveScoreService {
   /**
    * Get cached scorecard
    */
-  static async getCachedScorecard(matchId: number): Promise<any | null> {
+  static async getCachedScorecard(matchId: string): Promise<any | null> {
     try {
       const key = `match:${matchId}:scorecard`;
       const data = await redisClient.get(key);
@@ -101,7 +101,7 @@ export class LiveScoreService {
   /**
    * Invalidate match cache when match is updated
    */
-  static async invalidateMatchCache(matchId: number): Promise<void> {
+  static async invalidateMatchCache(matchId: string): Promise<void> {
     try {
       const keys = [
         `match:${matchId}:latest`,
@@ -118,7 +118,7 @@ export class LiveScoreService {
   /**
    * Get channel name for a match
    */
-  static getChannelName(matchId: number): string {
+  static getChannelName(matchId: string): string {
     return `${this.CHANNEL_PREFIX}${matchId}`;
   }
 }

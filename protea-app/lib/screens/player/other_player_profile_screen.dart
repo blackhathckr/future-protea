@@ -8,7 +8,7 @@ import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
 
 class OtherPlayerProfileScreen extends StatefulWidget {
-  final int playerId;
+  final String playerId;
   final String playerName;
 
   const OtherPlayerProfileScreen({

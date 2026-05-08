@@ -13,7 +13,7 @@ import '../players/player_detail_screen.dart';
 import 'search_add_player_screen.dart'; // used by FAB
 
 class TeamRegisteredScreen extends StatefulWidget {
-  final int teamId;
+  final String teamId;
 
   const TeamRegisteredScreen({super.key, required this.teamId});
 

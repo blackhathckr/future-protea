@@ -1,11 +1,11 @@
 class Team {
-  final int id;
+  final String id;
   final String teamName;
   final String? schoolName;
   final String? clubName;
   final String teamType; // 'school' or 'club'
   final String? logoUrl;
-  final int? createdBy;
+  final String? createdBy;
   final List<TeamPlayer>? players;
 
   Team({
@@ -21,13 +21,13 @@ class Team {
 
   factory Team.fromJson(Map<String, dynamic> json) {
     return Team(
-      id: json['id'],
+      id: json['id'].toString(),
       teamName: json['team_name'] ?? json['name'] ?? '',
       schoolName: json['school_name'],
       clubName: json['club_name'],
       teamType: json['team_type'] ?? 'school',
       logoUrl: json['logo_url'],
-      createdBy: json['created_by'],
+      createdBy: json['created_by']?.toString(),
       players: json['players'] != null
           ? (json['players'] as List).map((p) => TeamPlayer.fromJson(p)).toList()
           : null,
@@ -48,9 +48,9 @@ class Team {
 }
 
 class TeamPlayer {
-  final int id;
-  final int teamId;
-  final int playerId;
+  final String id;
+  final String teamId;
+  final String playerId;
   final String playerName;
   final String? dateOfBirth;
   final String? photoUrl;
@@ -70,9 +70,9 @@ class TeamPlayer {
 
   factory TeamPlayer.fromJson(Map<String, dynamic> json) {
     return TeamPlayer(
-      id: json['id'] ?? 0,
-      teamId: json['team_id'] ?? 0,
-      playerId: json['player_id'] ?? json['id'] ?? 0,
+      id: (json['id'] ?? '').toString(),
+      teamId: (json['team_id'] ?? '').toString(),
+      playerId: (json['player_id'] ?? json['id'] ?? '').toString(),
       playerName: json['player_name'] ?? json['name'] ?? '',
       dateOfBirth: json['date_of_birth'] ?? json['dob'],
       photoUrl: json['photo_url'],

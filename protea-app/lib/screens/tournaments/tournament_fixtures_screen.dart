@@ -9,7 +9,7 @@ import '../../widgets/theme_toggle.dart';
 import '../viewer/match_detail_screen.dart';
 
 class TournamentFixturesScreen extends StatefulWidget {
-  final int tournamentId;
+  final String tournamentId;
   final String tournamentName;
   final DateTime? startDate;
   final DateTime? endDate;

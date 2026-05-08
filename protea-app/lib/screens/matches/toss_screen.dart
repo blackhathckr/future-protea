@@ -9,7 +9,7 @@ import '../../widgets/protea_buttons.dart';
 import 'start_match_screen.dart';
 
 class TossScreen extends StatefulWidget {
-  final int matchId;
+  final String matchId;
   final CricketMatch match;
 
   const TossScreen({super.key, required this.matchId, required this.match});

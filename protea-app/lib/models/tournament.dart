@@ -1,5 +1,5 @@
 class Tournament {
-  final int id;
+  final String id;
   final String name;
   final String type; // 'T20', 'ODI', 'Test'
   final int overs;
@@ -9,7 +9,7 @@ class Tournament {
   final String? organizer;
   final String? logoUrl;
   final String status; // 'upcoming', 'in_progress', 'completed'
-  final int? createdBy;
+  final String? createdBy;
   final List<TournamentTeam>? teams;
 
   Tournament({
@@ -29,7 +29,7 @@ class Tournament {
 
   factory Tournament.fromJson(Map<String, dynamic> json) {
     return Tournament(
-      id: json['id'],
+      id: json['id'].toString(),
       name: json['name'] ?? '',
       type: json['type'] ?? 'T20',
       overs: json['overs'] ?? 20,
@@ -39,7 +39,7 @@ class Tournament {
       organizer: json['organizer'],
       logoUrl: json['logo_url'],
       status: json['status'] ?? 'upcoming',
-      createdBy: json['created_by'],
+      createdBy: json['created_by']?.toString(),
       teams: json['teams'] != null
           ? (json['teams'] as List).map((t) => TournamentTeam.fromJson(t)).toList()
           : null,
@@ -59,9 +59,9 @@ class Tournament {
 }
 
 class TournamentTeam {
-  final int id;
-  final int tournamentId;
-  final int teamId;
+  final String id;
+  final String tournamentId;
+  final String teamId;
   final String teamName;
   final String? group;
   final int played;
@@ -87,9 +87,9 @@ class TournamentTeam {
 
   factory TournamentTeam.fromJson(Map<String, dynamic> json) {
     return TournamentTeam(
-      id: json['id'] ?? 0,
-      tournamentId: json['tournament_id'] ?? 0,
-      teamId: json['team_id'] ?? 0,
+      id: (json['id'] ?? '').toString(),
+      tournamentId: (json['tournament_id'] ?? '').toString(),
+      teamId: (json['team_id'] ?? '').toString(),
       teamName: json['team_name'] ?? json['name'] ?? '',
       group: json['group_name'] ?? json['group'],
       played: json['played'] ?? 0,
@@ -103,9 +103,9 @@ class TournamentTeam {
 }
 
 class TournamentFixture {
-  final int id;
-  final int tournamentId;
-  final int? matchId;
+  final String id;
+  final String tournamentId;
+  final String? matchId;
   final String team1Name;
   final String team2Name;
   final DateTime matchDate;
@@ -147,9 +147,9 @@ class TournamentFixture {
 
   factory TournamentFixture.fromJson(Map<String, dynamic> json) {
     return TournamentFixture(
-      id: json['id'],
-      tournamentId: json['tournament_id'] ?? 0,
-      matchId: json['match_id'],
+      id: json['id'].toString(),
+      tournamentId: (json['tournament_id'] ?? '').toString(),
+      matchId: json['match_id']?.toString(),
       team1Name: json['team1_name'] ?? '',
       team2Name: json['team2_name'] ?? '',
       matchDate: DateTime.parse(json['match_date']),

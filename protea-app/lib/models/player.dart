@@ -1,5 +1,5 @@
 class Player {
-  final int id;
+  final String id;
   final String name;
   final String? playerId; // e.g. GUCT-0158
   final String? dateOfBirth;
@@ -38,7 +38,7 @@ class Player {
   final String? nationality;
   
   final List<String>? teamsPlayed;
-  final int? createdBy;
+  final String? createdBy;
 
   Player({
     required this.id,
@@ -74,7 +74,7 @@ class Player {
 
   factory Player.fromJson(Map<String, dynamic> json) {
     return Player(
-      id: json['id'],
+      id: json['id'].toString(),
       name: json['name'] ?? '',
       playerId: json['player_id_code'] ?? json['player_id'],
       dateOfBirth: json['date_of_birth'] ?? json['dob'],
@@ -104,7 +104,7 @@ class Player {
       teamsPlayed: json['teams_played'] != null
           ? List<String>.from(json['teams_played'])
           : null,
-      createdBy: json['created_by'],
+      createdBy: json['created_by']?.toString(),
     );
   }
 

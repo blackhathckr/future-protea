@@ -218,6 +218,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen> {
       ),
       floatingActionButton: canManage
           ? FloatingActionButton.extended(
+              heroTag: 'tournaments_home_create',
               onPressed: () async {
                 final result = await Navigator.push(
                   context,

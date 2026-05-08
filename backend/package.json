@@ -25,6 +25,7 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@paralleldrive/cuid2": "^3.3.0",
     "@prisma/client": "^6.2.0",
     "@supabase/supabase-js": "^2.104.0",
     "bcryptjs": "^3.0.3",

@@ -6,8 +6,8 @@ import '../../theme/app_theme.dart';
 import '../player/my_journey_screen.dart';
 
 class PlayerJourneyScreen extends StatefulWidget {
-  final int? playerId;
-  final int? matchId;
+  final String? playerId;
+  final String? matchId;
   const PlayerJourneyScreen({super.key, this.playerId, this.matchId});
 
   @override

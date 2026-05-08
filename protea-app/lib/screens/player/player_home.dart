@@ -68,7 +68,7 @@ class _PlayerHomeState extends State<PlayerHome> {
 
     final tabs = [
       const PlayerDashboardScreen(),
-      MyJourneyScreen(playerId: user?.id ?? 0),
+      MyJourneyScreen(playerId: user?.id ?? ''),
       const PlayerSearchScreen(),
       _buildMatchesAndTournamentsTab(),
       const ProfileScreen(),

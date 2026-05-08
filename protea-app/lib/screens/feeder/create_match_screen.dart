@@ -40,7 +40,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
 
   // Tournament linkage
   List<Tournament> _tournaments = [];
-  int? _selectedTournamentId;
+  String? _selectedTournamentId;
 
   @override
   void initState() {
@@ -272,7 +272,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                           child: Text('No tournaments available',
                               style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.ts(context))),
                         )
-                      : DropdownButtonFormField<int?>(
+                      : DropdownButtonFormField<String?>(
                           initialValue: _selectedTournamentId,
                           decoration: InputDecoration(
                             hintText: 'Select tournament',
@@ -281,11 +281,11 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
                           ),
                           isExpanded: true,
                           items: [
-                            const DropdownMenuItem<int?>(
+                            const DropdownMenuItem<String?>(
                               value: null,
                               child: Text('None (standalone match)'),
                             ),
-                            ..._tournaments.map((t) => DropdownMenuItem<int?>(
+                            ..._tournaments.map((t) => DropdownMenuItem<String?>(
                               value: t.id,
                               child: Text(t.name, overflow: TextOverflow.ellipsis),
                             )),

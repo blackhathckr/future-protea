@@ -8,7 +8,7 @@ const joinMatch = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const matchPlayer = await prisma.matchPlayer.create({
       data: {
-        matchId: parseInt(req.params.id as string),
+        matchId: req.params.id as string,
         playerId: req.user.id,
         team: team || null,
       },
@@ -26,7 +26,7 @@ const joinMatch = async (req: AuthRequest, res: Response): Promise<void> => {
 
 const getMatchPlayers = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const matchId = parseInt(req.params.id as string);
+    const matchId = req.params.id as string;
 
     const match = await prisma.match.findUnique({
       where: { id: matchId },
@@ -134,7 +134,7 @@ const approveMatchPlayer = async (req: AuthRequest, res: Response): Promise<void
     if (team) data.team = team;
 
     const matchPlayer = await prisma.matchPlayer.update({
-      where: { id: parseInt(req.params.id as string) },
+      where: { id: req.params.id as string },
       data,
     });
     res.json(toSnake(matchPlayer));
@@ -148,7 +148,7 @@ const getApprovedPlayers = async (req: AuthRequest, res: Response): Promise<void
   try {
     const players = await prisma.matchPlayer.findMany({
       where: {
-        matchId: parseInt(req.params.id as string),
+        matchId: req.params.id as string,
         status: 'approved',
       },
       include: {
@@ -183,7 +183,7 @@ const getApprovedPlayers = async (req: AuthRequest, res: Response): Promise<void
 
 const populateMatchPlayers = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const matchId = parseInt(req.params.id as string);
+    const matchId = req.params.id as string;
 
     const match = await prisma.match.findUnique({
       where: { id: matchId },
@@ -284,7 +284,7 @@ const populateMatchPlayers = async (req: AuthRequest, res: Response): Promise<vo
       orderBy: { id: 'asc' },
     });
     const seenKeys = new Set<string>();
-    const idsToDelete: number[] = [];
+    const idsToDelete: string[] = [];
     for (const mp of allMatchPlayers) {
       const nm = mp.player?.name?.toLowerCase().trim() ?? '';
       const key = `${mp.team ?? 0}|${nm}`;
@@ -315,15 +315,15 @@ const populateMatchPlayers = async (req: AuthRequest, res: Response): Promise<vo
  */
 const dedupeMatchPlayers = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const matchId = parseInt(req.params.id as string);
+    const matchId = req.params.id as string;
     const matchPlayers = await prisma.matchPlayer.findMany({
       where: { matchId },
       include: { player: { select: { name: true } } },
       orderBy: { id: 'asc' },
     });
 
-    const seen = new Map<string, number>(); // key: "team|name" → id of kept row
-    const idsToDelete: number[] = [];
+    const seen = new Map<string, string>(); // key: "team|name" → id of kept row
+    const idsToDelete: string[] = [];
 
     for (const mp of matchPlayers) {
       const name = mp.player?.name?.toLowerCase().trim() ?? '';

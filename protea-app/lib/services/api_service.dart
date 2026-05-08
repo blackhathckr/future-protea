@@ -9,8 +9,10 @@ import '../models/team.dart';
 import '../models/tournament.dart';
 
 class ApiService {
-  // LocalTunnel public URL for device access
-  static const String baseUrl = 'https://eustolia-jural-unaspiringly.ngrok-free.dev/api';
+  // Direct LAN connection: phone must be on the same Wi-Fi as the dev PC running the backend.
+  // 192.168.0.145 is this PC's Wi-Fi IPv4. If your PC's IP changes, update it here
+  // (run `ipconfig` and look for "Wireless LAN adapter Wi-Fi" -> IPv4 Address).
+  static const String baseUrl = 'http://172.31.195.81:5000/api';
 
   static Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
@@ -88,7 +90,14 @@ class ApiService {
     final prefs = await SharedPreferences.getInstance();
     final userStr = prefs.getString('user');
     if (userStr == null) return null;
-    return User.fromJson(jsonDecode(userStr));
+    try {
+      return User.fromJson(jsonDecode(userStr));
+    } catch (_) {
+      // Cached user shape is stale (e.g. from before CUID migration). Drop it.
+      await prefs.remove('user');
+      await prefs.remove('token');
+      return null;
+    }
   }
 
   static Future<bool> isLoggedIn() async {
@@ -232,7 +241,7 @@ class ApiService {
     throw Exception('Failed to load matches');
   }
 
-  static Future<CricketMatch> getMatch(int id) async {
+  static Future<CricketMatch> getMatch(String id) async {
     final headers = await _headers();
     final response = await http.get(Uri.parse('$baseUrl/matches/$id'), headers: headers);
     if (response.statusCode == 200) {
@@ -247,7 +256,7 @@ class ApiService {
     String? venue,
     int totalOvers = 20,
     required DateTime matchDate,
-    int? tournamentId,
+    String? tournamentId,
     String? matchType,
     int ballsPerOver = 6,
     String? umpire,
@@ -274,7 +283,7 @@ class ApiService {
     throw Exception('Failed to create match');
   }
 
-  static Future<CricketMatch> updateMatch(int id, Map<String, dynamic> updates) async {
+  static Future<CricketMatch> updateMatch(String id, Map<String, dynamic> updates) async {
     final headers = await _headers();
     final response = await http.put(
       Uri.parse('$baseUrl/matches/$id'),
@@ -289,7 +298,7 @@ class ApiService {
 
   // ==================== MATCH PLAYERS ====================
 
-  static Future<void> joinMatch(int matchId, {int? team}) async {
+  static Future<void> joinMatch(String matchId, {int? team}) async {
     final headers = await _headers();
     final response = await http.post(
       Uri.parse('$baseUrl/matches/$matchId/join'),
@@ -302,7 +311,7 @@ class ApiService {
     }
   }
 
-  static Future<List<MatchPlayer>> getMatchPlayers(int matchId) async {
+  static Future<List<MatchPlayer>> getMatchPlayers(String matchId) async {
     final headers = await _headers();
     final response = await http.get(Uri.parse('$baseUrl/matches/$matchId/players'), headers: headers);
     if (response.statusCode == 200) {
@@ -312,7 +321,7 @@ class ApiService {
     throw Exception('Failed to load players');
   }
 
-  static Future<void> populateMatchPlayers(int matchId) async {
+  static Future<void> populateMatchPlayers(String matchId) async {
     final headers = await _headers();
     final response = await http.post(
       Uri.parse('$baseUrl/matches/$matchId/populate-players'),
@@ -323,7 +332,7 @@ class ApiService {
     }
   }
 
-  static Future<List<MatchPlayer>> getApprovedPlayers(int matchId) async {
+  static Future<List<MatchPlayer>> getApprovedPlayers(String matchId) async {
     final headers = await _headers();
     final response = await http.get(Uri.parse('$baseUrl/matches/$matchId/approved-players'), headers: headers);
     if (response.statusCode == 200) {
@@ -333,7 +342,7 @@ class ApiService {
     throw Exception('Failed to load approved players');
   }
 
-  static Future<void> approvePlayer(int matchPlayerId, {String status = 'approved', int? team}) async {
+  static Future<void> approvePlayer(String matchPlayerId, {String status = 'approved', int? team}) async {
     final headers = await _headers();
     final response = await http.put(
       Uri.parse('$baseUrl/match-players/$matchPlayerId/approve'),
@@ -348,12 +357,12 @@ class ApiService {
   // ==================== SCORING ====================
 
   static Future<Map<String, dynamic>> addBall({
-    required int matchId,
+    required String matchId,
     required int innings,
     required int overNumber,
     required int ballNumber,
-    int? batsmanId,
-    int? bowlerId,
+    String? batsmanId,
+    String? bowlerId,
     int runs = 0,
     bool isWide = false,
     bool isNoball = false,
@@ -393,7 +402,7 @@ class ApiService {
     throw Exception('Failed to add ball');
   }
 
-  static Future<Map<String, dynamic>> deleteLastBall(int matchId, {int? innings}) async {
+  static Future<Map<String, dynamic>> deleteLastBall(String matchId, {int? innings}) async {
     final headers = await _headers();
     String url = '$baseUrl/matches/$matchId/ball/last';
     if (innings != null) url += '?innings=$innings';
@@ -404,7 +413,7 @@ class ApiService {
     throw Exception('Failed to delete ball');
   }
 
-  static Future<List<Ball>> getBalls(int matchId, {int? innings}) async {
+  static Future<List<Ball>> getBalls(String matchId, {int? innings}) async {
     final headers = await _headers();
     String url = '$baseUrl/matches/$matchId/balls';
     if (innings != null) url += '?innings=$innings';
@@ -416,7 +425,7 @@ class ApiService {
     throw Exception('Failed to load balls');
   }
 
-  static Future<Map<String, dynamic>> getScorecard(int matchId) async {
+  static Future<Map<String, dynamic>> getScorecard(String matchId) async {
     final headers = await _headers();
     final response = await http.get(Uri.parse('$baseUrl/matches/$matchId/scorecard'), headers: headers);
     if (response.statusCode == 200) {
@@ -425,7 +434,7 @@ class ApiService {
     throw Exception('Failed to load scorecard');
   }
 
-  static Future<void> markRetiredHurt(int matchId, int playerId) async {
+  static Future<void> markRetiredHurt(String matchId, String playerId) async {
     final headers = await _headers();
     final response = await http.put(
       Uri.parse('$baseUrl/matches/$matchId/players/$playerId/retired-hurt'),
@@ -436,7 +445,7 @@ class ApiService {
     }
   }
 
-  static Future<void> clearRetiredHurt(int matchId, int playerId) async {
+  static Future<void> clearRetiredHurt(String matchId, String playerId) async {
     final headers = await _headers();
     final response = await http.delete(
       Uri.parse('$baseUrl/matches/$matchId/players/$playerId/retired-hurt'),
@@ -459,7 +468,7 @@ class ApiService {
     throw Exception('Failed to load players');
   }
 
-  static Future<void> approveUser(int playerId) async {
+  static Future<void> approveUser(String playerId) async {
     final headers = await _headers();
     final response = await http.put(
       Uri.parse('$baseUrl/players/$playerId/approve'),
@@ -548,7 +557,7 @@ class ApiService {
     throw Exception(data['error'] ?? 'Failed to register player');
   }
 
-  static Future<Player> updatePlayer(int id, Map<String, dynamic> updates) async {
+  static Future<Player> updatePlayer(String id, Map<String, dynamic> updates) async {
     final headers = await _headers();
     final response = await http.put(
       Uri.parse('$baseUrl/registered-players/$id'),
@@ -561,7 +570,7 @@ class ApiService {
     throw Exception('Failed to update player');
   }
 
-  static Future<Player> uploadPlayerPhoto(int playerId, String filePath) async {
+  static Future<Player> uploadPlayerPhoto(String playerId, String filePath) async {
     final token = await _getToken();
     final uri = Uri.parse('$baseUrl/registered-players/$playerId/photo');
     final request = http.MultipartRequest('POST', uri);
@@ -577,7 +586,7 @@ class ApiService {
     throw Exception('Failed to upload photo');
   }
 
-  static Future<Player> deletePlayerPhoto(int playerId) async {
+  static Future<Player> deletePlayerPhoto(String playerId) async {
     final headers = await _headers();
     final response = await http.delete(
       Uri.parse('$baseUrl/registered-players/$playerId/photo'),
@@ -589,7 +598,7 @@ class ApiService {
     throw Exception('Failed to delete photo');
   }
 
-  static Future<void> deletePlayer(int playerId) async {
+  static Future<void> deletePlayer(String playerId) async {
     final headers = await _headers();
     final response = await http.delete(
       Uri.parse('$baseUrl/registered-players/$playerId'),
@@ -620,7 +629,7 @@ class ApiService {
     throw Exception('Failed to load teams');
   }
 
-  static Future<Team> getTeam(int id) async {
+  static Future<Team> getTeam(String id) async {
     final headers = await _headers();
     final response = await http.get(Uri.parse('$baseUrl/teams/$id'), headers: headers);
     if (response.statusCode == 200) {
@@ -653,7 +662,7 @@ class ApiService {
     throw Exception(data['error'] ?? 'Failed to create team');
   }
 
-  static Future<void> addPlayerToTeam(int teamId, int playerId) async {
+  static Future<void> addPlayerToTeam(String teamId, String playerId) async {
     final headers = await _headers();
     final response = await http.post(
       Uri.parse('$baseUrl/teams/$teamId/players'),
@@ -666,7 +675,7 @@ class ApiService {
     }
   }
 
-  static Future<void> updatePlayerRole(int teamId, int playerId, {bool? isCaptain, bool? isWicketKeeper}) async {
+  static Future<void> updatePlayerRole(String teamId, String playerId, {bool? isCaptain, bool? isWicketKeeper}) async {
     final headers = await _headers();
     final body = <String, dynamic>{};
     if (isCaptain != null) body['is_captain'] = isCaptain;
@@ -683,7 +692,7 @@ class ApiService {
     }
   }
 
-  static Future<void> removePlayerFromTeam(int teamId, int playerId) async {
+  static Future<void> removePlayerFromTeam(String teamId, String playerId) async {
     final headers = await _headers();
     final response = await http.delete(
       Uri.parse('$baseUrl/teams/$teamId/players/$playerId'),
@@ -694,7 +703,7 @@ class ApiService {
     }
   }
 
-  static Future<Team> updateTeam(int teamId, {
+  static Future<Team> updateTeam(String teamId, {
     String? teamName,
     String? teamType,
     String? schoolName,
@@ -718,7 +727,7 @@ class ApiService {
     throw Exception(data['error'] ?? 'Failed to update team');
   }
 
-  static Future<Team> uploadTeamLogo(int teamId, String filePath) async {
+  static Future<Team> uploadTeamLogo(String teamId, String filePath) async {
     final token = await _getToken();
     final uri = Uri.parse('$baseUrl/teams/$teamId/logo');
     final request = http.MultipartRequest('POST', uri);
@@ -734,7 +743,7 @@ class ApiService {
     throw Exception('Failed to upload logo');
   }
 
-  static Future<Team> deleteTeamLogo(int teamId) async {
+  static Future<Team> deleteTeamLogo(String teamId) async {
     final headers = await _headers();
     final response = await http.delete(
       Uri.parse('$baseUrl/teams/$teamId/logo'),
@@ -760,7 +769,7 @@ class ApiService {
     throw Exception('Failed to load tournaments');
   }
 
-  static Future<Tournament> getTournament(int id) async {
+  static Future<Tournament> getTournament(String id) async {
     final headers = await _headers();
     final response = await http.get(Uri.parse('$baseUrl/tournaments/$id'), headers: headers);
     if (response.statusCode == 200) {
@@ -799,7 +808,7 @@ class ApiService {
     throw Exception(data['error'] ?? 'Failed to create tournament');
   }
 
-  static Future<void> addTeamToTournament(int tournamentId, int teamId, {String? group}) async {
+  static Future<void> addTeamToTournament(String tournamentId, String teamId, {String? group}) async {
     final headers = await _headers();
     final response = await http.post(
       Uri.parse('$baseUrl/tournaments/$tournamentId/teams'),
@@ -812,7 +821,7 @@ class ApiService {
     }
   }
 
-  static Future<List<TournamentFixture>> getTournamentFixtures(int tournamentId) async {
+  static Future<List<TournamentFixture>> getTournamentFixtures(String tournamentId) async {
     final headers = await _headers();
     final response = await http.get(Uri.parse('$baseUrl/tournaments/$tournamentId/fixtures'), headers: headers);
     if (response.statusCode == 200) {
@@ -822,7 +831,7 @@ class ApiService {
     throw Exception('Failed to load fixtures');
   }
 
-  static Future<List<TournamentTeam>> getTournamentStandings(int tournamentId) async {
+  static Future<List<TournamentTeam>> getTournamentStandings(String tournamentId) async {
     final headers = await _headers();
     final response = await http.get(Uri.parse('$baseUrl/tournaments/$tournamentId/standings'), headers: headers);
     if (response.statusCode == 200) {
@@ -832,7 +841,7 @@ class ApiService {
     throw Exception('Failed to load standings');
   }
 
-  static Future<Map<String, dynamic>> getTournamentStats(int tournamentId) async {
+  static Future<Map<String, dynamic>> getTournamentStats(String tournamentId) async {
     final headers = await _headers();
     final response = await http.get(Uri.parse('$baseUrl/tournaments/$tournamentId/stats'), headers: headers);
     if (response.statusCode == 200) {
@@ -841,7 +850,7 @@ class ApiService {
     throw Exception('Failed to load tournament stats');
   }
 
-  static Future<Tournament> uploadTournamentLogo(int tournamentId, String filePath) async {
+  static Future<Tournament> uploadTournamentLogo(String tournamentId, String filePath) async {
     final token = await _getToken();
     // Upload to Supabase via the player photo endpoint pattern, but we only have the logo URL
     // We use a simpler approach: upload as multipart to a generic endpoint
@@ -858,7 +867,7 @@ class ApiService {
     throw Exception('Failed to upload logo');
   }
 
-  static Future<Tournament> updateTournament(int tournamentId, Map<String, dynamic> updates) async {
+  static Future<Tournament> updateTournament(String tournamentId, Map<String, dynamic> updates) async {
     final headers = await _headers();
     final response = await http.put(
       Uri.parse('$baseUrl/tournaments/$tournamentId'),
@@ -894,7 +903,7 @@ class ApiService {
 
   // ==================== JOURNEY ====================
 
-  static Future<Map<String, dynamic>> getPlayerJourney(int playerId) async {
+  static Future<Map<String, dynamic>> getPlayerJourney(String playerId) async {
     final headers = await _headers();
     final response = await http.get(Uri.parse('$baseUrl/players/$playerId/journey'), headers: headers);
     if (response.statusCode == 200) {
@@ -935,7 +944,7 @@ class ApiService {
     throw Exception('Failed to load live matches');
   }
 
-  static Future<Map<String, dynamic>> getPublicMatch(int id) async {
+  static Future<Map<String, dynamic>> getPublicMatch(String id) async {
     final response = await http.get(
       Uri.parse('$baseUrl/public/matches/$id'),
       headers: _publicHeaders,
@@ -946,7 +955,7 @@ class ApiService {
     throw Exception('Failed to load match');
   }
 
-  static Future<Map<String, dynamic>> getPublicScorecard(int matchId) async {
+  static Future<Map<String, dynamic>> getPublicScorecard(String matchId) async {
     final response = await http.get(
       Uri.parse('$baseUrl/public/matches/$matchId/scorecard'),
       headers: _publicHeaders,
@@ -957,7 +966,7 @@ class ApiService {
     throw Exception('Failed to load scorecard');
   }
 
-  static Future<List<Ball>> getPublicBalls(int matchId, {int? innings}) async {
+  static Future<List<Ball>> getPublicBalls(String matchId, {int? innings}) async {
     String url = '$baseUrl/public/matches/$matchId/balls';
     if (innings != null) url += '?innings=$innings';
     final response = await http.get(Uri.parse(url), headers: _publicHeaders);

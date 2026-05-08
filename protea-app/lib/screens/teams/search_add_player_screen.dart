@@ -8,7 +8,7 @@ import '../../widgets/protea_header.dart';
 import '../../widgets/theme_toggle.dart';
 
 class SearchAddPlayerScreen extends StatefulWidget {
-  final int teamId;
+  final String teamId;
 
   const SearchAddPlayerScreen({super.key, required this.teamId});
 

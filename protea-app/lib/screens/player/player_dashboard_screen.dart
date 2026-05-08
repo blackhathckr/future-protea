@@ -758,11 +758,12 @@ class _InfoItem {
 }
 
 class _UpcomingMatchItem {
-  final int id;
+  final String id;
   final String team1Name, team2Name;
   final DateTime matchDate;
   final String? venue, matchType;
-  final int? tournamentId, totalOvers;
+  final String? tournamentId;
+  final int? totalOvers;
 
   _UpcomingMatchItem({
     required this.id,

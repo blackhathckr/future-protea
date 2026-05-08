@@ -1,5 +1,5 @@
 class CricketMatch {
-  final int id;
+  final String id;
   final String team1Name;
   final String team2Name;
   final String? team1LogoUrl;
@@ -59,7 +59,7 @@ class CricketMatch {
 
   factory CricketMatch.fromJson(Map<String, dynamic> json) {
     return CricketMatch(
-      id: json['id'],
+      id: json['id'].toString(),
       team1Name: json['team1_name'] ?? '',
       team2Name: json['team2_name'] ?? '',
       team1LogoUrl: json['team1_logo_url'] as String?,
@@ -109,9 +109,9 @@ class CricketMatch {
 }
 
 class MatchPlayer {
-  final int id;
-  final int matchId;
-  final int playerId;
+  final String id;
+  final String matchId;
+  final String playerId;
   final int? team;
   final String status;
   final String name;
@@ -137,9 +137,9 @@ class MatchPlayer {
 
   factory MatchPlayer.fromJson(Map<String, dynamic> json) {
     return MatchPlayer(
-      id: json['id'],
-      matchId: json['match_id'],
-      playerId: json['player_id'],
+      id: json['id'].toString(),
+      matchId: json['match_id'].toString(),
+      playerId: json['player_id'].toString(),
       team: json['team'],
       status: json['status'] ?? 'pending',
       name: json['name'],
@@ -153,9 +153,9 @@ class MatchPlayer {
 }
 
 class PlayerScore {
-  final int id;
-  final int matchId;
-  final int playerId;
+  final String id;
+  final String matchId;
+  final String playerId;
   final int? team;
   final String name;
   final int runsScored;
@@ -219,9 +219,9 @@ class PlayerScore {
 
   factory PlayerScore.fromJson(Map<String, dynamic> json) {
     return PlayerScore(
-      id: json['id'],
-      matchId: json['match_id'],
-      playerId: json['player_id'],
+      id: json['id'].toString(),
+      matchId: json['match_id'].toString(),
+      playerId: json['player_id'].toString(),
       team: json['team'],
       name: json['name'] ?? '',
       runsScored: json['runs_scored'] ?? 0,

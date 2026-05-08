@@ -9,7 +9,7 @@ datasource db {
 }
 
 model User {
-  id            Int       @id @default(autoincrement())
+  id            String    @id @default(cuid())
   name          String    @db.VarChar(255)
   email         String    @unique @db.VarChar(255)
   password      String    @db.VarChar(255)
@@ -36,7 +36,7 @@ model User {
 }
 
 model Match {
-  id              Int      @id @default(autoincrement())
+  id              String   @id @default(cuid())
   team1Name       String   @map("team1_name") @db.VarChar(255)
   team2Name       String   @map("team2_name") @db.VarChar(255)
   venue           String?  @db.VarChar(255)
@@ -53,8 +53,8 @@ model Match {
   team2Overs      Float    @default(0) @map("team2_overs")
   currentInnings  Int      @default(1) @map("current_innings")
   matchDate       DateTime @map("match_date")
-  createdBy       Int?     @map("created_by")
-  tournamentId    Int?     @map("tournament_id")
+  createdBy       String?  @map("created_by")
+  tournamentId    String?  @map("tournament_id")
   matchType       String   @default("T20") @map("match_type") @db.VarChar(20)
   ballsPerOver    Int      @default(6) @map("balls_per_over")
   umpire          String?  @db.VarChar(255)
@@ -72,9 +72,9 @@ model Match {
 }
 
 model MatchPlayer {
-  id        Int      @id @default(autoincrement())
-  matchId   Int      @map("match_id")
-  playerId  Int      @map("player_id")
+  id        String   @id @default(cuid())
+  matchId   String   @map("match_id")
+  playerId  String   @map("player_id")
   team      Int?
   status    String   @default("pending") @db.VarChar(20)
   createdAt DateTime @default(now()) @map("created_at")
@@ -87,9 +87,9 @@ model MatchPlayer {
 }
 
 model PlayerScore {
-  id           Int      @id @default(autoincrement())
-  matchId      Int      @map("match_id")
-  playerId     Int      @map("player_id")
+  id           String   @id @default(cuid())
+  matchId      String   @map("match_id")
+  playerId     String   @map("player_id")
   team         Int?
   runsScored   Int      @default(0) @map("runs_scored")
   ballsFaced   Int      @default(0) @map("balls_faced")
@@ -113,13 +113,13 @@ model PlayerScore {
 }
 
 model Ball {
-  id          Int      @id @default(autoincrement())
-  matchId     Int      @map("match_id")
+  id          String   @id @default(cuid())
+  matchId     String   @map("match_id")
   innings     Int
   overNumber  Int      @map("over_number")
   ballNumber  Int      @map("ball_number")
-  batsmanId   Int?     @map("batsman_id")
-  bowlerId    Int?     @map("bowler_id")
+  batsmanId   String?  @map("batsman_id")
+  bowlerId    String?  @map("bowler_id")
   runs        Int      @default(0)
   isWide      Boolean  @default(false) @map("is_wide")
   isNoball    Boolean  @default(false) @map("is_noball")
@@ -141,7 +141,7 @@ model Ball {
 }
 
 model RegisteredPlayer {
-  id            Int      @id @default(autoincrement())
+  id            String   @id @default(cuid())
   name          String   @db.VarChar(255)
   playerIdCode  String?  @unique @map("player_id_code") @db.VarChar(50)
   dateOfBirth   DateTime? @map("date_of_birth") @db.Date
@@ -179,7 +179,7 @@ model RegisteredPlayer {
   guardianName  String?  @map("guardian_name") @db.VarChar(255)
   nationality   String?  @db.VarChar(100)
   
-  createdBy     Int?     @map("created_by")
+  createdBy     String?  @map("created_by")
   createdAt     DateTime @default(now()) @map("created_at")
 
   creator       User?    @relation(fields: [createdBy], references: [id])
@@ -189,13 +189,13 @@ model RegisteredPlayer {
 }
 
 model Team {
-  id          Int      @id @default(autoincrement())
+  id          String   @id @default(cuid())
   teamName    String   @map("team_name") @db.VarChar(255)
   teamType    String   @map("team_type") @db.VarChar(20)
   schoolName  String?  @map("school_name") @db.VarChar(255)
   clubName    String?  @map("club_name") @db.VarChar(255)
   logoUrl     String?  @map("logo_url") @db.VarChar(500)
-  createdBy   Int?     @map("created_by")
+  createdBy   String?  @map("created_by")
   createdAt   DateTime @default(now()) @map("created_at")
 
   creator     User?    @relation(fields: [createdBy], references: [id])
@@ -206,9 +206,9 @@ model Team {
 }
 
 model TeamPlayer {
-  id              Int      @id @default(autoincrement())
-  teamId          Int      @map("team_id")
-  playerId        Int      @map("player_id")
+  id              String   @id @default(cuid())
+  teamId          String   @map("team_id")
+  playerId        String   @map("player_id")
   isCaptain       Boolean  @default(false) @map("is_captain")
   isWicketKeeper  Boolean  @default(false) @map("is_wicket_keeper")
   createdAt       DateTime @default(now()) @map("created_at")
@@ -221,7 +221,7 @@ model TeamPlayer {
 }
 
 model Tournament {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(cuid())
   name      String   @db.VarChar(255)
   type      String   @default("T20") @db.VarChar(20)
   overs     Int      @default(20)
@@ -231,7 +231,7 @@ model Tournament {
   organizer String?  @db.VarChar(255)
   logoUrl   String?  @map("logo_url") @db.VarChar(500)
   status    String   @default("upcoming") @db.VarChar(20)
-  createdBy Int?     @map("created_by")
+  createdBy String?  @map("created_by")
   createdAt DateTime @default(now()) @map("created_at")
 
   creator   User?    @relation(fields: [createdBy], references: [id])
@@ -243,9 +243,9 @@ model Tournament {
 }
 
 model TournamentTeam {
-  id           Int      @id @default(autoincrement())
-  tournamentId Int      @map("tournament_id")
-  teamId       Int      @map("team_id")
+  id           String   @id @default(cuid())
+  tournamentId String   @map("tournament_id")
+  teamId       String   @map("team_id")
   groupName    String?  @map("group_name") @db.VarChar(50)
   played       Int      @default(0)
   won          Int      @default(0)
@@ -267,9 +267,9 @@ model TournamentTeam {
 }
 
 model TournamentFixture {
-  id           Int      @id @default(autoincrement())
-  tournamentId Int      @map("tournament_id")
-  matchId      Int?     @map("match_id")
+  id           String   @id @default(cuid())
+  tournamentId String   @map("tournament_id")
+  matchId      String?  @map("match_id")
   team1Name    String   @map("team1_name") @db.VarChar(255)
   team2Name    String   @map("team2_name") @db.VarChar(255)
   matchDate    DateTime @map("match_date")

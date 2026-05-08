@@ -196,6 +196,7 @@ class _TeamsHomeScreenState extends State<TeamsHomeScreen> {
                 ],
               ),
               child: FloatingActionButton.extended(
+                heroTag: 'teams_home_register',
                 onPressed: () async {
                   final result = await Navigator.push(
                     context,

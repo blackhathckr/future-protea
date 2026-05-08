@@ -19,7 +19,7 @@ const getTeams = async (_req: AuthRequest, res: Response): Promise<void> => {
 const getTeamById = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const team = await prisma.team.findUnique({
-      where: { id: parseInt(req.params.id as string) },
+      where: { id: req.params.id as string },
     });
     if (!team) {
       res.status(404).json({ error: 'Team not found' });
@@ -27,7 +27,7 @@ const getTeamById = async (req: AuthRequest, res: Response): Promise<void> => {
     }
 
     const players = await prisma.teamPlayer.findMany({
-      where: { teamId: parseInt(req.params.id as string) },
+      where: { teamId: req.params.id as string },
       include: {
         player: {
           select: {
@@ -86,7 +86,7 @@ const addPlayerToTeam = async (req: AuthRequest, res: Response): Promise<void> =
   try {
     await prisma.teamPlayer.create({
       data: {
-        teamId: parseInt(req.params.id as string),
+        teamId: req.params.id as string,
         playerId: player_id,
       },
     });
@@ -105,8 +105,8 @@ const removePlayerFromTeam = async (req: AuthRequest, res: Response): Promise<vo
   try {
     await prisma.teamPlayer.deleteMany({
       where: {
-        teamId: parseInt(req.params.teamId as string),
-        playerId: parseInt(req.params.playerId as string),
+        teamId: req.params.teamId as string,
+        playerId: req.params.playerId as string,
       },
     });
     res.json({ message: 'Player removed from team' });
@@ -131,7 +131,7 @@ const updateTeam = async (req: AuthRequest, res: Response): Promise<void> => {
     }
 
     const team = await prisma.team.update({
-      where: { id: parseInt(req.params.id as string) },
+      where: { id: req.params.id as string },
       data,
     });
     res.json(toSnake(team));
@@ -144,8 +144,8 @@ const updateTeam = async (req: AuthRequest, res: Response): Promise<void> => {
 const updatePlayerRole = async (req: AuthRequest, res: Response): Promise<void> => {
   const { is_captain, is_wicket_keeper } = req.body;
   try {
-    const teamId = parseInt(req.params.teamId as string);
-    const playerId = parseInt(req.params.playerId as string);
+    const teamId = req.params.teamId as string;
+    const playerId = req.params.playerId as string;
 
     if (is_captain === true) {
       await prisma.teamPlayer.updateMany({
@@ -184,7 +184,7 @@ const uploadTeamLogo = async (req: AuthRequest, res: Response): Promise<void> =>
       return;
     }
 
-    const teamId = parseInt(req.params.id as string);
+    const teamId = req.params.id as string;
     const team = await prisma.team.findUnique({ where: { id: teamId } });
     if (!team) {
       res.status(404).json({ error: 'Team not found' });
@@ -212,7 +212,7 @@ const uploadTeamLogo = async (req: AuthRequest, res: Response): Promise<void> =>
 
 const deleteTeamLogo = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const teamId = parseInt(req.params.id as string);
+    const teamId = req.params.id as string;
     const team = await prisma.team.findUnique({
       where: { id: teamId },
       select: { logoUrl: true },

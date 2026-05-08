@@ -78,7 +78,7 @@ const getMatches = async (req: AuthRequest, res: Response): Promise<void> => {
 const getMatchById = async (req: Request, res: Response): Promise<void> => {
   try {
     const match = await prisma.match.findUnique({
-      where: { id: parseInt(req.params.id as string) },
+      where: { id: req.params.id as string },
       include: {
         creator: { select: { name: true } },
         matchPlayers: {
@@ -212,7 +212,7 @@ const updateMatch = async (req: AuthRequest, res: Response): Promise<void> => {
     }
 
     const match = await prisma.match.update({
-      where: { id: parseInt(req.params.id as string) },
+      where: { id: req.params.id as string },
       data,
     });
     // Auto-update tournament standings when match completes
@@ -234,7 +234,7 @@ const updateMatch = async (req: AuthRequest, res: Response): Promise<void> => {
  * Recalculate tournament standings (W/L/NR/Pts/NRR) for all teams.
  * Called automatically when a match in the tournament completes.
  */
-async function updateTournamentStandings(tournamentId: number): Promise<void> {
+async function updateTournamentStandings(tournamentId: string): Promise<void> {
   // Get all completed matches in this tournament
   const matches = await prisma.match.findMany({
     where: { tournamentId, status: 'completed' },
@@ -247,7 +247,7 @@ async function updateTournamentStandings(tournamentId: number): Promise<void> {
   });
 
   // Reset all team stats
-  const teamStats = new Map<number, {
+  const teamStats = new Map<string, {
     played: number;
     won: number;
     lost: number;
@@ -330,7 +330,7 @@ async function updateTournamentStandings(tournamentId: number): Promise<void> {
 const getScorecard = async (req: Request, res: Response): Promise<void> => {
   try {
     const match = await prisma.match.findUnique({
-      where: { id: parseInt(req.params.id as string) },
+      where: { id: req.params.id as string },
     });
     if (!match) {
       res.status(404).json({ error: 'Match not found' });
@@ -339,7 +339,7 @@ const getScorecard = async (req: Request, res: Response): Promise<void> => {
 
     const batting = await prisma.playerScore.findMany({
       where: {
-        matchId: parseInt(req.params.id as string),
+        matchId: req.params.id as string,
         ballsFaced: { gt: 0 },
       },
       include: {
@@ -350,7 +350,7 @@ const getScorecard = async (req: Request, res: Response): Promise<void> => {
 
     const bowling = await prisma.playerScore.findMany({
       where: {
-        matchId: parseInt(req.params.id as string),
+        matchId: req.params.id as string,
         oversBowled: { gt: 0 },
       },
       include: {
