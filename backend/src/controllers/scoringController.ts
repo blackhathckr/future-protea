@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '../config/database';
 import toSnake from '../utils/toSnake';
 import { AuthRequest } from '../middleware/auth';
+import LiveScoreService from '../services/liveScoreService';
 
 const recordBall = async (req: AuthRequest, res: Response): Promise<void> => {
   const matchId = parseInt(req.params.id as string);
@@ -139,6 +140,34 @@ const recordBall = async (req: AuthRequest, res: Response): Promise<void> => {
       });
 
       return { ball, match: updatedMatch };
+    });
+
+    // Publish live score update to Redis
+    const batsman = await prisma.registeredPlayer.findUnique({
+      where: { id: batsman_id },
+      select: { name: true },
+    });
+    const bowler = await prisma.registeredPlayer.findUnique({
+      where: { id: bowler_id },
+      select: { name: true },
+    });
+
+    const totalRuns = runs + (extras || 0) + (overthrows || 0);
+    const currentScore = innings === 1 ? result.match?.team1Score : result.match?.team2Score;
+    const currentWickets = innings === 1 ? result.match?.team1Wickets : result.match?.team2Wickets;
+
+    await LiveScoreService.publishScoreUpdate(matchId, {
+      matchId,
+      innings,
+      over: over_number,
+      ball: ball_number,
+      runs: totalRuns,
+      totalRuns: currentScore || 0,
+      wickets: currentWickets || 0,
+      batsmanName: batsman?.name || 'Unknown',
+      bowlerName: bowler?.name || 'Unknown',
+      commentary: commentary || `${batsman?.name} ${runs} run${runs !== 1 ? 's' : ''}`,
+      timestamp: new Date().toISOString(),
     });
 
     res.status(201).json(toSnake(result));

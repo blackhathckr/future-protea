@@ -377,7 +377,8 @@ class _MatchDetailScreenState extends State<MatchDetailScreen>
     for (final b in ibBalls.reversed) {
       if (b.batsmanId != null) {
         final bs = batters.where((x) => x.playerId == b.batsmanId).firstOrNull;
-        if (bs != null && !bs.isOut && bs.outType != 'retired hurt') {
+        // A player is active if they're not out (isOut=false), even if they have outType='retired hurt' but returned
+        if (bs != null && !bs.isOut) {
           activeIds.add(b.batsmanId!);
           if (activeIds.length == 2) break;
         }
@@ -2320,7 +2321,8 @@ class _MatchDetailScreenState extends State<MatchDetailScreen>
             if (p.isOut && p.outType != null) Text(p.outType!, style: TextStyle(fontSize: 10, color: AppTheme.ts(context))),
             if (active) Text('Batting', style: TextStyle(fontSize: 10, color: AppTheme.ts(context))),
             if (notOut && !active && p.outType == 'retired hurt') const Text('retired hurt', style: TextStyle(fontSize: 10, color: Colors.orange)),
-            if (notOut && !active && p.outType != 'retired hurt') const Text('not out', style: TextStyle(fontSize: 10, color: AppTheme.completedGreen)),
+            if (notOut && !active && p.outType != 'retired hurt' && p.outType != null) const Text('not out', style: TextStyle(fontSize: 10, color: AppTheme.completedGreen)),
+            if (notOut && !active && p.outType == null) const Text('not out', style: TextStyle(fontSize: 10, color: AppTheme.completedGreen)),
           ])),
           Expanded(child: Text('${p.runsScored}', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: p.runsScored >= 50 ? AppTheme.accentAmber : null))),
           Expanded(child: Text('${p.ballsFaced}', textAlign: TextAlign.center, style: const TextStyle(fontSize: 13))),
