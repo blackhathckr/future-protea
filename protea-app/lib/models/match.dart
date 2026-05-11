@@ -26,6 +26,7 @@ class CricketMatch {
   final String? umpire;
   final String? playerOfMatch;
   final String? matchType;
+  final int ballsPerOver;
 
   CricketMatch({
     required this.id,
@@ -55,6 +56,7 @@ class CricketMatch {
     this.playerOfMatch,
     this.matchType,
     this.team2PlayerCount = 0,
+    this.ballsPerOver = 6,
   });
 
   factory CricketMatch.fromJson(Map<String, dynamic> json) {
@@ -84,6 +86,7 @@ class CricketMatch {
       umpire: json['umpire'] as String?,
       playerOfMatch: json['player_of_match'] as String?,
       matchType: json['match_type'] as String?,
+      ballsPerOver: json['balls_per_over'] ?? 6,
       players: json['players'] != null
           ? (json['players'] as List).map((p) => MatchPlayer.fromJson(p)).toList()
           : null,
@@ -105,6 +108,94 @@ class CricketMatch {
       default:
         return 'Upcoming';
     }
+  }
+
+  // ----- Live-match derived stats -----
+
+  /// Team number (1 or 2) that batted first, derived from toss winner + decision.
+  /// Returns null if toss info is missing or doesn't match either team name.
+  int? get _battingFirstTeam {
+    if (tossWinner == null || tossDecision == null) return null;
+    final int? winnerTeam = tossWinner == team1Name
+        ? 1
+        : tossWinner == team2Name
+            ? 2
+            : null;
+    if (winnerTeam == null) return null;
+    final chosenBat = tossDecision == 'bat';
+    return chosenBat ? winnerTeam : (winnerTeam == 1 ? 2 : 1);
+  }
+
+  /// Team number (1 or 2) currently batting, or null if unknown.
+  int? get battingTeam {
+    final first = _battingFirstTeam;
+    if (first == null) return null;
+    return currentInnings == 1 ? first : (first == 1 ? 2 : 1);
+  }
+
+  String? get battingTeamName {
+    final t = battingTeam;
+    if (t == null) return null;
+    return t == 1 ? team1Name : team2Name;
+  }
+
+  int get battingScore => battingTeam == 1 ? team1Score : team2Score;
+  double get battingOvers => battingTeam == 1 ? team1Overs : team2Overs;
+
+  /// Score of the team that batted first (for second-innings target).
+  int get firstInningsScore {
+    final first = _battingFirstTeam;
+    if (first == null) return 0;
+    return first == 1 ? team1Score : team2Score;
+  }
+
+  /// Convert a cricket overs value like 12.3 (= 12 overs and 3 balls) to total balls.
+  int _oversToBalls(double overs) {
+    final whole = overs.floor();
+    final frac = ((overs - whole) * 10).round();
+    return whole * ballsPerOver + frac;
+  }
+
+  /// Current run rate of the batting team (runs per over).
+  double get currentRunRate {
+    final overs = battingOvers;
+    if (overs <= 0) return 0;
+    final balls = _oversToBalls(overs);
+    if (balls <= 0) return 0;
+    return battingScore * ballsPerOver / balls;
+  }
+
+  bool get isSecondInnings => currentInnings == 2;
+
+  /// Target the chasing team needs to win (first innings score + 1).
+  int get target => firstInningsScore + 1;
+
+  /// Runs the batting team still needs to win.
+  int get runsNeeded {
+    final n = target - battingScore;
+    return n < 0 ? 0 : n;
+  }
+
+  /// Balls left in the current innings.
+  int get ballsRemaining {
+    final used = _oversToBalls(battingOvers);
+    final total = totalOvers * ballsPerOver;
+    final left = total - used;
+    return left < 0 ? 0 : left;
+  }
+
+  /// Required run rate for the chasing team (runs per over).
+  double get requiredRunRate {
+    final balls = ballsRemaining;
+    if (balls <= 0) return 0;
+    return runsNeeded * ballsPerOver / balls;
+  }
+
+  /// Human-readable toss summary, e.g. "Sharks won the toss, chose to bat first".
+  String? get tossSummary {
+    if (tossWinner == null || tossDecision == null) return null;
+    final choice = tossDecision == 'bat' ? 'bat first' : 'bowl first';
+    return '$tossWinner won the toss, chose to $choice';
   }
 }
 

@@ -1,6 +1,7 @@
-require('dotenv').config();
+require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
 const bcrypt = require('bcryptjs');
 const { Pool } = require('pg');
+const { createId } = require('@paralleldrive/cuid2');
 
 const pool = new Pool({
   host: process.env.DB_HOST,
@@ -12,41 +13,46 @@ const pool = new Pool({
 
 // ==================== HELPERS ====================
 async function insertUser(name, email, hash, role, bat, bowl) {
+  const id = createId();
   const r = await pool.query(
-    `INSERT INTO users (name, email, password, role, batting_style, bowling_style, approved)
-     VALUES ($1,$2,$3,$4,$5,$6,true) ON CONFLICT (email) DO NOTHING RETURNING id`, [name, email, hash, role, bat, bowl]);
+    `INSERT INTO users (id, name, email, password, role, batting_style, bowling_style, approved)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,true) ON CONFLICT (email) DO NOTHING RETURNING id`, [id, name, email, hash, role, bat, bowl]);
   if (r.rows.length > 0) return r.rows[0].id;
   return (await pool.query(`SELECT id FROM users WHERE email=$1`, [email])).rows[0].id;
 }
 
 async function createMatch(t1, t2, venue, overs, date, status, tossW, tossD, winner, feederId, tournId) {
+  const id = createId();
   const r = await pool.query(
-    `INSERT INTO matches (team1_name,team2_name,venue,total_overs,match_date,status,toss_winner,toss_decision,winner,created_by,tournament_id)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
-    [t1,t2,venue,overs,date,status,tossW,tossD,winner,feederId,tournId]);
+    `INSERT INTO matches (id,team1_name,team2_name,venue,total_overs,match_date,status,toss_winner,toss_decision,winner,created_by,tournament_id)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id`,
+    [id,t1,t2,venue,overs,date,status,tossW,tossD,winner,feederId,tournId]);
   return r.rows[0].id;
 }
 
 async function assignPlayers(matchId, userIds, team) {
   for (const uid of userIds) {
-    await pool.query(`INSERT INTO match_players (match_id,player_id,team,status) VALUES ($1,$2,$3,'approved') ON CONFLICT DO NOTHING`, [matchId, uid, team]);
+    const id = createId();
+    await pool.query(`INSERT INTO match_players (id,match_id,player_id,team,status) VALUES ($1,$2,$3,$4,'approved') ON CONFLICT DO NOTHING`, [id, matchId, uid, team]);
   }
 }
 
 async function addBatting(matchId, userId, team, runs, balls, fours, sixes, isOut, outType) {
+  const id = createId();
   await pool.query(
-    `INSERT INTO player_scores (match_id,player_id,team,runs_scored,balls_faced,fours,sixes,is_out,out_type)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT (match_id,player_id) DO UPDATE SET
-     runs_scored=$4,balls_faced=$5,fours=$6,sixes=$7,is_out=$8,out_type=$9`,
-    [matchId,userId,team,runs,balls,fours,sixes,isOut,outType]);
+    `INSERT INTO player_scores (id,match_id,player_id,team,runs_scored,balls_faced,fours,sixes,is_out,out_type)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT (match_id,player_id) DO UPDATE SET
+     runs_scored=$5,balls_faced=$6,fours=$7,sixes=$8,is_out=$9,out_type=$10`,
+    [id,matchId,userId,team,runs,balls,fours,sixes,isOut,outType]);
 }
 
 async function addBowling(matchId, userId, team, overs, runs, wickets, maidens) {
+  const id = createId();
   await pool.query(
-    `INSERT INTO player_scores (match_id,player_id,team,overs_bowled,runs_conceded,wickets_taken,maidens)
-     VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT (match_id,player_id) DO UPDATE SET
-     overs_bowled=$4,runs_conceded=$5,wickets_taken=$6,maidens=$7`,
-    [matchId,userId,team,overs,runs,wickets,maidens]);
+    `INSERT INTO player_scores (id,match_id,player_id,team,overs_bowled,runs_conceded,wickets_taken,maidens)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (match_id,player_id) DO UPDATE SET
+     overs_bowled=$5,runs_conceded=$6,wickets_taken=$7,maidens=$8`,
+    [id,matchId,userId,team,overs,runs,wickets,maidens]);
 }
 
 async function updateMatchScore(matchId, t1s, t1w, t1o, t2s, t2w, t2o) {
@@ -83,7 +89,7 @@ function genBalls(matchId, innings, batIds, bowlIds, totalScore, totalWickets, t
       runsLeft -= runs;
     }
 
-    balls.push([matchId,innings,ov,bl+1,batId,bowId,runs,false,false,false,false,isW,wType,0,null]);
+    balls.push([createId(),matchId,innings,ov,bl+1,batId,bowId,runs,false,false,false,false,isW,wType,0,null]);
     bl++;
     if (bl >= 6) { ov++; bl = 0; bowIdx++; }
     if (isW) { bIdx++; if (bIdx >= batIds.length) break; }
@@ -94,8 +100,8 @@ function genBalls(matchId, innings, batIds, bowlIds, totalScore, totalWickets, t
 async function insertBalls(ballsArr) {
   for (const b of ballsArr) {
     await pool.query(
-      `INSERT INTO balls (match_id,innings,over_number,ball_number,batsman_id,bowler_id,runs,is_wide,is_noball,is_bye,is_legbye,is_wicket,wicket_type,extras,commentary)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`, b);
+      `INSERT INTO balls (id,match_id,innings,over_number,ball_number,batsman_id,bowler_id,runs,is_wide,is_noball,is_bye,is_legbye,is_wicket,wicket_type,extras,commentary)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`, b);
   }
 }
 
@@ -179,10 +185,11 @@ async function seed() {
     const schools = ['Greenfield HS','South High School','Paarl Boys High','Rondebosch Boys','Bishops','Hilton College','DHS','KES','Grey College','SACS'];
     const clubs = ['Cape Cobras CC','Titans CC','Riverton CC','Lions CC','Dolphins CC','Warriors CC'];
     const code = `GUCT-${String(i+1).padStart(4,'0')}`;
+    const rid = createId();
     const r = await pool.query(
-      `INSERT INTO registered_players (name,player_id_code,date_of_birth,school_name,club_name,batting_style,bowling_style,created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id`,
-      [p.n, code, dob, schools[i%10], clubs[i%6], p.bat, p.bowl, feeder]);
+      `INSERT INTO registered_players (id,name,player_id_code,date_of_birth,school_name,club_name,batting_style,bowling_style,created_by)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
+      [rid, p.n, code, dob, schools[i%10], clubs[i%6], p.bat, p.bowl, feeder]);
     regPlayerIds.push(r.rows[0].id);
   }
   console.log(`  ${allPlayers.length} players created`);
@@ -199,12 +206,14 @@ async function seed() {
   ];
   const teamIds = [];
   for (const t of teamDefs) {
+    const tid = createId();
     const r = await pool.query(
-      `INSERT INTO teams (team_name,team_type,school_name,club_name,created_by) VALUES ($1,$2,$3,$4,$5) RETURNING id`,
-      [t.name, t.type, null, t.club, feeder]);
+      `INSERT INTO teams (id,team_name,team_type,school_name,club_name,created_by) VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
+      [tid, t.name, t.type, null, t.club, feeder]);
     teamIds.push(r.rows[0].id);
     for (const pi of t.players) {
-      await pool.query(`INSERT INTO team_players (team_id,player_id) VALUES ($1,$2) ON CONFLICT DO NOTHING`, [r.rows[0].id, regPlayerIds[pi]]);
+      const tpid = createId();
+      await pool.query(`INSERT INTO team_players (id,team_id,player_id) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING`, [tpid, r.rows[0].id, regPlayerIds[pi]]);
     }
   }
   console.log(`  ${teamDefs.length} teams created`);
@@ -214,10 +223,11 @@ async function seed() {
 
   // ==================== TOURNAMENT 1: Protea T20 Championship (COMPLETED) ====================
   console.log('Creating Protea T20 Championship (completed)...');
+  const trid = createId();
   const ct = await pool.query(
-    `INSERT INTO tournaments (name,type,overs,start_date,end_date,venue,organizer,status,created_by)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
-    ['Protea T20 Championship','T20',20,'2025-09-01','2025-10-15','Various Grounds, SA','Cricket South Africa Youth','completed',feeder]);
+    `INSERT INTO tournaments (id,name,type,overs,start_date,end_date,venue,organizer,status,created_by)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
+    [trid,'Protea T20 Championship','T20',20,'2025-09-01','2025-10-15','Various Grounds, SA','Cricket South Africa Youth','completed',feeder]);
   const ctId = ct.rows[0].id;
 
   // 4 teams: Mambas, Eagles, Sharks, Lions in Group A; + Group B with Dolphins, Warriors, Mambas B, Eagles B
@@ -231,8 +241,9 @@ async function seed() {
     {tid:teamIds[5], group:'Group B', p:6, w:3, l:3, nr:0, pts:6},    // Warriors
   ];
   for (const t of ctTeams) {
-    await pool.query(`INSERT INTO tournament_teams (tournament_id,team_id,group_name,played,won,lost,no_result,points) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-      [ctId,t.tid,t.group,t.p,t.w,t.l,t.nr,t.pts]);
+    const ttid = createId();
+    await pool.query(`INSERT INTO tournament_teams (id,tournament_id,team_id,group_name,played,won,lost,no_result,points) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+      [ttid,ctId,t.tid,t.group,t.p,t.w,t.l,t.nr,t.pts]);
   }
 
   // Group A fixtures (round robin = 6 matches)
@@ -272,8 +283,9 @@ async function seed() {
 
   const allFixtures = [...gaFixtures,...gbFixtures,...semiFixtures,...finalFixture];
   for (const f of allFixtures) {
-    await pool.query(`INSERT INTO tournament_fixtures (tournament_id,team1_name,team2_name,match_date,venue,status,group_name,winner) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-      [ctId,f.t1,f.t2,f.d,f.v,f.s,f.g,f.w]);
+    const fid = createId();
+    await pool.query(`INSERT INTO tournament_fixtures (id,tournament_id,team1_name,team2_name,match_date,venue,status,group_name,winner) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+      [fid,ctId,f.t1,f.t2,f.d,f.v,f.s,f.g,f.w]);
   }
   console.log(`  ${allFixtures.length} fixtures (Group A: ${gaFixtures.length}, Group B: ${gbFixtures.length}, Semis: ${semiFixtures.length}, Final: 1)`);
 
@@ -369,16 +381,17 @@ async function seed() {
 
   // ==================== TOURNAMENT 2: Protea Youth Cup (IN PROGRESS) ====================
   console.log('Creating Protea Youth Cup (in progress)...');
+  const pycid = createId();
   const t2 = await pool.query(
-    `INSERT INTO tournaments (name,type,overs,start_date,end_date,venue,organizer,status,created_by)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
-    ['Protea Youth Cup','T20',20,'2026-01-21','2026-06-07','Various','CSA Youth Development','in_progress',feeder]);
+    `INSERT INTO tournaments (id,name,type,overs,start_date,end_date,venue,organizer,status,created_by)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
+    [pycid,'Protea Youth Cup','T20',20,'2026-01-21','2026-06-07','Various','CSA Youth Development','in_progress',feeder]);
   const t2Id = t2.rows[0].id;
 
-  await pool.query(`INSERT INTO tournament_teams (tournament_id,team_id,group_name,played,won,lost,no_result,points) VALUES ($1,$2,'Group A',3,3,0,0,1.75)`, [t2Id,teamIds[0]]);
-  await pool.query(`INSERT INTO tournament_teams (tournament_id,team_id,group_name,played,won,lost,no_result,points) VALUES ($1,$2,'Group A',3,2,1,0,0.75)`, [t2Id,teamIds[1]]);
-  await pool.query(`INSERT INTO tournament_teams (tournament_id,team_id,group_name,played,won,lost,no_result,points) VALUES ($1,$2,'Group A',3,1,2,0,-0.65)`, [t2Id,teamIds[2]]);
-  await pool.query(`INSERT INTO tournament_teams (tournament_id,team_id,group_name,played,won,lost,no_result,points) VALUES ($1,$2,'Group A',3,0,3,0,-1.85)`, [t2Id,teamIds[3]]);
+  await pool.query(`INSERT INTO tournament_teams (id,tournament_id,team_id,group_name,played,won,lost,no_result,points) VALUES ($1,$2,$3,'Group A',3,3,0,0,1.75)`, [createId(),t2Id,teamIds[0]]);
+  await pool.query(`INSERT INTO tournament_teams (id,tournament_id,team_id,group_name,played,won,lost,no_result,points) VALUES ($1,$2,$3,'Group A',3,2,1,0,0.75)`, [createId(),t2Id,teamIds[1]]);
+  await pool.query(`INSERT INTO tournament_teams (id,tournament_id,team_id,group_name,played,won,lost,no_result,points) VALUES ($1,$2,$3,'Group A',3,1,2,0,-0.65)`, [createId(),t2Id,teamIds[2]]);
+  await pool.query(`INSERT INTO tournament_teams (id,tournament_id,team_id,group_name,played,won,lost,no_result,points) VALUES ($1,$2,$3,'Group A',3,0,3,0,-1.85)`, [createId(),t2Id,teamIds[3]]);
 
   const t2Fix = [
     {t1:'Green Mambas',t2:'Blue Sharks',  d:'2026-01-21 10:00',v:'Durban Cricket Ground',s:'completed',g:'Group A',w:'Green Mambas'},
@@ -390,19 +403,20 @@ async function seed() {
     {t1:'Green Mambas',t2:'Dolphins',     d:'2026-04-28 14:00',v:'Durban Cricket Ground', s:'upcoming', g:'Group A',w:null},
   ];
   for (const f of t2Fix) {
-    await pool.query(`INSERT INTO tournament_fixtures (tournament_id,team1_name,team2_name,match_date,venue,status,group_name,winner) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-      [t2Id,f.t1,f.t2,f.d,f.v,f.s,f.g,f.w]);
+    const fid = createId();
+    await pool.query(`INSERT INTO tournament_fixtures (id,tournament_id,team1_name,team2_name,match_date,venue,status,group_name,winner) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+      [fid,t2Id,f.t1,f.t2,f.d,f.v,f.s,f.g,f.w]);
   }
 
   // ==================== TOURNAMENT 3: High School League (UPCOMING) ====================
   await pool.query(
-    `INSERT INTO tournaments (name,type,overs,start_date,end_date,venue,organizer,status,created_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-    ['High School League','T20',20,'2026-06-15','2026-07-12','Various Schools','WP Schools Cricket','upcoming',feeder]);
+    `INSERT INTO tournaments (id,name,type,overs,start_date,end_date,venue,organizer,status,created_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+    [createId(),'High School League','T20',20,'2026-06-15','2026-07-12','Various Schools','WP Schools Cricket','upcoming',feeder]);
 
   // ==================== TOURNAMENT 4: Junior Cricket Series (UPCOMING) ====================
   await pool.query(
-    `INSERT INTO tournaments (name,type,overs,start_date,end_date,venue,organizer,status,created_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-    ['Junior Cricket Series','T20',20,'2026-07-20','2026-08-08','Various','CSA Development','upcoming',feeder]);
+    `INSERT INTO tournaments (id,name,type,overs,start_date,end_date,venue,organizer,status,created_by) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+    [createId(),'Junior Cricket Series','T20',20,'2026-07-20','2026-08-08','Various','CSA Development','upcoming',feeder]);
 
   console.log('  4 tournaments created');
 

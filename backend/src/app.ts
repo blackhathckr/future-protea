@@ -32,7 +32,7 @@ app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+app.listen(PORT as number, '0.0.0.0', () => {
   console.log('\n' + '='.repeat(60));
   logger.info('Cricket Match Management API Server Started');
   console.log('='.repeat(60));
