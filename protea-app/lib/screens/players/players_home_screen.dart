@@ -10,6 +10,7 @@ import '../../theme/app_theme.dart';
 import '../../shared/widgets/loading_state.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../shared/widgets/count_badge.dart';
+import '../../shared/utils/snackbar_utils.dart';
 import '../../widgets/protea_header.dart';
 import '../../widgets/theme_toggle.dart';
 import 'register_player_screen.dart';
@@ -34,6 +35,7 @@ class _PlayersHomeScreenState extends State<PlayersHomeScreen> {
     final query = _searchCtrl.text.trim().toLowerCase();
     return _allPlayers.where((p) =>
       p.name.toLowerCase().contains(query) ||
+      (p.playerId?.toLowerCase().contains(query) ?? false) ||
       (p.schoolName?.toLowerCase().contains(query) ?? false) ||
       (p.clubName?.toLowerCase().contains(query) ?? false)
     ).toList();
@@ -61,12 +63,35 @@ class _PlayersHomeScreenState extends State<PlayersHomeScreen> {
 
   void _onSearchChanged() => setState(() {});
 
+  Future<void> _backfillAccounts() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Create Player Logins'),
+        content: const Text(
+          'This will create login accounts (password: player123) for all registered players who have an email but no login yet.\n\nExisting accounts will not be changed.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Proceed')),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    try {
+      final msg = await ApiService.backfillPlayerAccounts();
+      if (mounted) SnackbarUtils.showSuccess(context, msg);
+    } catch (e) {
+      if (mounted) SnackbarUtils.showError(context, e);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final canEdit = _canEdit;
     final filtered = _filteredPlayers;
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: SafeArea(
         top: false,
         child: Column(
@@ -109,6 +134,16 @@ class _PlayersHomeScreenState extends State<PlayersHomeScreen> {
                       )),
                   const SizedBox(width: 8),
                   if (!_loading) CountBadge(count: _allPlayers.length),
+                  const Spacer(),
+                  if (context.read<AuthProvider>().role == 'feeder')
+                    Tooltip(
+                      message: 'Create login accounts for all registered players with emails',
+                      child: IconButton(
+                        icon: const Icon(Icons.manage_accounts_outlined, size: 20),
+                        color: AppTheme.ts(context),
+                        onPressed: _backfillAccounts,
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -139,7 +174,7 @@ class _PlayersHomeScreenState extends State<PlayersHomeScreen> {
                   focusNode: _searchFocus,
                   style: GoogleFonts.poppins(fontSize: 13.5, color: AppTheme.tp(context)),
                   decoration: InputDecoration(
-                    hintText: 'Search by name, school or club…',
+                    hintText: 'Search by name, school, club or player ID…',
                     hintStyle: GoogleFonts.poppins(fontSize: 13, color: AppTheme.ts(context)),
                     prefixIcon: Icon(Icons.search,
                         size: 19,
@@ -170,7 +205,7 @@ class _PlayersHomeScreenState extends State<PlayersHomeScreen> {
             // ── List ─────────────────────────────────────────────────────
             Expanded(
               child: _loading
-                  ? LoadingState(label: 'Loading players…')
+                  ? const LoadingState(label: 'Loading players…', size: 90)
                   : filtered.isEmpty
                       ? EmptyState(
                           message: _searchCtrl.text.isNotEmpty

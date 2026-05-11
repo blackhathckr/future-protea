@@ -607,6 +607,19 @@ class ApiService {
     }
   }
 
+  static Future<String> backfillPlayerAccounts() async {
+    final headers = await _headers();
+    final response = await http.post(
+      Uri.parse('$baseUrl/registered-players/backfill-accounts'),
+      headers: headers,
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data['message'] as String;
+    }
+    throw Exception('Failed to backfill accounts');
+  }
+
   /// Get the full URL for a photo path (e.g. /uploads/player_123.jpg)
   static String getPhotoUrl(String photoPath) {
     if (photoPath.startsWith('http')) return photoPath;

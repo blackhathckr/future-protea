@@ -21,10 +21,43 @@ class EditPlayerScreen extends StatefulWidget {
 
 class _EditPlayerScreenState extends State<EditPlayerScreen> {
   final _formKey = GlobalKey<FormState>();
+
+  // Basic Info
   late final TextEditingController _nameCtrl;
+  DateTime? _dateOfBirth;
+  late final TextEditingController _nationalityCtrl;
+
+  // Contact Info
+  late final TextEditingController _emailCtrl;
+  late final TextEditingController _phoneCtrl;
+  late final TextEditingController _emergencyContactCtrl;
+  late final TextEditingController _emergencyContactNameCtrl;
+
+  // Address
+  late final TextEditingController _addressCtrl;
+  late final TextEditingController _cityCtrl;
+  late final TextEditingController _stateCtrl;
+  late final TextEditingController _countryCtrl;
+  late final TextEditingController _postalCodeCtrl;
+
+  // Physical Stats
+  late final TextEditingController _heightCtrl;
+  late final TextEditingController _weightCtrl;
+  String? _bloodGroup;
+
+  // Cricket Details
   late final TextEditingController _schoolCtrl;
   late final TextEditingController _clubCtrl;
-  DateTime? _dateOfBirth;
+  String? _battingStyle;
+  String? _bowlingStyle;
+  String? _playingRole;
+  late final TextEditingController _jerseyNumberCtrl;
+
+  // Family Info
+  late final TextEditingController _fatherNameCtrl;
+  late final TextEditingController _motherNameCtrl;
+  late final TextEditingController _guardianNameCtrl;
+
   XFile? _pickedImage;
   bool _loading = false;
   final _picker = ImagePicker();
@@ -33,14 +66,38 @@ class _EditPlayerScreenState extends State<EditPlayerScreen> {
   void initState() {
     super.initState();
     final p = widget.player;
+    // Basic
     _nameCtrl = TextEditingController(text: p.name);
+    _nationalityCtrl = TextEditingController(text: p.nationality ?? '');
+    if (p.dateOfBirth != null) {
+      try { _dateOfBirth = DateTime.parse(p.dateOfBirth!); } catch (_) {}
+    }
+    // Contact
+    _emailCtrl = TextEditingController(text: p.email ?? '');
+    _phoneCtrl = TextEditingController(text: p.phone ?? '');
+    _emergencyContactNameCtrl = TextEditingController(text: p.emergencyContactName ?? '');
+    _emergencyContactCtrl = TextEditingController(text: p.emergencyContact ?? '');
+    // Address
+    _addressCtrl = TextEditingController(text: p.address ?? '');
+    _cityCtrl = TextEditingController(text: p.city ?? '');
+    _stateCtrl = TextEditingController(text: p.state ?? '');
+    _countryCtrl = TextEditingController(text: p.country ?? '');
+    _postalCodeCtrl = TextEditingController(text: p.postalCode ?? '');
+    // Physical
+    _heightCtrl = TextEditingController(text: p.height != null ? p.height!.toStringAsFixed(1) : '');
+    _weightCtrl = TextEditingController(text: p.weight != null ? p.weight!.toStringAsFixed(1) : '');
+    _bloodGroup = p.bloodGroup;
+    // Cricket
     _schoolCtrl = TextEditingController(text: p.schoolName ?? '');
     _clubCtrl = TextEditingController(text: p.clubName ?? '');
-    if (p.dateOfBirth != null) {
-      try {
-        _dateOfBirth = DateTime.parse(p.dateOfBirth!);
-      } catch (_) {}
-    }
+    _battingStyle = p.battingStyle;
+    _bowlingStyle = p.bowlingStyle;
+    _playingRole = p.playingRole;
+    _jerseyNumberCtrl = TextEditingController(text: p.jerseyNumber != null ? '${p.jerseyNumber}' : '');
+    // Family
+    _fatherNameCtrl = TextEditingController(text: p.fatherName ?? '');
+    _motherNameCtrl = TextEditingController(text: p.motherName ?? '');
+    _guardianNameCtrl = TextEditingController(text: p.guardianName ?? '');
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -129,14 +186,36 @@ class _EditPlayerScreenState extends State<EditPlayerScreen> {
     );
   }
 
+  String? _txt(TextEditingController c) => c.text.trim().isNotEmpty ? c.text.trim() : null;
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
     try {
       final updates = <String, dynamic>{
         'name': _nameCtrl.text.trim(),
-        'school_name': _schoolCtrl.text.trim().isNotEmpty ? _schoolCtrl.text.trim() : null,
-        'club_name': _clubCtrl.text.trim().isNotEmpty ? _clubCtrl.text.trim() : null,
+        'nationality': _txt(_nationalityCtrl),
+        'email': _txt(_emailCtrl),
+        'phone': _txt(_phoneCtrl),
+        'emergency_contact_name': _txt(_emergencyContactNameCtrl),
+        'emergency_contact': _txt(_emergencyContactCtrl),
+        'address': _txt(_addressCtrl),
+        'city': _txt(_cityCtrl),
+        'state': _txt(_stateCtrl),
+        'country': _txt(_countryCtrl),
+        'postal_code': _txt(_postalCodeCtrl),
+        'height': _txt(_heightCtrl),
+        'weight': _txt(_weightCtrl),
+        'blood_group': _bloodGroup,
+        'school_name': _txt(_schoolCtrl),
+        'club_name': _txt(_clubCtrl),
+        'batting_style': _battingStyle,
+        'bowling_style': _bowlingStyle,
+        'playing_role': _playingRole,
+        'jersey_number': _txt(_jerseyNumberCtrl),
+        'father_name': _txt(_fatherNameCtrl),
+        'mother_name': _txt(_motherNameCtrl),
+        'guardian_name': _txt(_guardianNameCtrl),
       };
       if (_dateOfBirth != null) {
         updates['date_of_birth'] = DateFormat('yyyy-MM-dd').format(_dateOfBirth!);
@@ -347,85 +426,62 @@ class _EditPlayerScreenState extends State<EditPlayerScreen> {
                       ),
                       const SizedBox(height: 20),
 
-                      Text('Player Name', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _nameCtrl,
-                        decoration: const InputDecoration(hintText: 'Enter name'),
-                        validator: (v) => v!.isEmpty ? 'Enter player name' : null,
-                      ),
-                      const SizedBox(height: 16),
+                      // ── BASIC INFORMATION ─────────────────────────────────
+                      _sectionHeader('Basic Information'),
+                      _field('Player Name', _nameCtrl, required: true),
+                      _dateField(),
+                      _field('Nationality', _nationalityCtrl, hint: 'e.g. South African'),
 
-                      Text('Date of Birth', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-                      const SizedBox(height: 8),
-                      GestureDetector(
-                        onTap: () async {
-                          final picked = await showDatePicker(
-                            context: context,
-                            initialDate: _dateOfBirth ?? DateTime(2008, 1, 1),
-                            firstDate: DateTime(1990),
-                            lastDate: DateTime.now(),
-                          );
-                          if (picked != null) setState(() => _dateOfBirth = picked);
-                        },
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                          decoration: BoxDecoration(
-                            color: AppTheme.surface(context),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppTheme.divider(context)),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  _dateOfBirth != null
-                                      ? DateFormat('dd / MM / yyyy').format(_dateOfBirth!)
-                                      : 'DD / MM / YYYY',
-                                  style: TextStyle(
-                                    color: _dateOfBirth != null ? AppTheme.tp(context) : AppTheme.ts(context),
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ),
-                              Icon(Icons.calendar_today, color: AppTheme.ts(context)),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
+                      // ── CONTACT INFORMATION ───────────────────────────────
+                      _sectionHeader('Contact Information'),
+                      _field('Email', _emailCtrl, hint: 'player@example.com', keyboard: TextInputType.emailAddress),
+                      _field('Phone', _phoneCtrl, hint: '+27 123 456 7890', keyboard: TextInputType.phone),
+                      _field('Emergency Contact Name', _emergencyContactNameCtrl, hint: 'Parent/Guardian name'),
+                      _field('Emergency Contact Number', _emergencyContactCtrl, hint: '+27 123 456 7890', keyboard: TextInputType.phone),
 
-                      Text('School Name', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-                      Text('(optional)', style: TextStyle(color: AppTheme.ts(context), fontSize: 12)),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _schoolCtrl,
-                        decoration: const InputDecoration(hintText: 'Enter school name (optional)'),
-                      ),
-                      const SizedBox(height: 16),
+                      // ── ADDRESS ───────────────────────────────────────────
+                      _sectionHeader('Address'),
+                      _field('Street Address', _addressCtrl, hint: 'Street address'),
+                      Row(children: [
+                        Expanded(child: _field('City', _cityCtrl, hint: 'City')),
+                        const SizedBox(width: 12),
+                        Expanded(child: _field('Postal Code', _postalCodeCtrl, hint: 'Code', keyboard: TextInputType.number)),
+                      ]),
+                      Row(children: [
+                        Expanded(child: _field('State/Province', _stateCtrl, hint: 'State')),
+                        const SizedBox(width: 12),
+                        Expanded(child: _field('Country', _countryCtrl, hint: 'Country')),
+                      ]),
 
-                      Text('Club Name', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-                      Text('(optional)', style: TextStyle(color: AppTheme.ts(context), fontSize: 12)),
-                      const SizedBox(height: 8),
-                      TextFormField(
-                        controller: _clubCtrl,
-                        decoration: const InputDecoration(hintText: 'Enter club name (optional)'),
-                      ),
+                      // ── PHYSICAL STATS ────────────────────────────────────
+                      _sectionHeader('Physical Stats'),
+                      Row(children: [
+                        Expanded(child: _field('Height (cm)', _heightCtrl, hint: '175', keyboard: TextInputType.number)),
+                        const SizedBox(width: 12),
+                        Expanded(child: _field('Weight (kg)', _weightCtrl, hint: '70', keyboard: TextInputType.number)),
+                      ]),
+                      _dropdown('Blood Group', _bloodGroup, ['A+','A-','B+','B-','O+','O-','AB+','AB-'], (v) => setState(() => _bloodGroup = v)),
+
+                      // ── CRICKET DETAILS ───────────────────────────────────
+                      _sectionHeader('Cricket Details'),
+                      _field('School Name', _schoolCtrl, hint: 'School name'),
+                      _field('Club Name', _clubCtrl, hint: 'Club name'),
+                      _dropdown('Playing Role', _playingRole, ['Batsman','Bowler','All-rounder','Wicket-keeper'], (v) => setState(() => _playingRole = v)),
+                      _dropdown('Batting Style', _battingStyle, ['Right-hand bat','Left-hand bat'], (v) => setState(() => _battingStyle = v)),
+                      _dropdown('Bowling Style', _bowlingStyle, ['Right-arm fast','Left-arm fast','Right-arm medium','Left-arm medium','Right-arm spin','Left-arm spin','Leg-spin','Off-spin'], (v) => setState(() => _bowlingStyle = v)),
+                      _field('Jersey Number', _jerseyNumberCtrl, hint: 'e.g. 7', keyboard: TextInputType.number),
+
+                      // ── FAMILY INFORMATION ────────────────────────────────
+                      _sectionHeader('Family Information'),
+                      _field("Father's Name", _fatherNameCtrl, hint: "Father's full name"),
+                      _field("Mother's Name", _motherNameCtrl, hint: "Mother's full name"),
+                      _field('Guardian Name', _guardianNameCtrl, hint: 'Guardian (if applicable)'),
+
                       const SizedBox(height: 32),
-
-                      YellowButton(
-                        label: 'SAVE CHANGES',
-                        onPressed: _save,
-                        loading: _loading,
-                      ),
+                      YellowButton(label: 'SAVE CHANGES', onPressed: _save, loading: _loading),
                       const SizedBox(height: 12),
-                      GreenButton(
-                        label: 'CANCEL',
-                        onPressed: () => Navigator.pop(context),
-                      ),
+                      GreenButton(label: 'CANCEL', onPressed: () => Navigator.pop(context)),
                       const SizedBox(height: 20),
-                      // Delete Player Button
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
@@ -451,11 +507,108 @@ class _EditPlayerScreenState extends State<EditPlayerScreen> {
     );
   }
 
+  // ── Helper widgets ─────────────────────────────────────────────────
+  Widget _sectionHeader(String title) => Padding(
+    padding: const EdgeInsets.only(top: 24, bottom: 8),
+    child: Text(title, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: AppTheme.primaryGreen)),
+  );
+
+  Widget _field(String label, TextEditingController ctrl, {String? hint, bool required = false, TextInputType keyboard = TextInputType.text}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 10),
+        Row(children: [
+          Text(label, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13)),
+          if (required) const Text(' *', style: TextStyle(color: AppTheme.wicketRed, fontWeight: FontWeight.bold)),
+        ]),
+        const SizedBox(height: 5),
+        TextFormField(
+          controller: ctrl,
+          keyboardType: keyboard,
+          decoration: InputDecoration(hintText: hint ?? label),
+          validator: required ? (v) => v!.isEmpty ? 'Required' : null : null,
+        ),
+      ],
+    );
+  }
+
+  Widget _dateField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 10),
+        Text('Date of Birth', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13)),
+        const SizedBox(height: 5),
+        GestureDetector(
+          onTap: () async {
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: _dateOfBirth ?? DateTime(2008, 1, 1),
+              firstDate: DateTime(1990),
+              lastDate: DateTime.now(),
+            );
+            if (picked != null) setState(() => _dateOfBirth = picked);
+          },
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: AppTheme.surface(context),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppTheme.divider(context)),
+            ),
+            child: Row(children: [
+              Expanded(child: Text(
+                _dateOfBirth != null ? DateFormat('dd / MM / yyyy').format(_dateOfBirth!) : 'DD / MM / YYYY',
+                style: TextStyle(color: _dateOfBirth != null ? AppTheme.tp(context) : AppTheme.ts(context), fontSize: 15),
+              )),
+              Icon(Icons.calendar_today, color: AppTheme.ts(context), size: 20),
+            ]),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _dropdown(String label, String? value, List<String> options, Function(String?) onChange) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 10),
+        Text(label, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13)),
+        const SizedBox(height: 5),
+        DropdownButtonFormField<String>(
+          value: value,
+          decoration: InputDecoration(hintText: 'Select $label'),
+          items: options.map((o) => DropdownMenuItem(value: o, child: Text(o, style: GoogleFonts.poppins(fontSize: 13)))).toList(),
+          onChanged: onChange,
+        ),
+      ],
+    );
+  }
+
   @override
   void dispose() {
     _nameCtrl.dispose();
+    _nationalityCtrl.dispose();
+    _emailCtrl.dispose();
+    _phoneCtrl.dispose();
+    _emergencyContactNameCtrl.dispose();
+    _emergencyContactCtrl.dispose();
+    _addressCtrl.dispose();
+    _cityCtrl.dispose();
+    _stateCtrl.dispose();
+    _countryCtrl.dispose();
+    _postalCodeCtrl.dispose();
+    _heightCtrl.dispose();
+    _weightCtrl.dispose();
     _schoolCtrl.dispose();
     _clubCtrl.dispose();
+    _jerseyNumberCtrl.dispose();
+    _fatherNameCtrl.dispose();
+    _motherNameCtrl.dispose();
+    _guardianNameCtrl.dispose();
     super.dispose();
   }
 }

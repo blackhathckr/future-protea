@@ -14,6 +14,7 @@ router.put('/players/:id/approve', authenticate, authorize(['feeder']), playerCo
 router.get('/players/:id/journey', authenticate, playerController.getPlayerJourney as any);
 
 router.get('/registered-players', authenticate, registeredPlayerController.getRegisteredPlayers as any);
+router.post('/registered-players/backfill-accounts', authenticate, authorize(['feeder']), registeredPlayerController.backfillPlayerAccounts as any);
 router.post('/registered-players', authenticate, authorize(['feeder', 'player']), registeredPlayerController.createRegisteredPlayer as any);
 router.post('/registered-players/:id/photo', authenticate, authorize(['feeder', 'player']), upload.single('photo'), registeredPlayerController.uploadPlayerPhoto as any);
 router.put('/registered-players/:id', authenticate, authorize(['feeder', 'player']), registeredPlayerController.updateRegisteredPlayer as any);

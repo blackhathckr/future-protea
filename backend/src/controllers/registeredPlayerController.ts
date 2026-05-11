@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import bcrypt from 'bcryptjs';
 import prisma from '../config/database';
 import supabaseStorage from '../config/supabase';
 import toSnake from '../utils/toSnake';
@@ -67,6 +68,27 @@ const createRegisteredPlayer = async (req: AuthRequest, res: Response): Promise<
         createdBy: req.user.id,
       },
     });
+
+    // If email provided, auto-create a User account so the player can log in
+    if (email) {
+      const existing = await prisma.user.findUnique({ where: { email } });
+      if (!existing) {
+        const hashedPassword = await bcrypt.hash('player123', 10);
+        await prisma.user.create({
+          data: {
+            name,
+            email,
+            password: hashedPassword,
+            role: 'player',
+            phone: phone || null,
+            battingStyle: batting_style || null,
+            bowlingStyle: bowling_style || null,
+            approved: true,
+          },
+        });
+      }
+    }
+
     res.status(201).json(toSnake(player));
   } catch (error: unknown) {
     const err = error as { message: string };
@@ -236,6 +258,43 @@ const deletePlayer = async (req: AuthRequest, res: Response): Promise<void> => {
   }
 };
 
+const backfillPlayerAccounts = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const playersWithEmail = await prisma.registeredPlayer.findMany({
+      where: { email: { not: null } },
+      select: { email: true, name: true, phone: true, battingStyle: true, bowlingStyle: true },
+    });
+
+    let created = 0;
+    let skipped = 0;
+
+    for (const p of playersWithEmail) {
+      if (!p.email) continue;
+      const existing = await prisma.user.findUnique({ where: { email: p.email } });
+      if (existing) { skipped++; continue; }
+      const hashedPassword = await bcrypt.hash('player123', 10);
+      await prisma.user.create({
+        data: {
+          name: p.name,
+          email: p.email,
+          password: hashedPassword,
+          role: 'player',
+          phone: p.phone || null,
+          battingStyle: p.battingStyle || null,
+          bowlingStyle: p.bowlingStyle || null,
+          approved: true,
+        },
+      });
+      created++;
+    }
+
+    res.json({ message: `Done. Created ${created} accounts, skipped ${skipped} (already existed).` });
+  } catch (error: unknown) {
+    const err = error as { message: string };
+    res.status(500).json({ error: err.message });
+  }
+};
+
 export default {
   getRegisteredPlayers,
   createRegisteredPlayer,
@@ -243,4 +302,5 @@ export default {
   updateRegisteredPlayer,
   deletePlayerPhoto,
   deletePlayer,
+  backfillPlayerAccounts,
 };

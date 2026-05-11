@@ -385,45 +385,84 @@ class _PlayerDetailScreenState extends State<PlayerDetailScreen>
 
   Widget _buildBioTab() {
     final p = widget.player;
+
+    // helper: only show a card section if at least one field has a value
+    bool anyOf(List<String?> vals) => vals.any((v) => v != null && v.isNotEmpty);
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _sectionTitle('Personal Information'),
-                const SizedBox(height: 8),
-                _bioRow('Full Name', p.name),
-                if (p.playerId != null) _bioRow('Player ID', p.playerId!),
-                if (p.dateOfBirth != null) _bioRow('Date of Birth', _formatDate(p.dateOfBirth!)),
-                if (p.dateOfBirth != null) _bioRow('Age', _calculateAge(p.dateOfBirth!)),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _sectionTitle('Cricket Profile'),
-                const SizedBox(height: 8),
-                if (p.battingStyle != null) _bioRow('Batting Style', p.battingStyle!),
-                if (p.bowlingStyle != null) _bioRow('Bowling Style', p.bowlingStyle!),
-                if (p.schoolName != null) _bioRow('School', p.schoolName!),
-                if (p.clubName != null) _bioRow('Club', p.clubName!),
-                if (p.teamsPlayed != null && p.teamsPlayed!.isNotEmpty)
-                  _bioRow('Teams Played', p.teamsPlayed!.join(', ')),
-              ],
-            ),
-          ),
-        ),
+        // ── Personal ─────────────────────────────────────────────────
+        _bioCard('Personal Information', [
+          _bioRow('Full Name', p.name),
+          if (p.playerId != null) _bioRow('Player ID', p.playerId!),
+          if (p.dateOfBirth != null) _bioRow('Date of Birth', _formatDate(p.dateOfBirth!)),
+          if (p.dateOfBirth != null) _bioRow('Age', _calculateAge(p.dateOfBirth!)),
+          if (p.nationality != null) _bioRow('Nationality', p.nationality!),
+          if (p.bloodGroup != null) _bioRow('Blood Group', p.bloodGroup!),
+          if (p.height != null) _bioRow('Height', '${p.height!.toStringAsFixed(1)} cm'),
+          if (p.weight != null) _bioRow('Weight', '${p.weight!.toStringAsFixed(1)} kg'),
+        ]),
+
+        // ── Cricket Profile ──────────────────────────────────────────
+        _bioCard('Cricket Profile', [
+          if (p.battingStyle != null) _bioRow('Batting Style', p.battingStyle!),
+          if (p.bowlingStyle != null) _bioRow('Bowling Style', p.bowlingStyle!),
+          if (p.playingRole != null) _bioRow('Playing Role', p.playingRole!),
+          if (p.jerseyNumber != null) _bioRow('Jersey Number', '#${p.jerseyNumber}'),
+          if (p.schoolName != null) _bioRow('School', p.schoolName!),
+          if (p.clubName != null) _bioRow('Club', p.clubName!),
+          if (p.teamsPlayed != null && p.teamsPlayed!.isNotEmpty)
+            _bioRow('Teams Played', p.teamsPlayed!.join(', ')),
+        ]),
+
+        // ── Contact ──────────────────────────────────────────────────
+        if (anyOf([p.email, p.phone, p.emergencyContact, p.emergencyContactName]))
+          _bioCard('Contact Information', [
+            if (p.email != null) _bioRow('Email', p.email!),
+            if (p.phone != null) _bioRow('Phone', p.phone!),
+            if (p.emergencyContactName != null) _bioRow('Emergency Contact', p.emergencyContactName!),
+            if (p.emergencyContact != null) _bioRow('Emergency Phone', p.emergencyContact!),
+          ]),
+
+        // ── Address ──────────────────────────────────────────────────
+        if (anyOf([p.address, p.city, p.state, p.country, p.postalCode]))
+          _bioCard('Address', [
+            if (p.address != null) _bioRow('Street', p.address!),
+            if (p.city != null) _bioRow('City', p.city!),
+            if (p.state != null) _bioRow('Province / State', p.state!),
+            if (p.country != null) _bioRow('Country', p.country!),
+            if (p.postalCode != null) _bioRow('Postal Code', p.postalCode!),
+          ]),
+
+        // ── Family ───────────────────────────────────────────────────
+        if (anyOf([p.fatherName, p.motherName, p.guardianName]))
+          _bioCard('Family Information', [
+            if (p.fatherName != null) _bioRow("Father's Name", p.fatherName!),
+            if (p.motherName != null) _bioRow("Mother's Name", p.motherName!),
+            if (p.guardianName != null) _bioRow('Guardian', p.guardianName!),
+          ]),
       ],
+    );
+  }
+
+  Widget _bioCard(String title, List<Widget> rows) {
+    if (rows.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _sectionTitle(title),
+              const SizedBox(height: 8),
+              ...rows,
+            ],
+          ),
+        ),
+      ),
     );
   }
 

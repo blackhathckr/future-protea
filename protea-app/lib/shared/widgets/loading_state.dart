@@ -15,23 +15,28 @@ class LoadingState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Lottie.asset(
-            'assets/images/lottie/Bat ball.json',
-            width: size,
-            height: size,
-            repeat: true,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final lottieSize = (constraints.maxHeight * 0.4).clamp(40.0, size);
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SizedBox(
+                width: lottieSize,
+                height: lottieSize,
+                child: Lottie.asset('assets/images/lottie/Bat ball.json', repeat: true),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.ts(context)),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.ts(context)),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

@@ -237,12 +237,12 @@ class _PlayerSearchScreenState extends State<PlayerSearchScreen> {
                 children: [
                   Text(player.name, style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600, color: AppTheme.tp(context))),
                   const SizedBox(height: 4),
-                  Row(
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 4,
                     children: [
-                      if (player.battingStyle != null) ...[
+                      if (player.battingStyle != null)
                         _stylePill(player.battingStyle!, AppTheme.lightGreen),
-                        const SizedBox(width: 6),
-                      ],
                       if (player.bowlingStyle != null && player.bowlingStyle != 'None')
                         _stylePill(player.bowlingStyle!, AppTheme.accentAmber),
                     ],
