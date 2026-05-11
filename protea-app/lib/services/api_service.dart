@@ -9,8 +9,8 @@ import '../models/team.dart';
 import '../models/tournament.dart';
 
 class ApiService {
-  
   static const String baseUrl = 'https://eustolia-jural-unaspiringly.ngrok-free.dev/api';
+  // static const String baseUrl = 'http://10.66.199.18:5000/api'; // Local fallback
 
   static Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
@@ -974,4 +974,47 @@ class ApiService {
     }
     throw Exception('Failed to load balls');
   }
+
+  static Future<List<CricketMatch>> getPublicMatches({String? status, int? limit}) async {
+    String url = '$baseUrl/public/matches';
+    final params = <String>[];
+    if (status != null) params.add('status=$status');
+    if (limit != null) params.add('limit=$limit');
+    if (params.isNotEmpty) url += '?${params.join('&')}';
+    final response = await http.get(Uri.parse(url), headers: _publicHeaders);
+    if (response.statusCode == 200) {
+      final List list = jsonDecode(response.body);
+      return list.map((m) => CricketMatch.fromJson(m)).toList();
+    }
+    return [];
+  }
+
+  static Future<Map<String, dynamic>> getPublicTopPlayers() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/public/top-players'),
+      headers: _publicHeaders,
+    );
+    if (response.statusCode == 200) return jsonDecode(response.body);
+    return {'top_run_scorers': [], 'top_wicket_takers': []};
+  }
+
+  static Future<Map<String, dynamic>> getPublicNews() async {
+    final response = await http.get(
+      Uri.parse('$baseUrl/public/news'),
+      headers: _publicHeaders,
+    );
+    if (response.statusCode == 200) return jsonDecode(response.body);
+    return {'articles': []};
+  }
+
+  static Future<Map<String, dynamic>> publicSearch(String query) async {
+    final encoded = Uri.encodeQueryComponent(query);
+    final response = await http.get(
+      Uri.parse('$baseUrl/public/search?q=$encoded'),
+      headers: _publicHeaders,
+    );
+    if (response.statusCode == 200) return jsonDecode(response.body);
+    return {'matches': [], 'players': []};
+  }
 }
+

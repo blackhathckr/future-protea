@@ -8,6 +8,7 @@ import 'theme/app_theme.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/core/home_screen.dart';
 import 'screens/guest/guest_live_screen.dart';
+import 'screens/landing/landing_screen.dart';
 import 'screens/core/splash_screen.dart';
 
 /// Cached logo image provider - decoded once, used everywhere
@@ -75,11 +76,11 @@ class _FutureProteaAppState extends State<FutureProteaApp> {
                 builder: (context, auth, _) {
                   // Skip the logo loading screen - auth loads during splash
                   if (!auth.isLoggedIn) {
-                    return const LoginScreen();
+                    return const LandingScreen();
                   }
 
                   if (auth.isGuest) {
-                    return const GuestLiveScreen();
+                    return const LandingScreen();
                   }
 
                   return const HomeScreen();
