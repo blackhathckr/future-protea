@@ -7,6 +7,7 @@ import '../../shared/utils/snackbar_utils.dart';
 import '../../providers/theme_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/protea_header.dart';
+import '../core/home_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -66,7 +67,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ? DateFormat('yyyy-MM-dd').format(_dateOfBirth!)
                 : null,
           );
-      if (mounted) Navigator.pop(context);
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          (_) => false,
+        );
+      }
     } catch (e) {
       if (mounted) {
         SnackbarUtils.showError(context, e);

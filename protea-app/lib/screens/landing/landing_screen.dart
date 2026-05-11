@@ -104,7 +104,7 @@ class _LandingScreenState extends State<LandingScreen> {
   }
 
   void _navigateToLogin() {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
+    Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
   }
 
   void _openMatch(String id) {

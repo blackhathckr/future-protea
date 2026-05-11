@@ -6,6 +6,8 @@ import '../../shared/utils/snackbar_utils.dart';
 import '../../providers/theme_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/protea_header.dart';
+import '../core/home_screen.dart';
+import '../landing/landing_screen.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
 
@@ -31,6 +33,12 @@ class _LoginScreenState extends State<LoginScreen> {
             _emailCtrl.text.trim(),
             _passwordCtrl.text,
           );
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          (_) => false,
+        );
+      }
     } catch (e) {
       if (mounted) {
         SnackbarUtils.showError(context, e);
@@ -53,6 +61,18 @@ class _LoginScreenState extends State<LoginScreen> {
               Stack(
                 children: [
                   const ProteaHeader(height: 200),
+                  Positioned(
+                    top: MediaQuery.of(context).padding.top + 8,
+                    left: 8,
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+                      tooltip: 'Back',
+                      onPressed: () => Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (_) => const LandingScreen()),
+                        (_) => false,
+                      ),
+                    ),
+                  ),
                   Positioned(
                     top: MediaQuery.of(context).padding.top + 8,
                     right: 8,
