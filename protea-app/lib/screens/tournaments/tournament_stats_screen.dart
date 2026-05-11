@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:lottie/lottie.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../shared/widgets/loading_state.dart';
 import '../../widgets/protea_header.dart';
 import '../../widgets/theme_toggle.dart';
 
@@ -123,16 +123,7 @@ class _TournamentStatsScreenState extends State<TournamentStatsScreen>
             const SizedBox(height: 8),
             Expanded(
               child: _loading
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Lottie.asset('assets/images/lottie/Bat ball.json', width: 120, height: 120, repeat: true),
-                          const SizedBox(height: 12),
-                          Text('Loading stats...', style: GoogleFonts.poppins(color: AppTheme.ts(context), fontSize: 13)),
-                        ],
-                      ),
-                    )
+                  ? const LoadingState(label: 'Loading stats...')
                   : _error != null
                       ? Center(
                           child: Column(

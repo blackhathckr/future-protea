@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import '../../services/api_service.dart';
-import '../../services/auth_provider.dart';
-import '../../services/theme_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../shared/widgets/loading_state.dart';
+import '../../shared/utils/snackbar_utils.dart';
+import '../../providers/theme_provider.dart';
 import '../../theme/app_theme.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -86,15 +87,11 @@ class _ProfileScreenState extends State<ProfileScreen>
         final updatedUser = await ApiService.uploadProfilePhoto(pickedFile.path);
         if (mounted) {
           context.read<AuthProvider>().setUser(updatedUser);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Profile photo updated successfully')),
-          );
+          SnackbarUtils.showSuccess(context, 'Profile photo updated successfully');
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to upload photo: $e')),
-          );
+          SnackbarUtils.showError(context, 'Failed to upload photo: $e');
         }
       } finally {
         if (mounted) setState(() => _loading = false);
@@ -128,15 +125,11 @@ class _ProfileScreenState extends State<ProfileScreen>
       final updatedUser = await ApiService.deleteProfilePhoto();
       if (mounted) {
         context.read<AuthProvider>().setUser(updatedUser);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Photo deleted successfully')),
-        );
+        SnackbarUtils.showSuccess(context, 'Photo deleted successfully');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to delete photo: $e')),
-        );
+        SnackbarUtils.showError(context, 'Failed to delete photo: $e');
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -163,15 +156,11 @@ class _ProfileScreenState extends State<ProfileScreen>
       if (mounted) {
         context.read<AuthProvider>().setUser(updatedUser);
         setState(() => _isEditing = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated successfully')),
-        );
+        SnackbarUtils.showSuccess(context, 'Profile updated successfully');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update profile: $e')),
-        );
+        SnackbarUtils.showError(context, 'Failed to update profile: $e');
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -180,16 +169,12 @@ class _ProfileScreenState extends State<ProfileScreen>
 
   Future<void> _changePassword() async {
     if (_newPasswordController.text != _confirmPasswordController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('New passwords do not match')),
-      );
+      SnackbarUtils.showInfo(context, 'New passwords do not match');
       return;
     }
 
     if (_newPasswordController.text.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password must be at least 6 characters')),
-      );
+      SnackbarUtils.showInfo(context, 'Password must be at least 6 characters');
       return;
     }
 
@@ -204,15 +189,11 @@ class _ProfileScreenState extends State<ProfileScreen>
         _currentPasswordController.clear();
         _newPasswordController.clear();
         _confirmPasswordController.clear();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Password changed successfully')),
-        );
+        SnackbarUtils.showSuccess(context, 'Password changed successfully');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$e')),
-        );
+        SnackbarUtils.showError(context, e);
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -350,16 +331,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           ),
         ],
         body: _loading
-            ? Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Lottie.asset('assets/images/lottie/Bat ball.json', width: 120, height: 120),
-                    const SizedBox(height: 12),
-                    Text('Saving...', style: GoogleFonts.poppins(fontSize: 14, color: AppTheme.ts(context))),
-                  ],
-                ),
-              )
+            ? const LoadingState(label: 'Saving...')
             : TabBarView(
                 controller: _tabController,
                 children: [

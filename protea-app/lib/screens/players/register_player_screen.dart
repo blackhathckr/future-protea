@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../shared/utils/snackbar_utils.dart';
 import '../../widgets/protea_header.dart';
 import '../../widgets/theme_toggle.dart';
 import '../../widgets/protea_buttons.dart';
@@ -74,9 +75,7 @@ class _RegisterPlayerScreenState extends State<RegisterPlayerScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not pick image: $e'), backgroundColor: AppTheme.wicketRed),
-        );
+        SnackbarUtils.showError(context, 'Could not pick image: $e');
       }
     }
   }
@@ -202,12 +201,7 @@ class _RegisterPlayerScreenState extends State<RegisterPlayerScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceFirst('Exception: ', '')),
-            backgroundColor: AppTheme.wicketRed,
-          ),
-        );
+        SnackbarUtils.showError(context, e);
       }
     } finally {
       if (mounted) setState(() => _loading = false);

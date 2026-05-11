@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../models/team.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../shared/utils/snackbar_utils.dart';
 import '../../widgets/protea_header.dart';
 import '../../widgets/theme_toggle.dart';
 import '../../widgets/protea_buttons.dart';
@@ -72,9 +73,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
           await ApiService.uploadTournamentLogo(tournament.id, _logoFile!.path);
         } catch (e) {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Tournament saved but logo upload failed: $e'), backgroundColor: AppTheme.accentAmber),
-            );
+            SnackbarUtils.showInfo(context, 'Tournament saved but logo upload failed: $e');
           }
         }
       }
@@ -87,10 +86,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString().replaceFirst('Exception: ', '')),
-              backgroundColor: AppTheme.wicketRed),
-        );
+        SnackbarUtils.showError(context, e);
       }
     } finally {
       if (mounted) setState(() => _loading = false);

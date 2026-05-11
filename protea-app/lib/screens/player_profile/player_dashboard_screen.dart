@@ -8,7 +8,7 @@ import '../../models/player.dart';
 import '../../models/tournament.dart';
 import '../../models/user.dart';
 import '../../services/api_service.dart';
-import '../../services/auth_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
 import '../profile/profile_screen.dart';
 import '../viewer/match_detail_screen.dart';

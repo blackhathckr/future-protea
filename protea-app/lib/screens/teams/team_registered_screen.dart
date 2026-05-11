@@ -5,7 +5,8 @@ import 'package:provider/provider.dart';
 import '../../models/team.dart';
 import '../../models/player.dart';
 import '../../services/api_service.dart';
-import '../../services/auth_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../shared/utils/snackbar_utils.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/protea_header.dart';
 import '../../widgets/theme_toggle.dart';
@@ -61,17 +62,9 @@ class _TeamRegisteredScreenState extends State<TeamRegisteredScreen> {
         setState(() => _loading = true);
         await ApiService.uploadTeamLogo(widget.teamId, pickedFile.path);
         await _loadTeam();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Logo uploaded successfully'), backgroundColor: AppTheme.primaryGreen),
-          );
-        }
+        SnackbarUtils.showSuccess(context, 'Logo uploaded successfully');
       } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(e.toString().replaceFirst('Exception: ', '')), backgroundColor: AppTheme.wicketRed),
-          );
-        }
+        SnackbarUtils.showError(context, e);
       } finally {
         setState(() => _loading = false);
       }
@@ -104,15 +97,11 @@ class _TeamRegisteredScreenState extends State<TeamRegisteredScreen> {
       await ApiService.deleteTeamLogo(widget.teamId);
       await _loadTeam();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Logo deleted successfully'), backgroundColor: AppTheme.primaryGreen),
-        );
+        SnackbarUtils.showSuccess(context, 'Logo deleted successfully');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString().replaceFirst('Exception: ', '')), backgroundColor: AppTheme.wicketRed),
-        );
+        SnackbarUtils.showError(context, e);
       }
     } finally {
       setState(() => _loading = false);
@@ -132,15 +121,11 @@ class _TeamRegisteredScreenState extends State<TeamRegisteredScreen> {
       await _loadTeam();
       setState(() => _isEditing = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Team updated successfully'), backgroundColor: AppTheme.primaryGreen),
-        );
+        SnackbarUtils.showSuccess(context, 'Team updated successfully');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString().replaceFirst('Exception: ', '')), backgroundColor: AppTheme.wicketRed),
-        );
+        SnackbarUtils.showError(context, e);
       }
     } finally {
       setState(() => _loading = false);
@@ -694,15 +679,11 @@ class _TeamRegisteredScreenState extends State<TeamRegisteredScreen> {
       );
       await _loadTeam();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Player role updated successfully')),
-        );
+        SnackbarUtils.showSuccess(context, 'Player role updated successfully');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update role: $e')),
-        );
+        SnackbarUtils.showError(context, e);
       }
     } finally {
       if (mounted) setState(() => _loading = false);

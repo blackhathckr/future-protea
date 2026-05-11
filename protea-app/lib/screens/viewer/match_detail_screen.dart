@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:lottie/lottie.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -13,6 +12,9 @@ import '../../models/match.dart';
 import '../../models/ball.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../shared/widgets/loading_state.dart';
+import '../../shared/utils/snackbar_utils.dart';
+import '../../shared/widgets/empty_state.dart';
 import '../../widgets/protea_header.dart';
 import '../../widgets/theme_toggle.dart';
 
@@ -109,12 +111,10 @@ class _MatchDetailScreenState extends State<MatchDetailScreen>
         top: false,
         child: _loading
             ? Center(
-                child: Column(
+                child: const Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Lottie.asset('assets/images/lottie/Bat ball.json', width: 120, height: 120, repeat: true),
-                    const SizedBox(height: 12),
-                    Text('Loading match...', style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.ts(context))),
+                    LoadingState(label: 'Loading match...'),
                   ],
                 ),
               )
@@ -221,9 +221,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen>
           onPressed: () {
             final link = '${ApiService.baseUrl.replaceAll('/api', '')}/public/matches/${widget.matchId}';
             Clipboard.setData(ClipboardData(text: link));
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Match link copied!'), backgroundColor: AppTheme.primaryGreen),
-            );
+            SnackbarUtils.showSuccess(context, 'Match link copied!');
           },
           backgroundColor: AppTheme.primaryGreen,
           foregroundColor: Colors.white,
@@ -706,11 +704,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen>
 
     return ListView(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6), children: [
       if (!hasBattingData)
-        Center(child: Padding(padding: const EdgeInsets.all(40), child: Column(children: [
-          Lottie.asset('assets/images/lottie/Bat ball.json', width: 100, height: 100, repeat: true),
-          const SizedBox(height: 12),
-          Text('$teamName has not batted yet', style: GoogleFonts.poppins(color: AppTheme.ts(context), fontSize: 14)),
-        ]))),
+        EmptyState(message: '$teamName has not batted yet', size: 100),
       if (hasBattingData) ...[
         _sectionHeader('BATTING', trailing: '$teamScore-$teamWickets (${teamOvers.toStringAsFixed(1)})'),
         _battingTable(batters, activeBatsmenIds),
@@ -2278,11 +2272,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen>
   // SHARED HELPERS
   // ═══════════════════════════════════════════════════════════════════════════
 
-  Widget _emptyTab(String msg) => Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-    Lottie.asset('assets/images/lottie/Bat ball.json', width: 120, height: 120, repeat: true),
-    const SizedBox(height: 16),
-    Text(msg, style: GoogleFonts.poppins(color: AppTheme.ts(context), fontSize: 14)),
-  ]));
+  Widget _emptyTab(String msg) => EmptyState(message: msg);
 
   Widget _roleBadge(String text, Color color) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),

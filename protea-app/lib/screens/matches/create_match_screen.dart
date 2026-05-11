@@ -5,6 +5,7 @@ import '../../models/team.dart';
 import '../../models/tournament.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../shared/utils/snackbar_utils.dart';
 import '../../widgets/protea_header.dart';
 import '../../widgets/theme_toggle.dart';
 import '../../widgets/protea_buttons.dart';
@@ -56,9 +57,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
 
   Future<void> _create() async {
     if (_teamA == null || _teamB == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Select both teams'), backgroundColor: AppTheme.wicketRed),
-      );
+      SnackbarUtils.showError(context, 'Select both teams');
       return;
     }
     setState(() => _loading = true);
@@ -102,10 +101,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString().replaceFirst('Exception: ', '')),
-              backgroundColor: AppTheme.wicketRed),
-        );
+        SnackbarUtils.showError(context, e);
       }
     } finally {
       if (mounted) setState(() => _loading = false);

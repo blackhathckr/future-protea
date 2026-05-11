@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import '../../services/auth_provider.dart';
-import '../../services/theme_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../shared/utils/snackbar_utils.dart';
+import '../../providers/theme_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/protea_header.dart';
 import 'register_screen.dart';
@@ -32,12 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
           );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceFirst('Exception: ', '')),
-            backgroundColor: AppTheme.wicketRed,
-          ),
-        );
+        SnackbarUtils.showError(context, e);
       }
     } finally {
       if (mounted) setState(() => _loading = false);

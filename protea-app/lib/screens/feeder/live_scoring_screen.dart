@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../models/match.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../shared/utils/snackbar_utils.dart';
+import '../../shared/widgets/section_label.dart';
 import '../viewer/match_detail_screen.dart';
 
 class LiveScoringScreen extends StatefulWidget {
@@ -254,9 +256,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
     int overthrows = 0,
   }) async {
     if (_striker == null || _bowler == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Select striker & bowler first'), backgroundColor: AppTheme.wicketRed),
-      );
+      SnackbarUtils.showError(context, 'Select striker & bowler first');
       return;
     }
 
@@ -268,12 +268,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
       final nextOver = willCompleteOver ? _currentOver + 1 : _currentOver;
 
       if (nextOver >= _match!.totalOvers) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Innings complete! Cannot score beyond ${_match!.totalOvers} overs.'),
-            backgroundColor: AppTheme.wicketRed,
-          ),
-        );
+        SnackbarUtils.showError(context, 'Innings complete! Cannot score beyond ${_match!.totalOvers} overs.');
         return;
       }
     }
@@ -359,13 +354,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
           if (_isInningsComplete()) {
             print('DEBUG: Innings complete! Wickets: ${_outBatsmen.length}');
             if (_currentInnings == 2) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Innings Complete! All batsmen are out.'),
-                  backgroundColor: AppTheme.primaryGreen,
-                  duration: Duration(seconds: 3),
-                ),
-              );
+              SnackbarUtils.showSuccess(context, 'Innings Complete! All batsmen are out.');
             }
           }
         }
@@ -419,9 +408,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.wicketRed),
-        );
+        SnackbarUtils.showError(context, e);
       }
     }
   }
@@ -486,11 +473,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
         });
         _selectNewBatsman();
       } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.wicketRed),
-          );
-        }
+        if (mounted) SnackbarUtils.showError(context, e);
       }
     }
   }
@@ -506,20 +489,14 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
         });
         _selectNewBatsman();
       } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.wicketRed),
-          );
-        }
+        if (mounted) SnackbarUtils.showError(context, e);
       }
     }
   }
 
   Future<void> _undoLastBall() async {
     if (_overBalls.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No balls to undo')),
-      );
+      SnackbarUtils.showInfo(context, 'No balls to undo');
       return;
     }
 
@@ -529,13 +506,9 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
       // Reload match data and balls
       await _loadData();
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Last ball undone'), duration: Duration(seconds: 1)),
-      );
+      SnackbarUtils.showSuccess(context, 'Last ball undone');
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to undo: $e')),
-      );
+      SnackbarUtils.showError(context, 'Failed to undo: $e');
     }
   }
 
@@ -982,7 +955,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _sectionLabel('BATSMEN', Icons.sports_cricket),
+                        const SectionLabel('BATSMEN', icon: Icons.sports_cricket),
                         const SizedBox(height: 3),
                         ..._getFixedOrderBatsmen().map((entry) =>
                           Padding(
@@ -1004,7 +977,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _sectionLabel('BOWLER', Icons.sports_baseball),
+                          const SectionLabel('BOWLER', icon: Icons.sports_baseball),
                           const SizedBox(height: 3),
                           if (_bowler != null) ...[
                             Row(
@@ -1286,12 +1259,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
                           child: _actionBtn('END OVER', const Color(0xFF37474F), Colors.white, () {
                             // Check if innings is complete
                             if (_match != null && _currentOver + 1 >= _match!.totalOvers) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Innings complete! Cannot score beyond ${_match!.totalOvers} overs.'),
-                                  backgroundColor: AppTheme.primaryGreen,
-                                ),
-                              );
+                              SnackbarUtils.showInfo(context, 'Innings complete! Cannot score beyond ${_match!.totalOvers} overs.');
                               return;
                             }
                             setState(() {
@@ -1462,13 +1430,9 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
       // Reload match data
       await _loadData();
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('1st Innings Complete! Starting 2nd Innings...'), backgroundColor: AppTheme.primaryGreen),
-      );
+      SnackbarUtils.showSuccess(context, '1st Innings Complete! Starting 2nd Innings...');
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.wicketRed),
-      );
+      SnackbarUtils.showError(context, e);
     }
   }
 
@@ -1497,22 +1461,14 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
         },
       );
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Match Complete! $winner won by ${(_match!.team1Score - _match!.team2Score).abs()} runs.'),
-          backgroundColor: AppTheme.primaryGreen,
-          duration: const Duration(seconds: 3),
-        ),
-      );
+      SnackbarUtils.showSuccess(context, 'Match Complete! $winner won by ${(_match!.team1Score - _match!.team2Score).abs()} runs.');
       
       // Navigate back to match list after delay
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) Navigator.of(context).pop();
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.wicketRed),
-      );
+      SnackbarUtils.showError(context, 'Failed to complete match: $e');
     }
   }
 
@@ -1537,18 +1493,14 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
       // Reload match data
       await _loadData();
       
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Match completed! $winner won!'), duration: const Duration(seconds: 3)),
-      );
+      SnackbarUtils.showSuccess(context, 'Match completed! $winner won!');
       
       // Navigate back after a delay
       Future.delayed(const Duration(seconds: 2), () {
         if (mounted) Navigator.pop(context);
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to complete match: $e')),
-      );
+      SnackbarUtils.showError(context, 'Failed to complete match: $e');
     }
   }
 
@@ -1747,21 +1699,6 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
     return '$completedOvers.$balls';
   }
 
-  Widget _sectionLabel(String text, IconData icon) {
-    return Row(
-      children: [
-        Icon(icon, size: 11, color: AppTheme.primaryGreen),
-        const SizedBox(width: 4),
-        Text(text,
-            style: GoogleFonts.poppins(
-              fontSize: 9,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.7,
-              color: AppTheme.primaryGreen,
-            )),
-      ],
-    );
-  }
 
   Widget _teamCrest(String name, String? logoUrl, {required bool isBatting, double radius = 28}) {
     final hasLogo = logoUrl != null && logoUrl.isNotEmpty;
@@ -2082,9 +2019,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
   // ─── Overthrow runs (added on top of last ball) ─────────────────────
   void _showOverthrowDialog() {
     if (_overBalls.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No previous ball to add overthrow to')),
-      );
+      SnackbarUtils.showInfo(context, 'No previous ball to add overthrow to');
       return;
     }
     showModalBottomSheet(
@@ -2109,9 +2044,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
                   // Better: we store it as a separate ball event with overthrows = n.
                   await _addBall(isWide: true, extrasOverride: n);
                   if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('+$n overthrow runs added'), backgroundColor: AppTheme.primaryGreen),
-                    );
+                    SnackbarUtils.showSuccess(context, '+$n overthrow runs added');
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -2262,15 +2195,11 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
                 );
                 await _reloadMatchStats();
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('5 penalty runs awarded to batting team'), backgroundColor: AppTheme.primaryGreen),
-                  );
+                  SnackbarUtils.showSuccess(context, '5 penalty runs awarded to batting team');
                 }
               } catch (e) {
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.wicketRed),
-                  );
+                  SnackbarUtils.showError(context, e);
                 }
               }
             },
@@ -2281,9 +2210,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
               Navigator.pop(ctx);
               // For bowling team penalty, we add to the OTHER innings
               // This is complex, so we show a message for now
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('5 penalty runs awarded to bowling team (added to their total)'), backgroundColor: AppTheme.primaryGreen),
-              );
+              SnackbarUtils.showSuccess(context, '5 penalty runs awarded to bowling team (added to their total)');
             },
             child: const Text('Bowling Team (+5 runs)'),
           ),
@@ -2312,16 +2239,12 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
                   'winner': 'Abandoned',
                 });
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Match abandoned'), backgroundColor: AppTheme.wicketRed),
-                  );
+                  SnackbarUtils.showError(context, 'Match abandoned');
                   Navigator.pop(context);
                 }
               } catch (e) {
                 if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e'), backgroundColor: AppTheme.wicketRed),
-                  );
+                  SnackbarUtils.showError(context, e);
                 }
               }
             },
@@ -2335,12 +2258,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
   void _shareMatchLink() {
     final link = '${ApiService.baseUrl.replaceAll('/api', '')}/public/matches/${widget.matchId}';
     Clipboard.setData(ClipboardData(text: link));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Match link copied to clipboard!'),
-        backgroundColor: AppTheme.primaryGreen,
-      ),
-    );
+    SnackbarUtils.showSuccess(context, 'Match link copied to clipboard!');
   }
 
   void _showWicketDialog() {
@@ -2568,12 +2486,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
       setState(() => _loading = false);
       print('DEBUG: 2nd innings started successfully');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('2nd Innings started!'),
-            backgroundColor: AppTheme.primaryGreen,
-          ),
-        );
+        SnackbarUtils.showSuccess(context, '2nd Innings started!');
       }
     } catch (e) {
       print('DEBUG: ERROR starting 2nd innings: $e');
@@ -2582,12 +2495,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
         _error = e.toString();
       });
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error starting 2nd innings: $e'),
-            backgroundColor: AppTheme.wicketRed,
-          ),
-        );
+        SnackbarUtils.showError(context, 'Error starting 2nd innings: $e');
       }
     } finally {
       if (mounted) setState(() => _loading = false);

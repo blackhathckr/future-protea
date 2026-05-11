@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../models/match.dart';
 import '../../services/api_service.dart';
-import '../../services/auth_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/protea_header.dart';
 import '../../widgets/theme_toggle.dart';

@@ -4,9 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../models/match.dart';
 import '../../services/api_service.dart';
-import '../../services/auth_provider.dart';
-import '../../services/theme_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/theme_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../shared/utils/snackbar_utils.dart';
 import '../../widgets/protea_header.dart';
 import '../viewer/match_detail_screen.dart';
 import '../viewer/upcoming_match_detail_screen.dart';
@@ -14,7 +15,7 @@ import '../players/players_home_screen.dart';
 import '../teams/teams_home_screen.dart';
 import '../tournaments/tournament_home_screen.dart';
 import '../profile/profile_screen.dart';
-import 'create_match_screen.dart';
+import 'feeder_create_match_screen.dart';
 import 'live_scoring_screen.dart';
 import '../matches/toss_screen.dart';
 import 'player_journey_screen.dart';
@@ -65,7 +66,7 @@ class _FeederHomeState extends State<FeederHome> {
             onNewMatch: () async {
               final result = await Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const CreateMatchScreen()),
+                MaterialPageRoute(builder: (_) => const FeederCreateMatchScreen()),
               );
               if (result == true) _loadMatches();
             },
@@ -144,9 +145,7 @@ class _FeederHomeState extends State<FeederHome> {
         _loadMatches();
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed: $e'), backgroundColor: AppTheme.wicketRed),
-          );
+          SnackbarUtils.showError(context, e);
         }
       }
     }

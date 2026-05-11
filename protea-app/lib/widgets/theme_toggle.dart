@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../services/theme_provider.dart';
+import '../providers/theme_provider.dart';
 
 /// Theme toggle icon button for use in header Stacks.
 /// Place inside a Positioned widget in the header Stack.

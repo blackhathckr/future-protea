@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import '../../models/player.dart';
 import '../../services/api_service.dart';
-import '../../services/auth_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../shared/widgets/loading_state.dart';
+import '../../shared/widgets/empty_state.dart';
+import '../../shared/widgets/count_badge.dart';
 import '../../widgets/protea_header.dart';
 import '../../widgets/theme_toggle.dart';
 import 'register_player_screen.dart';
@@ -106,7 +108,7 @@ class _PlayersHomeScreenState extends State<PlayersHomeScreen> {
                         letterSpacing: -0.3,
                       )),
                   const SizedBox(width: 8),
-                  if (!_loading) _CountBadge(count: _allPlayers.length),
+                  if (!_loading) CountBadge(count: _allPlayers.length),
                 ],
               ),
             ),
@@ -168,9 +170,9 @@ class _PlayersHomeScreenState extends State<PlayersHomeScreen> {
             // ── List ─────────────────────────────────────────────────────
             Expanded(
               child: _loading
-                  ? _LoadingState(label: 'Loading players…')
+                  ? LoadingState(label: 'Loading players…')
                   : filtered.isEmpty
-                      ? _EmptyState(
+                      ? EmptyState(
                           message: _searchCtrl.text.isNotEmpty
                               ? 'No players match "${_searchCtrl.text}"'
                               : 'No players registered yet',
@@ -234,85 +236,6 @@ class _PlayersHomeScreenState extends State<PlayersHomeScreen> {
     _searchCtrl.dispose();
     _searchFocus.dispose();
     super.dispose();
-  }
-}
-
-class _CountBadge extends StatelessWidget {
-  final int count;
-  const _CountBadge({required this.count});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.primaryGreen.withValues(alpha: 0.18),
-            AppTheme.lightGreen.withValues(alpha: 0.10),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.35), width: 0.8),
-      ),
-      child: Text(
-        '$count',
-        style: GoogleFonts.poppins(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          color: AppTheme.primaryGreen,
-        ),
-      ),
-    );
-  }
-}
-
-class _LoadingState extends StatelessWidget {
-  final String label;
-  const _LoadingState({required this.label});
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Lottie.asset('assets/images/lottie/Bat ball.json',
-              width: 120, height: 120, repeat: true),
-          const SizedBox(height: 8),
-          Text(label,
-              style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.ts(context))),
-        ],
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  final String message;
-  const _EmptyState({required this.message});
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Lottie.asset('assets/images/lottie/Bat ball.json',
-              width: 150, height: 150, repeat: true),
-          const SizedBox(height: 12),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Text(
-              message,
-              style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.ts(context)),
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 

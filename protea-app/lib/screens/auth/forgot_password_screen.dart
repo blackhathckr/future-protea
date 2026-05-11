@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../shared/utils/snackbar_utils.dart';
 import '../../widgets/protea_header.dart';
 import '../../widgets/protea_buttons.dart';
 
@@ -36,21 +37,11 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       await ApiService.forgotPassword(_emailCtrl.text.trim());
       if (mounted) {
         setState(() => _step = 1);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('OTP sent to your email'),
-            backgroundColor: AppTheme.completedGreen,
-          ),
-        );
+        SnackbarUtils.showSuccess(context, 'OTP sent to your email');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceFirst('Exception: ', '')),
-            backgroundColor: AppTheme.wicketRed,
-          ),
-        );
+        SnackbarUtils.showError(context, e);
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -61,12 +52,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     if (!_otpFormKey.currentState!.validate()) return;
     // Client-side check for the hardcoded OTP
     if (_otpCtrl.text.trim() != '123456') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Invalid OTP. Please try again.'),
-          backgroundColor: AppTheme.wicketRed,
-        ),
-      );
+      SnackbarUtils.showError(context, 'Invalid OTP. Please try again.');
       return;
     }
     setState(() => _step = 2);
@@ -75,12 +61,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   Future<void> _resetPassword() async {
     if (!_passwordFormKey.currentState!.validate()) return;
     if (_newPasswordCtrl.text != _confirmPasswordCtrl.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Passwords do not match'),
-          backgroundColor: AppTheme.wicketRed,
-        ),
-      );
+      SnackbarUtils.showError(context, 'Passwords do not match');
       return;
     }
     setState(() => _loading = true);
@@ -93,12 +74,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       if (mounted) setState(() => _step = 3);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceFirst('Exception: ', '')),
-            backgroundColor: AppTheme.wicketRed,
-          ),
-        );
+        SnackbarUtils.showError(context, e);
       }
     } finally {
       if (mounted) setState(() => _loading = false);

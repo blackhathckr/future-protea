@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import '../../models/match.dart';
 import '../../services/api_service.dart';
-import '../../services/auth_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../shared/widgets/loading_state.dart';
+import '../../shared/widgets/empty_state.dart';
 import '../../widgets/protea_header.dart';
 import '../../widgets/theme_toggle.dart';
 import 'match_detail_screen.dart';
@@ -272,30 +273,16 @@ class _ViewerHomeScreenState extends State<ViewerHomeScreen> {
             // ── Content ─────────────────────────────────────────────
                 Expanded(
                 child: _loading
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Lottie.asset(
-                                'assets/images/lottie/Bat ball.json',
-                                width: 120,
-                                height: 120,
-                                repeat: true),
-                            const SizedBox(height: 12),
-                            Text('Loading matches...',
-                                style: GoogleFonts.poppins(
-                                    fontSize: 13,
-                                    color: AppTheme.ts(context))),
-                          ],
-                        ),
-                      )
+                    ? const LoadingState(label: 'Loading matches...')
                     : TabBarView(
                         children: [
                           // Live
                           _liveMatches.isEmpty
-                              ? _buildEmptyState(
-                                  'No live matches right now',
-                                  'Pull down to refresh or check upcoming matches')
+                              ? EmptyState(
+                                  message: 'No live matches right now',
+                                  subtitle: 'Pull down to refresh or check upcoming matches',
+                                  onRefresh: _loadMatches,
+                                )
                               : RefreshIndicator(
                                   onRefresh: _loadMatches,
                                   child: ListView.builder(
@@ -326,8 +313,11 @@ class _ViewerHomeScreenState extends State<ViewerHomeScreen> {
                                 ),
                           // Upcoming
                           _upcomingMatches.isEmpty
-                              ? _buildEmptyState('No upcoming matches',
-                                  'New matches will appear here')
+                              ? EmptyState(
+                                  message: 'No upcoming matches',
+                                  subtitle: 'New matches will appear here',
+                                  onRefresh: _loadMatches,
+                                )
                               : RefreshIndicator(
                                   onRefresh: _loadMatches,
                                   child: ListView.builder(
@@ -358,8 +348,11 @@ class _ViewerHomeScreenState extends State<ViewerHomeScreen> {
                                 ),
                           // Results
                           _completedMatches.isEmpty
-                              ? _buildEmptyState('No results yet',
-                                  'Completed matches will appear here')
+                              ? EmptyState(
+                                  message: 'No results yet',
+                                  subtitle: 'Completed matches will appear here',
+                                  onRefresh: _loadMatches,
+                                )
                               : RefreshIndicator(
                                   onRefresh: _loadMatches,
                                   child: ListView.builder(
@@ -434,51 +427,6 @@ class _ViewerHomeScreenState extends State<ViewerHomeScreen> {
             ),
           ],
         ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState(String title, String subtitle) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Lottie.asset('assets/images/lottie/Bat ball.json',
-                width: 140, height: 140, repeat: true),
-            const SizedBox(height: 20),
-            Text(title,
-                    style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: AppTheme.tp(context)),
-                    textAlign: TextAlign.center)
-                .animate()
-                .fadeIn(delay: 300.ms),
-            const SizedBox(height: 8),
-            Text(subtitle,
-                    style: GoogleFonts.poppins(
-                        fontSize: 13, color: AppTheme.ts(context)),
-                    textAlign: TextAlign.center)
-                .animate()
-                .fadeIn(delay: 500.ms),
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: _loadMatches,
-              icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: const Text('Refresh'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.primaryGreen,
-                foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24)),
-              ),
-            ).animate().fadeIn(delay: 700.ms).slideY(begin: 0.15),
-          ],
-        ),
       ),
     );
   }

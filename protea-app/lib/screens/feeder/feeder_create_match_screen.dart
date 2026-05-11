@@ -5,15 +5,17 @@ import '../../models/team.dart';
 import '../../models/tournament.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../shared/widgets/section_label.dart';
+import '../../shared/utils/snackbar_utils.dart';
 
-class CreateMatchScreen extends StatefulWidget {
-  const CreateMatchScreen({super.key});
+class FeederCreateMatchScreen extends StatefulWidget {
+  const FeederCreateMatchScreen({super.key});
 
   @override
-  State<CreateMatchScreen> createState() => _CreateMatchScreenState();
+  State<FeederCreateMatchScreen> createState() => _FeederCreateMatchScreenState();
 }
 
-class _CreateMatchScreenState extends State<CreateMatchScreen> {
+class _FeederCreateMatchScreenState extends State<FeederCreateMatchScreen> {
   final _formKey = GlobalKey<FormState>();
   final _venueCtrl = TextEditingController();
   final _umpireCtrl = TextEditingController();
@@ -71,9 +73,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
 
   Future<void> _create() async {
     if (_teamA == null || _teamB == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select both teams'), backgroundColor: AppTheme.wicketRed),
-      );
+      SnackbarUtils.showError(context, 'Please select both teams');
       return;
     }
     if (!_formKey.currentState!.validate()) return;
@@ -96,9 +96,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: AppTheme.wicketRed),
-        );
+        SnackbarUtils.showError(context, e);
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -119,7 +117,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ── Teams ─────────────────────────────────────────
-              _sectionLabel('Teams'),
+              const SectionLabel('Teams'),
               const SizedBox(height: 12),
               if (_loadingTeams)
                 const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen))
@@ -170,7 +168,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
               const SizedBox(height: 24),
 
               // ── Match Type ────────────────────────────────────
-              _sectionLabel('Match Type'),
+              const SectionLabel('Match Type'),
               const SizedBox(height: 10),
               Wrap(
                 spacing: 8,
@@ -195,7 +193,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
               const SizedBox(height: 16),
 
               // ── Overs ─────────────────────────────────────────
-              _sectionLabel('Overs'),
+              const SectionLabel('Overs'),
               const SizedBox(height: 8),
               if (isCustomOvers)
                 Row(
@@ -244,7 +242,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
               const SizedBox(height: 24),
 
               // ── Match Details ─────────────────────────────────
-              _sectionLabel('Match Details'),
+              const SectionLabel('Match Details'),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _venueCtrl,
@@ -264,7 +262,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
               const SizedBox(height: 24),
 
               // ── Tournament Linkage ────────────────────────────
-              _sectionLabel('Tournament (optional)'),
+              const SectionLabel('Tournament (optional)'),
               const SizedBox(height: 10),
               _tournaments.isEmpty
                       ? Padding(
@@ -295,7 +293,7 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
               const SizedBox(height: 24),
 
               // ── Schedule ──────────────────────────────────────
-              _sectionLabel('Schedule'),
+              const SectionLabel('Schedule'),
               const SizedBox(height: 12),
               Row(
                 children: [
@@ -370,12 +368,6 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
         ),
       ),
     );
-  }
-
-  Widget _sectionLabel(String text) {
-    return Text(text,
-        style: GoogleFonts.poppins(
-            fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.accentAmber));
   }
 
   @override

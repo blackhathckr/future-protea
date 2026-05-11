@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:lottie/lottie.dart';
 import 'package:provider/provider.dart';
 import '../../models/tournament.dart';
 import '../../services/api_service.dart';
-import '../../services/auth_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../shared/widgets/loading_state.dart';
+import '../../shared/widgets/empty_state.dart';
 import '../../widgets/protea_header.dart';
 import '../../widgets/theme_toggle.dart';
 import 'create_tournament_screen.dart';
@@ -99,26 +100,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen> {
             // ── Tournament lists ──────────────────────────────────────────
             Expanded(
               child: _loading
-                  ? Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Lottie.asset(
-                            'assets/images/lottie/Bat ball.json',
-                            width: 120,
-                            height: 120,
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Loading tournaments...',
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              color: AppTheme.ts(context),
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
+                  ? const LoadingState(label: 'Loading tournaments...')
                   : RefreshIndicator(
                       color: AppTheme.accentGold,
                       onRefresh: _loadTournaments,
@@ -179,34 +161,10 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen> {
                           if (_tournaments.isEmpty)
                             Padding(
                               padding: const EdgeInsets.all(40),
-                              child: Center(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Lottie.asset(
-                                      'assets/images/lottie/Bat ball.json',
-                                      width: 150,
-                                      height: 150,
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      'No tournaments yet',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppTheme.tp(context),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Check back for upcoming events',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 13,
-                                        color: AppTheme.ts(context),
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                              child: EmptyState(
+                                message: 'No tournaments yet',
+                                subtitle: 'Create a tournament to get started',
+                                onRefresh: _loadTournaments,
                               ),
                             ),
                         ],

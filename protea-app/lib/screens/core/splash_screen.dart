@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import '../theme/app_theme.dart';
+import '../../theme/app_theme.dart';
 
 class SplashScreen extends StatefulWidget {
   final VoidCallback onComplete;

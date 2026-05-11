@@ -3,7 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../models/match.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
-import '../player/my_journey_screen.dart';
+import '../player_profile/my_journey_screen.dart';
 
 class PlayerJourneyScreen extends StatefulWidget {
   final String? playerId;

@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../models/match.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../shared/utils/snackbar_utils.dart';
 import '../../widgets/protea_header.dart';
 import '../../widgets/theme_toggle.dart';
 import '../../widgets/protea_buttons.dart';
@@ -26,12 +27,7 @@ class _TossScreenState extends State<TossScreen> {
 
   Future<void> _startMatch() async {
     if (_tossWinner == null || _tossDecision == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Select toss winner and decision'),
-          backgroundColor: AppTheme.wicketRed,
-        ),
-      );
+      SnackbarUtils.showError(context, 'Select toss winner and decision');
       return;
     }
     setState(() => _loading = true);
@@ -57,9 +53,7 @@ class _TossScreenState extends State<TossScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString()), backgroundColor: AppTheme.wicketRed),
-        );
+        SnackbarUtils.showError(context, e);
       }
     } finally {
       if (mounted) setState(() => _loading = false);

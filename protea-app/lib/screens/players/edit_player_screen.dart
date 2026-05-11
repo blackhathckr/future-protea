@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../models/player.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../shared/utils/snackbar_utils.dart';
 import '../../widgets/protea_header.dart';
 import '../../widgets/theme_toggle.dart';
 import '../../widgets/protea_buttons.dart';
@@ -53,9 +54,7 @@ class _EditPlayerScreenState extends State<EditPlayerScreen> {
       if (image != null) setState(() => _pickedImage = image);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not pick image: $e'), backgroundColor: AppTheme.wicketRed),
-        );
+        SnackbarUtils.showError(context, 'Could not pick image: $e');
       }
     }
   }
@@ -152,22 +151,12 @@ class _EditPlayerScreenState extends State<EditPlayerScreen> {
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Player updated successfully'),
-            backgroundColor: AppTheme.completedGreen,
-          ),
-        );
+        SnackbarUtils.showSuccess(context, 'Player updated successfully');
         Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceFirst('Exception: ', '')),
-            backgroundColor: AppTheme.wicketRed,
-          ),
-        );
+        SnackbarUtils.showError(context, e);
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -199,22 +188,12 @@ class _EditPlayerScreenState extends State<EditPlayerScreen> {
     try {
       await ApiService.deletePlayerPhoto(widget.player.id);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Photo deleted successfully'),
-            backgroundColor: AppTheme.completedGreen,
-          ),
-        );
+        SnackbarUtils.showSuccess(context, 'Photo deleted successfully');
         Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceFirst('Exception: ', '')),
-            backgroundColor: AppTheme.wicketRed,
-          ),
-        );
+        SnackbarUtils.showError(context, e);
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -246,22 +225,12 @@ class _EditPlayerScreenState extends State<EditPlayerScreen> {
     try {
       await ApiService.deletePlayer(widget.player.id);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Player deleted successfully'),
-            backgroundColor: AppTheme.completedGreen,
-          ),
-        );
+        SnackbarUtils.showSuccess(context, 'Player deleted successfully');
         Navigator.popUntil(context, (route) => route.isFirst);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceFirst('Exception: ', '')),
-            backgroundColor: AppTheme.wicketRed,
-          ),
-        );
+        SnackbarUtils.showError(context, e);
       }
     } finally {
       if (mounted) setState(() => _loading = false);

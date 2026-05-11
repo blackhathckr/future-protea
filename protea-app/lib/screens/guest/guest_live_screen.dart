@@ -3,8 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../models/match.dart';
 import '../../services/api_service.dart';
-import '../../services/auth_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../shared/widgets/empty_state.dart';
 import '../../widgets/protea_header.dart';
 import '../../widgets/theme_toggle.dart';
 import 'guest_match_detail_screen.dart';
@@ -139,7 +140,11 @@ class _GuestLiveScreenState extends State<GuestLiveScreen> {
               child: _loading
                   ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen))
                   : _liveMatches.isEmpty
-                      ? _buildEmptyState()
+                      ? EmptyState(
+                          message: 'No live matches at the moment',
+                          subtitle: 'Check back later or sign in to see upcoming and completed matches',
+                          onRefresh: _loadLiveMatches,
+                        )
                       : RefreshIndicator(
                           onRefresh: _loadLiveMatches,
                           child: ListView.builder(
@@ -196,29 +201,6 @@ class _GuestLiveScreenState extends State<GuestLiveScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.live_tv, size: 72, color: AppTheme.ts(context).withValues(alpha: 0.3)),
-          const SizedBox(height: 16),
-          Text('No live matches at the moment',
-              style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.ts(context))),
-          const SizedBox(height: 8),
-          Text('Check back later or sign in to see\nupcoming and completed matches',
-              style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.ts(context)),
-              textAlign: TextAlign.center),
-          const SizedBox(height: 24),
-          OutlinedButton.icon(
-            onPressed: _loadLiveMatches,
-            icon: const Icon(Icons.refresh),
-            label: const Text('Refresh'),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _LiveMatchCard extends StatelessWidget {

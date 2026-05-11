@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../../models/player.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../shared/utils/snackbar_utils.dart';
 import '../../widgets/protea_header.dart';
 import '../../widgets/theme_toggle.dart';
 
@@ -52,24 +53,14 @@ class _SearchAddPlayerScreenState extends State<SearchAddPlayerScreen> {
     try {
       await ApiService.addPlayerToTeam(widget.teamId, player.id);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${player.name} added to team'),
-            backgroundColor: AppTheme.completedGreen,
-          ),
-        );
+        SnackbarUtils.showSuccess(context, '${player.name} added to team');
         setState(() {
           _players.remove(player);
         });
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceFirst('Exception: ', '')),
-            backgroundColor: AppTheme.wicketRed,
-          ),
-        );
+        SnackbarUtils.showError(context, e);
       }
     }
   }

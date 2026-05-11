@@ -9,10 +9,8 @@ import '../models/team.dart';
 import '../models/tournament.dart';
 
 class ApiService {
-  // Direct LAN connection: phone must be on the same Wi-Fi as the dev PC running the backend.
-  // 192.168.0.145 is this PC's Wi-Fi IPv4. If your PC's IP changes, update it here
-  // (run `ipconfig` and look for "Wireless LAN adapter Wi-Fi" -> IPv4 Address).
-  static const String baseUrl = 'http://172.31.195.81:5000/api';
+  
+  static const String baseUrl = 'https://eustolia-jural-unaspiringly.ngrok-free.dev/api';
 
   static Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();

@@ -3,7 +3,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:provider/provider.dart';
 import '../../models/match.dart';
 import '../../services/api_service.dart';
-import '../../services/auth_provider.dart' show AuthProvider;
 import '../../theme/app_theme.dart';
 import '../../widgets/match_card.dart';
 import 'match_detail_screen.dart';

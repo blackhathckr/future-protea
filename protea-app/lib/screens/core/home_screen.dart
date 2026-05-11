@@ -1,20 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import '../services/api_service.dart';
-import '../services/auth_provider.dart';
-import '../services/theme_provider.dart';
-import '../theme/app_theme.dart';
-import '../widgets/protea_header.dart';
-import 'players/players_home_screen.dart';
-import 'teams/teams_home_screen.dart';
-import 'matches/match_home_screen.dart';
-import 'tournaments/tournament_home_screen.dart';
-import 'profile/profile_screen.dart';
-import 'auth/login_screen.dart';
-import 'viewer/viewer_home_screen.dart';
-import 'player/player_home.dart';
-import 'feeder/feeder_home.dart';
+import '../../services/api_service.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/theme_provider.dart';
+import '../../theme/app_theme.dart';
+import '../../widgets/protea_header.dart';
+import '../players/players_home_screen.dart';
+import '../teams/teams_home_screen.dart';
+import '../matches/match_home_screen.dart';
+import '../tournaments/tournament_home_screen.dart';
+import '../profile/profile_screen.dart';
+import '../auth/login_screen.dart';
+import '../viewer/viewer_home_screen.dart';
+import '../player_profile/player_home.dart';
+import '../feeder/feeder_home.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});

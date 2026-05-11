@@ -6,8 +6,9 @@ import 'package:provider/provider.dart';
 import '../../models/match.dart';
 import '../../models/tournament.dart';
 import '../../services/api_service.dart';
-import '../../services/auth_provider.dart';
-import '../../services/theme_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../shared/utils/snackbar_utils.dart';
+import '../../providers/theme_provider.dart';
 import '../../theme/app_theme.dart';
 import '../viewer/match_detail_screen.dart';
 import '../tournaments/tournament_detail_screen.dart';
@@ -450,17 +451,11 @@ class _PlayerHomeState extends State<PlayerHome> {
     try {
       await ApiService.joinMatch(match.id, team: team);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Join request sent for ${team == 1 ? match.team1Name : match.team2Name}!'),
-          backgroundColor: AppTheme.lightGreen,
-        ));
+        SnackbarUtils.showSuccess(context, 'Join request sent for ${team == 1 ? match.team1Name : match.team2Name}!');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(e.toString().replaceFirst('Exception: ', '')),
-          backgroundColor: AppTheme.wicketRed,
-        ));
+        SnackbarUtils.showError(context, e);
       }
     }
   }
