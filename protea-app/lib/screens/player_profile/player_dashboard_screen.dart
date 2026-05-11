@@ -15,7 +15,8 @@ import '../viewer/match_detail_screen.dart';
 import '../tournaments/tournament_detail_screen.dart';
 
 class PlayerDashboardScreen extends StatefulWidget {
-  const PlayerDashboardScreen({super.key});
+  final int reloadTrigger;
+  const PlayerDashboardScreen({super.key, this.reloadTrigger = 0});
 
   @override
   State<PlayerDashboardScreen> createState() => _PlayerDashboardScreenState();
@@ -30,6 +31,12 @@ class _PlayerDashboardScreenState extends State<PlayerDashboardScreen> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void didUpdateWidget(PlayerDashboardScreen old) {
+    super.didUpdateWidget(old);
+    if (old.reloadTrigger != widget.reloadTrigger) _load();
   }
 
   Future<void> _load() async {
@@ -109,7 +116,9 @@ class _PlayerDashboardScreenState extends State<PlayerDashboardScreen> {
   // ==================== HERO CARD ====================
   Widget _buildHeroCard(BuildContext context, User? user, CareerStats? stats, Player? regPlayer) {
     final name = user?.name ?? 'Player';
-    final photo = user?.photoUrl;
+    final photo = (user?.photoUrl != null && user!.photoUrl!.isNotEmpty)
+        ? user.photoUrl!
+        : (regPlayer?.photoUrl != null && regPlayer!.photoUrl!.isNotEmpty ? regPlayer.photoUrl : null);
     final battingStyle = regPlayer?.battingStyle ?? user?.battingStyle;
     final bowlingStyle = regPlayer?.bowlingStyle ?? user?.bowlingStyle;
     final playingRole = regPlayer?.playingRole;

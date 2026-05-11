@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
+import '../../models/player.dart';
 import '../../services/api_service.dart';
 import '../../providers/auth_provider.dart';
 import '../../shared/widgets/loading_state.dart';
@@ -36,6 +37,9 @@ class _ProfileScreenState extends State<ProfileScreen>
   bool _isChangingPassword = false;
   bool _loading = false;
 
+  Player? _registeredPlayer;
+  bool _profileLoaded = false;
+
   bool _obscureCurrentPassword = true;
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
@@ -47,6 +51,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
     _loadUserData();
+    _loadRegisteredPlayer();
   }
 
   @override
@@ -74,6 +79,23 @@ class _ProfileScreenState extends State<ProfileScreen>
       }
       _battingStyleController.text = user.battingStyle ?? '';
       _bowlingStyleController.text = user.bowlingStyle ?? '';
+    }
+  }
+
+  Future<void> _loadRegisteredPlayer() async {
+    try {
+      final data = await ApiService.getMyProfile();
+      final rpData = data['registered_player'];
+      if (rpData != null && mounted) {
+        setState(() {
+          _registeredPlayer = Player.fromJson(rpData as Map<String, dynamic>);
+          _profileLoaded = true;
+        });
+      } else if (mounted) {
+        setState(() => _profileLoaded = true);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _profileLoaded = true);
     }
   }
 
@@ -260,24 +282,30 @@ class _ProfileScreenState extends State<ProfileScreen>
                                     ),
                                   ],
                                 ),
-                                child: CircleAvatar(
-                                  radius: 44,
-                                  backgroundColor: AppTheme.primaryGreen,
-                                  backgroundImage: user.photoUrl != null &&
-                                          user.photoUrl!.isNotEmpty
-                                      ? NetworkImage(ApiService.getPhotoUrl(user.photoUrl!))
-                                      : null,
-                                  child: user.photoUrl == null || user.photoUrl!.isEmpty
-                                      ? Text(
-                                          user.name[0].toUpperCase(),
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 32,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        )
-                                      : null,
-                                ),
+                                child: Builder(builder: (_) {
+                                  final effectivePhoto = (user.photoUrl != null && user.photoUrl!.isNotEmpty)
+                                      ? user.photoUrl!
+                                      : (_registeredPlayer?.photoUrl != null && _registeredPlayer!.photoUrl!.isNotEmpty
+                                          ? _registeredPlayer!.photoUrl!
+                                          : null);
+                                  return CircleAvatar(
+                                    radius: 44,
+                                    backgroundColor: AppTheme.primaryGreen,
+                                    backgroundImage: effectivePhoto != null
+                                        ? NetworkImage(ApiService.getPhotoUrl(effectivePhoto))
+                                        : null,
+                                    child: effectivePhoto == null
+                                        ? Text(
+                                            user.name[0].toUpperCase(),
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 32,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          )
+                                        : null,
+                                  );
+                                }),
                               ),
                               Positioned(
                                 bottom: 0,
@@ -445,6 +473,20 @@ class _ProfileScreenState extends State<ProfileScreen>
                           ],
 
                         const SizedBox(height: 24),
+
+                        // Complete profile banner
+                        if (_profileLoaded && user.role == 'player') ...[
+                          if (_registeredPlayer == null)
+                            _buildCompleteProfileBanner(noRecord: true),
+                          if (_registeredPlayer != null && _isProfileIncomplete(_registeredPlayer!))
+                            _buildCompleteProfileBanner(noRecord: false),
+                        ],
+
+                        // Registered player info card (read-only)
+                        if (_registeredPlayer != null) ...[  
+                          _buildRegisteredPlayerCard(_registeredPlayer!),
+                          const SizedBox(height: 16),
+                        ],
 
                         // Edit form
                         Card(
@@ -770,6 +812,161 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
+  bool _isProfileIncomplete(Player p) {
+    final filled = [
+      p.phone, p.address, p.city, p.schoolName, p.clubName,
+      p.battingStyle, p.bowlingStyle, p.playingRole,
+      p.fatherName, p.motherName,
+    ].where((v) => v != null && v.isNotEmpty).length;
+    return filled < 3;
+  }
+
+  Widget _buildCompleteProfileBanner({required bool noRecord}) {
+    final message = noRecord
+        ? 'Your cricket profile is not set up yet. Ask your coach/feeder to register you, or complete your details below so your stats and info are fully visible.'
+        : 'Your profile is missing some details. Please fill in your address, school, batting/bowling style, family info, etc. to complete your cricket profile.';
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [AppTheme.accentAmber.withValues(alpha: 0.15), AppTheme.primaryGreen.withValues(alpha: 0.10)],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.accentAmber.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.info_outline, color: AppTheme.accentAmber, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: GoogleFonts.poppins(fontSize: 12.5, color: AppTheme.accentAmber, fontWeight: FontWeight.w500),
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 300.ms);
+  }
+
+  Widget _buildRegisteredPlayerCard(Player p) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryGreen.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.sports_cricket, color: AppTheme.primaryGreen, size: 18),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text('Cricket Profile',
+                      style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w700, color: AppTheme.tp(context))),
+                ),
+                if (p.playerId != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryGreen.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppTheme.primaryGreen.withValues(alpha: 0.35)),
+                    ),
+                    child: Text(p.playerId!,
+                        style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.primaryGreen)),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            // Cricket Details
+            _rpSection('Cricket Details', [
+              _rpRow(Icons.sports_cricket, 'Batting Style', p.battingStyle),
+              _rpRow(Icons.sports_baseball, 'Bowling Style', p.bowlingStyle),
+              _rpRow(Icons.person_pin_circle_outlined, 'Playing Role', p.playingRole),
+              _rpRow(Icons.tag, 'Jersey Number', p.jerseyNumber?.toString()),
+              _rpRow(Icons.school_outlined, 'School', p.schoolName),
+              _rpRow(Icons.group_outlined, 'Club', p.clubName),
+            ]),
+            // Contact & Address
+            _rpSection('Contact & Address', [
+              _rpRow(Icons.location_city_outlined, 'City', p.city),
+              _rpRow(Icons.map_outlined, 'State', p.state),
+              _rpRow(Icons.public_outlined, 'Country', p.country),
+              _rpRow(Icons.home_outlined, 'Address', p.address),
+              _rpRow(Icons.markunread_mailbox_outlined, 'Postal Code', p.postalCode),
+              _rpRow(Icons.phone_outlined, 'Emergency Contact', p.emergencyContact),
+              _rpRow(Icons.contact_emergency_outlined, 'Emergency Name', p.emergencyContactName),
+            ]),
+            // Physical Stats
+            _rpSection('Physical', [
+              _rpRow(Icons.height, 'Height', p.height != null ? '${p.height} cm' : null),
+              _rpRow(Icons.monitor_weight_outlined, 'Weight', p.weight != null ? '${p.weight} kg' : null),
+              _rpRow(Icons.bloodtype_outlined, 'Blood Group', p.bloodGroup),
+              _rpRow(Icons.flag_outlined, 'Nationality', p.nationality),
+            ]),
+            // Family
+            _rpSection('Family', [
+              _rpRow(Icons.person_outlined, 'Father', p.fatherName),
+              _rpRow(Icons.person_outlined, 'Mother', p.motherName),
+              _rpRow(Icons.person_outlined, 'Guardian', p.guardianName),
+            ]),
+          ],
+        ),
+      ),
+    ).animate().fadeIn(duration: 350.ms, delay: 80.ms);
+  }
+
+  Widget _rpSection(String title, List<_RpEntry> entries) {
+    final visible = entries.where((e) => e.value != null && e.value!.isNotEmpty).toList();
+    if (visible.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 4, bottom: 6),
+          child: Text(title,
+              style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700,
+                  color: AppTheme.primaryGreen, letterSpacing: 0.5)),
+        ),
+        ...visible.map((e) => _buildRpRow(e.icon, e.label, e.value!)),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+
+  _RpEntry _rpRow(IconData icon, String label, String? value) => _RpEntry(icon, label, value);
+
+  Widget _buildRpRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 15, color: AppTheme.primaryGreen),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 110,
+            child: Text(label,
+                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.ts(context))),
+          ),
+          Expanded(
+            child: Text(value,
+                style: GoogleFonts.poppins(fontSize: 12, color: AppTheme.ts(context))),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _confirmLogout(BuildContext context) {
     showDialog(
       context: context,
@@ -910,6 +1107,13 @@ class _RoleBadge extends StatelessWidget {
       ),
     );
   }
+}
+
+class _RpEntry {
+  final IconData icon;
+  final String label;
+  final String? value;
+  const _RpEntry(this.icon, this.label, this.value);
 }
 
 class _InfoPill extends StatelessWidget {

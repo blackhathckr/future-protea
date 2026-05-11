@@ -27,6 +27,8 @@ class PlayerHome extends StatefulWidget {
 class _PlayerHomeState extends State<PlayerHome> {
   int _currentIndex = 0;
 
+  int _dashboardReloadTrigger = 0;
+
   // Matches tab state
   List<CricketMatch> _matches = [];
   bool _matchesLoading = true;
@@ -68,7 +70,7 @@ class _PlayerHomeState extends State<PlayerHome> {
     final user = context.watch<AuthProvider>().user;
 
     final tabs = [
-      const PlayerDashboardScreen(),
+      PlayerDashboardScreen(reloadTrigger: _dashboardReloadTrigger),
       MyJourneyScreen(playerId: user?.id ?? ''),
       const PlayerSearchScreen(),
       _buildMatchesAndTournamentsTab(),
@@ -114,6 +116,8 @@ class _PlayerHomeState extends State<PlayerHome> {
                       if (_currentIndex == 3) {
                         _loadMatches();
                         _loadTournaments();
+                      } else if (_currentIndex == 0) {
+                        setState(() => _dashboardReloadTrigger++);
                       }
                     },
                   ),
