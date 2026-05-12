@@ -149,10 +149,20 @@ const getTournamentFixtures = async (req: AuthRequest, res: Response): Promise<v
   }
 };
 
+// Convert cricket-style overs ("12.3" = 12 overs + 3 balls) to decimal overs
+// (12.5) for NRR math.
+const cricketOversToDecimal = (overs: number): number => {
+  const whole = Math.floor(overs);
+  const balls = Math.round((overs - whole) * 10);
+  return whole + balls / 6;
+};
+
 const getTournamentStandings = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    const tournamentId = req.params.id as string;
+
     const standings = await prisma.tournamentTeam.findMany({
-      where: { tournamentId: req.params.id as string },
+      where: { tournamentId },
       include: {
         team: {
           select: { teamName: true },
@@ -164,7 +174,47 @@ const getTournamentStandings = async (req: AuthRequest, res: Response): Promise<
         { won: 'desc' },
       ],
     });
-    res.json(toSnake(standings.map((s) => ({
+
+    // Compute NRR per team from all completed matches in the tournament.
+    // NRR = (runs scored / overs faced) − (runs conceded / overs bowled)
+    const completedMatches = await prisma.match.findMany({
+      where: { tournamentId, status: 'completed' },
+      select: {
+        team1Name: true, team2Name: true,
+        team1Score: true, team1Overs: true,
+        team2Score: true, team2Overs: true,
+      },
+    });
+
+    const nrrByTeam = new Map<string, number>();
+    for (const s of standings) {
+      const name = s.team.teamName;
+      let runsScored = 0;
+      let oversFaced = 0;
+      let runsConceded = 0;
+      let oversBowled = 0;
+
+      for (const m of completedMatches) {
+        if (m.team1Name === name) {
+          runsScored += m.team1Score;
+          oversFaced += cricketOversToDecimal(m.team1Overs);
+          runsConceded += m.team2Score;
+          oversBowled += cricketOversToDecimal(m.team2Overs);
+        } else if (m.team2Name === name) {
+          runsScored += m.team2Score;
+          oversFaced += cricketOversToDecimal(m.team2Overs);
+          runsConceded += m.team1Score;
+          oversBowled += cricketOversToDecimal(m.team1Overs);
+        }
+      }
+
+      const scoredRate = oversFaced > 0 ? runsScored / oversFaced : 0;
+      const concededRate = oversBowled > 0 ? runsConceded / oversBowled : 0;
+      const nrr = oversFaced > 0 && oversBowled > 0 ? scoredRate - concededRate : 0;
+      nrrByTeam.set(s.teamId, Math.round(nrr * 1000) / 1000);
+    }
+
+    const enriched = standings.map((s) => ({
       id: s.id,
       tournament_id: s.tournamentId,
       team_id: s.teamId,
@@ -175,7 +225,19 @@ const getTournamentStandings = async (req: AuthRequest, res: Response): Promise<
       lost: s.lost,
       no_result: s.noResult,
       points: s.points,
-    }))));
+      nrr: nrrByTeam.get(s.teamId) ?? 0,
+    }));
+
+    // Re-sort within group by points desc, then NRR desc.
+    enriched.sort((a, b) => {
+      if (a.group_name !== b.group_name) {
+        return (a.group_name ?? '').localeCompare(b.group_name ?? '');
+      }
+      if (b.points !== a.points) return b.points - a.points;
+      return b.nrr - a.nrr;
+    });
+
+    res.json(toSnake(enriched));
   } catch (error: unknown) {
     const err = error as { message: string };
     res.status(500).json({ error: err.message });
