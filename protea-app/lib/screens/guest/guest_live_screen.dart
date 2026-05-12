@@ -338,6 +338,92 @@ class _LiveMatchCard extends StatelessWidget {
                   ],
                 );
               }(),
+              const SizedBox(height: 12),
+              // Innings info and run rates
+              () {
+                bool team1BatsFirst;
+                if (match.tossWinner == match.team1Name) {
+                  team1BatsFirst = match.tossDecision == 'bat';
+                } else {
+                  team1BatsFirst = match.tossDecision == 'bowl';
+                }
+                
+                final innings1Team = team1BatsFirst ? 1 : 2;
+                final isSecondInnings = match.currentInnings == 2;
+                final currentBatTeam = isSecondInnings ? (team1BatsFirst ? 2 : 1) : innings1Team;
+                
+                final batScore = currentBatTeam == 1 
+                    ? (innings1Team == 1 ? match.team1Score : match.team2Score)
+                    : (innings1Team == 2 ? match.team2Score : match.team1Score);
+                final batOvers = currentBatTeam == 1
+                    ? (innings1Team == 1 ? match.team1Overs : match.team2Overs)
+                    : (innings1Team == 2 ? match.team2Overs : match.team1Overs);
+                final firstInningsScore = team1BatsFirst
+                    ? (innings1Team == 1 ? match.team1Score : match.team2Score)
+                    : (innings1Team == 2 ? match.team2Score : match.team1Score);
+                
+                final crr = batOvers > 0 ? (batScore / batOvers) : 0.0;
+                final rrr = isSecondInnings && batOvers < match.totalOvers
+                    ? ((firstInningsScore + 1 - batScore) / (match.totalOvers - batOvers))
+                    : 0.0;
+                
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryGreen.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      // Innings indicator
+                      Row(
+                        children: [
+                          Icon(Icons.sports_cricket, size: 14, color: AppTheme.primaryGreen),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${match.currentInnings == 1 ? "1st" : "2nd"} Innings',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.primaryGreen,
+                            ),
+                          ),
+                        ],
+                      ),
+                      // CRR
+                      Row(
+                        children: [
+                          Text('CRR: ', style: TextStyle(fontSize: 10, color: AppTheme.ts(context))),
+                          Text(
+                            crr.toStringAsFixed(2),
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.primaryGreen,
+                            ),
+                          ),
+                        ],
+                      ),
+                      // RRR (only in 2nd innings)
+                      if (isSecondInnings && rrr > 0)
+                        Row(
+                          children: [
+                            Text('RRR: ', style: TextStyle(fontSize: 10, color: AppTheme.ts(context))),
+                            Text(
+                              rrr.toStringAsFixed(2),
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.liveRed,
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                );
+              }(),
               const SizedBox(height: 10),
               // Tap to view
               Text('Tap to view scorecard',

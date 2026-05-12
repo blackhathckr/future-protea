@@ -9,7 +9,7 @@ import '../models/team.dart';
 import '../models/tournament.dart';
 
 class ApiService {
-  static const String baseUrl = 'https://eustolia-jural-unaspiringly.ngrok-free.dev/api';
+  static const String baseUrl = 'https://isolatable-babyishly-teresa.ngrok-free.dev/api';
   // static const String baseUrl = 'http://10.66.199.18:5000/api'; // Local fallback
 
   static Future<String?> _getToken() async {
@@ -647,6 +647,15 @@ class ApiService {
       return Team.fromJson(jsonDecode(response.body));
     }
     throw Exception('Failed to load team');
+  }
+
+  static Future<Map<String, dynamic>> getTeamStats(String id) async {
+    final headers = await _headers();
+    final response = await http.get(Uri.parse('$baseUrl/teams/$id/stats'), headers: headers);
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    }
+    throw Exception('Failed to load team stats');
   }
 
   static Future<Team> createTeam({

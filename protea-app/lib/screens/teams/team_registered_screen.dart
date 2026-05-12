@@ -12,6 +12,7 @@ import '../../widgets/protea_header.dart';
 import '../../widgets/theme_toggle.dart';
 import '../players/player_detail_screen.dart';
 import 'search_add_player_screen.dart'; // used by FAB
+import 'team_stats_screen.dart';
 
 class TeamRegisteredScreen extends StatefulWidget {
   final String teamId;
@@ -33,7 +34,7 @@ class _TeamRegisteredScreenState extends State<TeamRegisteredScreen> {
 
   bool get _canEdit {
     final role = context.read<AuthProvider>().role;
-    return role == 'feeder' || role == 'player';
+    return role == 'admin';
   }
 
   @override
@@ -280,7 +281,9 @@ class _TeamRegisteredScreenState extends State<TeamRegisteredScreen> {
                                                   borderRadius: BorderRadius.circular(6),
                                                 ),
                                                 child: Text(
-                                                  'ID: GUCT-${_team!.id.toString().padLeft(4, '0')}',
+                                                  _team!.teamCode != null && _team!.teamCode!.isNotEmpty
+                                                      ? 'ID: ${_team!.teamCode}'
+                                                      : 'ID: ${_team!.id}',
                                                   style: const TextStyle(
                                                       color: Colors.white,
                                                       fontWeight: FontWeight.bold,
@@ -479,6 +482,43 @@ class _TeamRegisteredScreenState extends State<TeamRegisteredScreen> {
                             ),
                           ),
                         const SizedBox(height: 4),
+
+                        // Team stats link
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                          child: Card(
+                            margin: EdgeInsets.zero,
+                            child: ListTile(
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => TeamStatsScreen(
+                                    teamId: widget.teamId,
+                                    teamName: _team!.teamName,
+                                  ),
+                                ),
+                              ),
+                              leading: Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.accentAmber.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(Icons.bar_chart_rounded,
+                                    color: AppTheme.accentAmber, size: 22),
+                              ),
+                              title: Text('Team Stats',
+                                  style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w600, fontSize: 15)),
+                              subtitle: Text(
+                                'Matches, W/L, highest total, top performers',
+                                style: TextStyle(
+                                    fontSize: 12, color: AppTheme.ts(context)),
+                              ),
+                              trailing: const Icon(Icons.chevron_right),
+                            ),
+                          ),
+                        ),
 
                         // Players section
                         Padding(

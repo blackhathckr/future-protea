@@ -15,6 +15,7 @@ import '../auth/login_screen.dart';
 import '../viewer/viewer_home_screen.dart';
 import '../player_profile/player_home.dart';
 import '../feeder/feeder_home.dart';
+import '../admin/admin_home.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -43,7 +44,13 @@ class HomeScreen extends StatelessWidget {
     if (role == 'feeder') {
       return const FeederHome();
     }
-    
+
+    // Show admin-focused screen for admins
+    if (role == 'admin') {
+      return const AdminHome();
+    }
+
+
     final userName = auth.user?.name.split(' ').first ?? 'User';
     final isViewer = role == 'viewer';
 
@@ -217,6 +224,7 @@ class HomeScreen extends StatelessWidget {
       case 'feeder': return AppTheme.primaryGreen;
       case 'player': return AppTheme.upcomingBlue;
       case 'viewer': return AppTheme.accentAmber;
+      case 'admin': return AppTheme.team2Color;
       default: return AppTheme.textSecondary;
     }
   }
@@ -226,6 +234,7 @@ class HomeScreen extends StatelessWidget {
       case 'feeder': return 'Score Feeder';
       case 'player': return 'Player';
       case 'viewer': return 'Viewer';
+      case 'admin': return 'Admin';
       default: return role;
     }
   }

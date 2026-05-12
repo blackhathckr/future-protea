@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '../../models/tournament.dart';
@@ -6,6 +7,7 @@ import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/protea_header.dart';
 import '../../widgets/theme_toggle.dart';
+import 'tournament_bracket_screen.dart';
 import 'tournament_fixtures_screen.dart';
 import 'tournament_points_screen.dart';
 import 'tournament_stats_screen.dart';
@@ -37,6 +39,23 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
     setState(() => _loading = false);
   }
 
+  Future<void> _shareLink() async {
+    // Public spectator URL — uses the server host with a /tournaments/<id> path.
+    // The /api/public/* endpoints back this view; the marketing site / web app
+    // can route this URL to a public tournament page.
+    final serverRoot = ApiService.baseUrl.replaceAll('/api', '');
+    final link = '$serverRoot/tournaments/${widget.tournamentId}';
+    await Clipboard.setData(ClipboardData(text: link));
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Link copied: $link'),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -55,7 +74,16 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
                             Positioned(
                               top: MediaQuery.of(context).padding.top + 8,
                               right: 8,
-                              child: const ThemeToggleButton(),
+                              child: Row(
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(Icons.share, color: Colors.white),
+                                    tooltip: 'Share tournament link',
+                                    onPressed: _shareLink,
+                                  ),
+                                  const ThemeToggleButton(),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -194,6 +222,19 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
                                       tournamentName: _tournament!.name,
                                       startDate: _tournament!.startDate,
                                       endDate: _tournament!.endDate,
+                                    ),
+                                  )),
+                                ),
+                                const Divider(height: 1, indent: 56),
+                                _NavTile(
+                                  icon: Icons.account_tree,
+                                  iconColor: AppTheme.team1Color,
+                                  label: 'Knockout Bracket',
+                                  subtitle: 'Semi-finals & final',
+                                  onTap: () => Navigator.push(context, MaterialPageRoute(
+                                    builder: (_) => TournamentBracketScreen(
+                                      tournamentId: widget.tournamentId,
+                                      tournamentName: _tournament!.name,
                                     ),
                                   )),
                                 ),

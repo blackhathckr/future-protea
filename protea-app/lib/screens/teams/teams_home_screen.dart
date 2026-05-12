@@ -38,7 +38,7 @@ class _TeamsHomeScreenState extends State<TeamsHomeScreen> {
 
   bool get _canEdit {
     final role = context.read<AuthProvider>().role;
-    return role == 'feeder' || role == 'player';
+    return role == 'admin';
   }
 
   @override
@@ -299,6 +299,25 @@ class _TeamCard extends StatelessWidget {
                             ),
                           ],
                         ),
+                        if (team.teamCode != null && team.teamCode!.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryGreen.withValues(alpha: 0.10),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              team.teamCode!,
+                              style: GoogleFonts.robotoMono(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                                color: AppTheme.primaryGreen,
+                                letterSpacing: 0.4,
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),

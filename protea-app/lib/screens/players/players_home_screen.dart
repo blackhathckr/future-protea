@@ -43,7 +43,7 @@ class _PlayersHomeScreenState extends State<PlayersHomeScreen> {
 
   bool get _canEdit {
     final role = context.read<AuthProvider>().role;
-    return role == 'feeder' || role == 'player';
+    return role == 'admin' || role == 'player';
   }
 
   @override
@@ -135,7 +135,7 @@ class _PlayersHomeScreenState extends State<PlayersHomeScreen> {
                   const SizedBox(width: 8),
                   if (!_loading) CountBadge(count: _allPlayers.length),
                   const Spacer(),
-                  if (context.read<AuthProvider>().role == 'feeder')
+                  if (context.read<AuthProvider>().role == 'admin')
                     Tooltip(
                       message: 'Create login accounts for all registered players with emails',
                       child: IconButton(

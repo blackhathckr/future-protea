@@ -1,5 +1,6 @@
 class Team {
   final String id;
+  final String? teamCode;
   final String teamName;
   final String? schoolName;
   final String? clubName;
@@ -10,6 +11,7 @@ class Team {
 
   Team({
     required this.id,
+    this.teamCode,
     required this.teamName,
     this.schoolName,
     this.clubName,
@@ -22,6 +24,7 @@ class Team {
   factory Team.fromJson(Map<String, dynamic> json) {
     return Team(
       id: json['id'].toString(),
+      teamCode: json['team_code'],
       teamName: json['team_name'] ?? json['name'] ?? '',
       schoolName: json['school_name'],
       clubName: json['club_name'],

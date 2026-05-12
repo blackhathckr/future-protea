@@ -572,6 +572,7 @@ class _EditPlayerScreenState extends State<EditPlayerScreen> {
   }
 
   Widget _dropdown(String label, String? value, List<String> options, Function(String?) onChange) {
+    final uniqueOptions = options.toSet().toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -579,9 +580,9 @@ class _EditPlayerScreenState extends State<EditPlayerScreen> {
         Text(label, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13)),
         const SizedBox(height: 5),
         DropdownButtonFormField<String>(
-          value: value,
+          value: value != null && uniqueOptions.contains(value) ? value : null,
           decoration: InputDecoration(hintText: 'Select $label'),
-          items: options.map((o) => DropdownMenuItem(value: o, child: Text(o, style: GoogleFonts.poppins(fontSize: 13)))).toList(),
+          items: uniqueOptions.map((o) => DropdownMenuItem(value: o, child: Text(o, style: GoogleFonts.poppins(fontSize: 13)))).toList(),
           onChanged: onChange,
         ),
       ],

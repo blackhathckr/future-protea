@@ -46,7 +46,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
       'value': 'feeder',
       'label': 'Score Feeder',
       'icon': Icons.edit_note,
-      'desc': 'Manage matches, teams & score',
+      'desc': 'Score live matches & manage match flow',
+    },
+    {
+      'value': 'admin',
+      'label': 'Admin',
+      'icon': Icons.admin_panel_settings,
+      'desc': 'Manage teams, tournaments & players',
     },
   ];
 

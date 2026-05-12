@@ -1078,6 +1078,10 @@ class _RoleBadge extends StatelessWidget {
         color = AppTheme.accentAmber;
         icon = Icons.visibility;
         break;
+      case 'admin':
+        color = AppTheme.team2Color;
+        icon = Icons.admin_panel_settings;
+        break;
       default:
         color = AppTheme.textSecondary;
         icon = Icons.person;
