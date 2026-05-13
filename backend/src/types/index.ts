@@ -3,6 +3,7 @@ import { Request } from 'express';
 export interface JwtPayload {
   id: string;
   role: string;
+  roles: string[];
   name: string;
   iat?: number;
 }

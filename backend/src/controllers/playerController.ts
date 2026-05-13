@@ -133,19 +133,26 @@ async function computeExtendedStats(playerId: string) {
 const getPlayerJourney = async (req: AuthRequest, res: Response): Promise<void> => {
   const playerId = req.params.id as string;
   try {
-    const [user, matches] = await Promise.all([
-      prisma.user.findUnique({
+    // Primary: registered_players table (canonical source post identity-split)
+    // Fallback: users table for legacy user IDs
+    let playerInfo: {
+      id: string; name: string; email?: string | null;
+      battingStyle?: string | null; bowlingStyle?: string | null;
+      phone?: string | null; photoUrl?: string | null;
+    } | null = await prisma.registeredPlayer.findUnique({
+      where: { id: playerId },
+      select: { id: true, name: true, email: true, battingStyle: true, bowlingStyle: true, phone: true, photoUrl: true },
+    });
+
+    if (!playerInfo) {
+      playerInfo = await prisma.user.findUnique({
         where: { id: playerId },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          role: true,
-          battingStyle: true,
-          bowlingStyle: true,
-          phone: true,
-        },
-      }),
+        select: { id: true, name: true, email: true, battingStyle: true, bowlingStyle: true, phone: true, photoUrl: true },
+      });
+    }
+
+    const [, matches] = await Promise.all([
+      Promise.resolve(playerInfo),
       prisma.playerScore.findMany({
         where: { playerId },
         include: {
@@ -167,6 +174,11 @@ const getPlayerJourney = async (req: AuthRequest, res: Response): Promise<void> 
         orderBy: { match: { matchDate: 'desc' } },
       }),
     ]);
+    if (!playerInfo) {
+      res.status(404).json({ error: 'Player not found' });
+      return;
+    }
+    const user = playerInfo;
 
     // Compute stats from already-fetched matches — no extra DB round trip
     const careerStats = (() => {
@@ -232,31 +244,20 @@ const getPlayerJourneyByName = async (req: AuthRequest, res: Response): Promise<
   }
 
   try {
-    const user = await prisma.user.findFirst({
-      where: {
-        name: { contains: name, mode: 'insensitive' },
-        role: 'player',
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        battingStyle: true,
-        bowlingStyle: true,
-        phone: true,
-      },
+    // Primary: registered_players (canonical source post identity-split)
+    const registeredPlayer = await prisma.registeredPlayer.findFirst({
+      where: { name: { contains: name, mode: 'insensitive' } },
+      select: { id: true, name: true, email: true, battingStyle: true, bowlingStyle: true, phone: true, photoUrl: true },
+    });
+
+    // Fallback: users table
+    const user = registeredPlayer ?? await prisma.user.findFirst({
+      where: { name: { contains: name, mode: 'insensitive' }, role: 'player' },
+      select: { id: true, name: true, email: true, battingStyle: true, bowlingStyle: true, phone: true, photoUrl: true },
     });
 
     if (!user) {
-      const registeredPlayer = await prisma.registeredPlayer.findFirst({
-        where: { name: { contains: name, mode: 'insensitive' } },
-      });
-      if (!registeredPlayer) {
-        res.status(404).json({ error: 'Player not found' });
-        return;
-      }
-      res.json(toSnake({ player: registeredPlayer, career_stats: null, matches: [] }));
+      res.status(404).json({ error: 'Player not found' });
       return;
     }
 

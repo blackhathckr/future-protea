@@ -320,7 +320,7 @@ class _AdminDashboardState extends State<AdminDashboard> with TickerProviderStat
           crossAxisCount: 3,
           mainAxisSpacing: 8,
           crossAxisSpacing: 8,
-          childAspectRatio: 1.05,
+          mainAxisExtent: 120,
         ),
         itemCount: tiles.length,
         itemBuilder: (_, i) => _statTile(tiles[i]),
@@ -332,7 +332,7 @@ class _AdminDashboardState extends State<AdminDashboard> with TickerProviderStat
     return Card(
       margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [

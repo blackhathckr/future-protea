@@ -3,7 +3,6 @@ import '../../theme/app_theme.dart';
 import '../players/players_home_screen.dart';
 import '../teams/teams_home_screen.dart';
 import '../tournaments/tournament_home_screen.dart';
-import '../profile/profile_screen.dart';
 import 'admin_dashboard.dart';
 
 class AdminHome extends StatefulWidget {

@@ -129,30 +129,57 @@ class _StartMatchScreenState extends State<StartMatchScreen> {
                       child: Column(
                         children: [
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              CircleAvatar(
-                                backgroundColor: AppTheme.primaryGreen,
-                                child: Text(m.team1Name[0],
-                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                              // Team 1
+                              Expanded(
+                                child: Column(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 18,
+                                      backgroundColor: AppTheme.primaryGreen,
+                                      child: Text(m.team1Name[0],
+                                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      m.team1Name,
+                                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 12),
+                                      textAlign: TextAlign.center,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
                               ),
-                              const SizedBox(width: 8),
-                              Text(m.team1Name,
-                                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                              // VS
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 12),
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
                                 child: Text('VS',
                                     style: GoogleFonts.poppins(
-                                        fontWeight: FontWeight.w700,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 16,
                                         color: AppTheme.ts(context))),
                               ),
-                              Text(m.team2Name,
-                                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-                              const SizedBox(width: 8),
-                              CircleAvatar(
-                                backgroundColor: AppTheme.team2Color,
-                                child: Text(m.team2Name[0],
-                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                              // Team 2
+                              Expanded(
+                                child: Column(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 18,
+                                      backgroundColor: AppTheme.team2Color,
+                                      child: Text(m.team2Name[0],
+                                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      m.team2Name,
+                                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 12),
+                                      textAlign: TextAlign.center,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
                               ),
                             ],
                           ),

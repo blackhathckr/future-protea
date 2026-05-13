@@ -63,23 +63,27 @@ const getTeamById = async (req: AuthRequest, res: Response): Promise<void> => {
 };
 
 const createTeam = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { team_name, team_type, school_name, club_name } = req.body;
+  const { team_name, team_type, school_name, club_name, team_code } = req.body;
   try {
     const count = await prisma.team.count();
     const teamCode = `TEAM-${String(count + 1).padStart(4, '0')}`;
     const team = await prisma.team.create({
       data: {
-        teamCode,
-        teamName: team_name,
-        teamType: team_type,
+        teamCode:   team_code || teamCode,
+        teamName:   team_name,
+        teamType:   team_type,
         schoolName: school_name || null,
-        clubName: club_name || null,
-        createdBy: req.user.id,
+        clubName:   club_name   || null,
+        createdBy:  req.user.id,
       },
     });
     res.status(201).json(toSnake(team));
   } catch (error: unknown) {
-    const err = error as { message: string };
+    const err = error as { code?: string; message: string };
+    if (err.code === 'P2002') {
+      res.status(400).json({ error: 'Team code already taken' });
+      return;
+    }
     res.status(500).json({ error: err.message });
   }
 };
@@ -150,7 +154,7 @@ const getTeamStats = async (req: AuthRequest, res: Response): Promise<void> => {
           _sum: { runsScored: true, wicketsTaken: true },
         });
         const playerIds = batting.map((b) => b.playerId);
-        const players = await prisma.user.findMany({
+        const players = await prisma.registeredPlayer.findMany({
           where: { id: { in: playerIds } },
           select: { id: true, name: true },
         });
@@ -229,13 +233,14 @@ const removePlayerFromTeam = async (req: AuthRequest, res: Response): Promise<vo
 };
 
 const updateTeam = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { team_name, team_type, school_name, club_name } = req.body;
+  const { team_name, team_type, school_name, club_name, team_code } = req.body;
   try {
     const data: Record<string, unknown> = {};
-    if (team_name) data.teamName = team_name;
-    if (team_type) data.teamType = team_type;
+    if (team_name  !== undefined) data.teamName   = team_name   || null;
+    if (team_type  !== undefined) data.teamType   = team_type   || null;
+    if (team_code  !== undefined) data.teamCode   = team_code   || null;
     if (school_name !== undefined) data.schoolName = school_name || null;
-    if (club_name !== undefined) data.clubName = club_name || null;
+    if (club_name  !== undefined) data.clubName   = club_name   || null;
 
     if (Object.keys(data).length === 0) {
       res.status(400).json({ error: 'No fields to update' });

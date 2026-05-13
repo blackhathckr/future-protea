@@ -35,10 +35,16 @@ const register = async (req: AuthRequest, res: Response): Promise<void> => {
         battingStyle: batting_style || null,
         bowlingStyle: bowling_style || null,
         approved: role !== 'player',
+        userRoles: {
+          create: [{ role }],
+        },
       },
       select: USER_SELECT,
     });
-    const token = jwt.sign({ id: user.id, role: user.role, name: user.name }, process.env.JWT_SECRET as string);
+    const token = jwt.sign(
+      { id: user.id, role: user.role, roles: [user.role], name: user.name },
+      process.env.JWT_SECRET as string,
+    );
     res.status(201).json({ token, user: toSnake(user) });
   } catch (error: unknown) {
     const err = error as { code?: string; message: string };
@@ -70,7 +76,18 @@ const login = async (req: AuthRequest, res: Response): Promise<void> => {
       data: { lastLogin: new Date() },
     });
 
-    const token = jwt.sign({ id: user.id, role: user.role, name: user.name }, process.env.JWT_SECRET as string);
+    const userRoleRows = await prisma.userRole.findMany({
+      where: { userId: user.id },
+      select: { role: true },
+    });
+    const roles = userRoleRows.length > 0
+      ? userRoleRows.map((r) => r.role)
+      : [user.role];
+
+    const token = jwt.sign(
+      { id: user.id, role: user.role, roles, name: user.name },
+      process.env.JWT_SECRET as string,
+    );
     res.json({
       token,
       user: {

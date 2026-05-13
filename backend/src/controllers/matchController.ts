@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import prisma from '../config/database';
 import toSnake from '../utils/toSnake';
 import { AuthRequest } from '../middleware/auth';
+import logger from '../utils/logger';
 
 const getLiveMatches = async (_req: Request, res: Response): Promise<void> => {
   try {
@@ -84,16 +85,29 @@ const getMatchById = async (req: Request, res: Response): Promise<void> => {
         matchPlayers: {
           include: {
             player: {
-              select: { name: true, battingStyle: true, bowlingStyle: true },
+              select: { name: true, battingStyle: true, bowlingStyle: true, photoUrl: true },
             },
           },
           orderBy: [{ team: 'asc' }, { player: { name: 'asc' } }],
         },
         playerScores: {
           include: {
-            player: { select: { name: true } },
+            player:      { select: { name: true } },
+            dismissedBy: { select: { name: true } },
+            fielder:     { select: { name: true } },
           },
           orderBy: [{ team: 'asc' }, { runsScored: 'desc' }],
+        },
+        matchInnings: {
+          orderBy: { inningsNumber: 'asc' },
+          select: {
+            id: true, inningsNumber: true,
+            totalRuns: true, totalWickets: true, totalOvers: true, totalBalls: true,
+            extrasWides: true, extrasNoballs: true, extrasByes: true,
+            extrasLegbyes: true, extrasPenalties: true,
+            targetRuns: true, status: true,
+            strikerId: true, nonStrikerId: true, currentBowlerId: true,
+          },
         },
       },
     });
@@ -145,24 +159,27 @@ const getMatchById = async (req: Request, res: Response): Promise<void> => {
           });
       })(),
       scores: match.playerScores.map((ps) => ({
-        id: ps.id,
-        match_id: ps.matchId,
-        player_id: ps.playerId,
-        team: ps.team,
-        name: ps.player?.name,
-        runs_scored: ps.runsScored,
-        balls_faced: ps.ballsFaced,
-        fours: ps.fours,
-        sixes: ps.sixes,
-        is_out: ps.isOut,
-        out_type: ps.outType,
-        overs_bowled: ps.oversBowled,
+        id:            ps.id,
+        match_id:      ps.matchId,
+        player_id:     ps.playerId,
+        team:          ps.team,
+        name:          ps.player?.name,
+        runs_scored:   ps.runsScored,
+        balls_faced:   ps.ballsFaced,
+        fours:         ps.fours,
+        sixes:         ps.sixes,
+        is_out:        ps.isOut,
+        out_type:      ps.outType,
+        dismissed_by:  ps.dismissedBy?.name ?? null,
+        fielder:       ps.fielder?.name     ?? null,
+        overs_bowled:  ps.oversBowled,
         runs_conceded: ps.runsConceded,
         wickets_taken: ps.wicketsTaken,
-        maidens: ps.maidens,
-        catches: ps.catches,
-        run_outs: ps.runOuts,
+        maidens:       ps.maidens,
+        catches:       ps.catches,
+        run_outs:      ps.runOuts,
       })),
+      match_innings: match.matchInnings,
     }));
   } catch (error: unknown) {
     const err = error as { message: string };
@@ -171,20 +188,26 @@ const getMatchById = async (req: Request, res: Response): Promise<void> => {
 };
 
 const createMatch = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { team1_name, team2_name, venue, total_overs, match_date, tournament_id, match_type, balls_per_over, umpire } = req.body;
+  const {
+    team1_name, team2_name, team1_id, team2_id,
+    venue, total_overs, match_date, tournament_id,
+    match_type, balls_per_over, umpire,
+  } = req.body;
   try {
     const match = await prisma.match.create({
       data: {
-        team1Name: team1_name,
-        team2Name: team2_name,
-        venue: venue || null,
-        totalOvers: total_overs || 20,
-        matchDate: new Date(match_date),
-        createdBy: req.user.id,
+        team1Name:    team1_name,
+        team2Name:    team2_name,
+        team1Id:      team1_id      || null,
+        team2Id:      team2_id      || null,
+        venue:        venue         || null,
+        totalOvers:   total_overs   || 20,
+        matchDate:    new Date(match_date),
+        createdBy:    req.user.id,
         tournamentId: tournament_id || null,
-        matchType: match_type || 'T20',
+        matchType:    match_type    || 'T20',
         ballsPerOver: balls_per_over || 6,
-        umpire: umpire || null,
+        umpire:       umpire        || null,
       },
     });
     res.status(201).json(toSnake(match));
@@ -195,16 +218,28 @@ const createMatch = async (req: AuthRequest, res: Response): Promise<void> => {
 };
 
 const updateMatch = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { status, toss_winner, toss_decision, winner, current_innings, umpire, player_of_match } = req.body;
+  const {
+    status, toss_winner, toss_decision,
+    winner, winner_team_id, result_type, result_margin,
+    current_innings, umpire,
+    player_of_match, player_of_match_id,
+  } = req.body;
+
   try {
+    const matchId = req.params.id as string;
+
     const data: Record<string, unknown> = {};
-    if (status) data.status = status;
-    if (toss_winner) data.tossWinner = toss_winner;
-    if (toss_decision) data.tossDecision = toss_decision;
-    if (winner) data.winner = winner;
-    if (current_innings !== undefined) data.currentInnings = current_innings;
-    if (umpire !== undefined) data.umpire = umpire || null;
-    if (player_of_match !== undefined) data.playerOfMatch = player_of_match || null;
+    if (status                !== undefined) data.status             = status;
+    if (toss_winner           !== undefined) data.tossWinner         = toss_winner         || null;
+    if (toss_decision         !== undefined) data.tossDecision       = toss_decision       || null;
+    if (winner                !== undefined) data.winner             = winner              || null;
+    if (winner_team_id        !== undefined) data.winnerTeamId       = winner_team_id      || null;
+    if (result_type           !== undefined) data.resultType         = result_type         || null;
+    if (result_margin         !== undefined) data.resultMargin       = result_margin       ?? null;
+    if (current_innings       !== undefined) data.currentInnings     = current_innings;
+    if (umpire                !== undefined) data.umpire             = umpire              || null;
+    if (player_of_match       !== undefined) data.playerOfMatch      = player_of_match     || null;
+    if (player_of_match_id    !== undefined) data.playerOfMatchId    = player_of_match_id  || null;
 
     if (Object.keys(data).length === 0) {
       res.status(400).json({ error: 'No fields to update' });
@@ -212,18 +247,107 @@ const updateMatch = async (req: AuthRequest, res: Response): Promise<void> => {
     }
 
     const match = await prisma.match.update({
-      where: { id: req.params.id as string },
+      where: { id: matchId },
       data,
     });
-    // Auto-update tournament standings when match completes
-    if (status === 'completed' && match.tournamentId) {
+
+    // When innings switches to 2, ensure match_innings row 1 is closed
+    // and innings row 2 is seeded with the target
+    if (current_innings === 2) {
       try {
-        await updateTournamentStandings(match.tournamentId);
-      } catch (_e) {
+        await prisma.$transaction(async (tx) => {
+          await tx.matchInnings.updateMany({
+            where: { matchId, inningsNumber: 1, status: 'in_progress' },
+            data:  { status: 'completed', endedAt: new Date() },
+          });
+          // target = team1 total + 1
+          const target = match.team1Score + 1;
+          await tx.matchInnings.upsert({
+            where: { matchId_inningsNumber: { matchId, inningsNumber: 2 } },
+            create: {
+              matchId,
+              inningsNumber: 2,
+              targetRuns:    target,
+              status:        'in_progress',
+              startedAt:     new Date(),
+            },
+            update: { targetRuns: target, status: 'in_progress' },
+          });
+        });
+      } catch (inningsErr) {
+        logger.error('match_innings transition failed (non-fatal):', inningsErr);
+      }
+    }
+
+    // When match completes, close both innings and update tournament standings
+    if (status === 'completed') {
+      try {
+        await prisma.matchInnings.updateMany({
+          where: { matchId, status: 'in_progress' },
+          data:  { status: 'completed', endedAt: new Date() },
+        });
+        if (match.tournamentId) {
+          await updateTournamentStandings(match.tournamentId);
+        }
+      } catch (compErr) {
+        logger.error('match completion side-effects failed (non-fatal):', compErr);
       }
     }
 
     res.json(toSnake(match));
+  } catch (error: unknown) {
+    const err = error as { message: string };
+    res.status(500).json({ error: err.message });
+  }
+};
+
+/**
+ * POST /matches/:id/innings/:inningsNumber/setup
+ * Explicitly create/open an innings row (used before first ball of an innings).
+ */
+const setupInnings = async (req: AuthRequest, res: Response): Promise<void> => {
+  const matchId       = req.params.id           as string;
+  const inningsNumber = parseInt(req.params.inningsNumber as string, 10);
+  const { batting_team_id, bowling_team_id, target_runs } = req.body;
+  try {
+    const innings = await prisma.matchInnings.upsert({
+      where: { matchId_inningsNumber: { matchId, inningsNumber } },
+      create: {
+        matchId,
+        inningsNumber,
+        battingTeamId:  batting_team_id  || null,
+        bowlingTeamId:  bowling_team_id  || null,
+        targetRuns:     target_runs      ?? null,
+        status:         'in_progress',
+        startedAt:      new Date(),
+      },
+      update: {
+        battingTeamId:  batting_team_id  || null,
+        bowlingTeamId:  bowling_team_id  || null,
+        targetRuns:     target_runs      ?? null,
+        status:         'in_progress',
+      },
+    });
+    res.status(201).json(toSnake(innings));
+  } catch (error: unknown) {
+    const err = error as { message: string };
+    res.status(500).json({ error: err.message });
+  }
+};
+
+/**
+ * POST /matches/:id/innings/:inningsNumber/end
+ * Close an innings (all out / declared / overs complete).
+ */
+const endInnings = async (req: AuthRequest, res: Response): Promise<void> => {
+  const matchId       = req.params.id           as string;
+  const inningsNumber = parseInt(req.params.inningsNumber as string, 10);
+  try {
+    const innings = await prisma.matchInnings.update({
+      where: { matchId_inningsNumber: { matchId, inningsNumber } },
+      data:  { status: 'completed', endedAt: new Date() },
+    });
+    res.json(toSnake(innings));
   } catch (error: unknown) {
     const err = error as { message: string };
     res.status(500).json({ error: err.message });
@@ -329,96 +453,150 @@ async function updateTournamentStandings(tournamentId: string): Promise<void> {
 
 const getScorecard = async (req: Request, res: Response): Promise<void> => {
   try {
+    const matchId = req.params.id as string;
+
     const match = await prisma.match.findUnique({
-      where: { id: req.params.id as string },
+      where: { id: matchId },
     });
     if (!match) {
       res.status(404).json({ error: 'Match not found' });
       return;
     }
 
-    const batting = await prisma.playerScore.findMany({
-      where: {
-        matchId: req.params.id as string,
-        ballsFaced: { gt: 0 },
-      },
-      include: {
-        player: { select: { name: true } },
-      },
-      orderBy: [{ team: 'asc' }, { runsScored: 'desc' }],
-    });
-
-    const bowling = await prisma.playerScore.findMany({
-      where: {
-        matchId: req.params.id as string,
-        oversBowled: { gt: 0 },
-      },
-      include: {
-        player: { select: { name: true } },
-      },
-      orderBy: [{ team: 'asc' }, { wicketsTaken: 'desc' }],
-    });
-
-    const teams = await prisma.team.findMany({
-      where: {
-        teamName: {
-          in: [match.team1Name, match.team2Name],
+    // Parallel fetch all scorecard data
+    const [batting, bowling, inningsRows, teams] = await Promise.all([
+      prisma.playerScore.findMany({
+        where: { matchId, ballsFaced: { gt: 0 } },
+        include: {
+          player:      { select: { name: true } },
+          dismissedBy: { select: { name: true } },
+          fielder:     { select: { name: true } },
         },
-      },
-      select: { id: true, teamName: true },
-    });
-
-    const teamIds = teams.map((t) => t.id);
-
-    const teamPlayers = await prisma.teamPlayer.findMany({
-      where: {
-        teamId: {
-          in: teamIds,
-        },
-      },
-      include: {
-        player: {
-          select: {
-            name: true,
+        orderBy: [{ team: 'asc' }, { runsScored: 'desc' }],
+      }),
+      prisma.playerScore.findMany({
+        where: { matchId, oversBowled: { gt: 0 } },
+        include: { player: { select: { name: true } } },
+        orderBy: [{ team: 'asc' }, { wicketsTaken: 'desc' }],
+      }),
+      prisma.matchInnings.findMany({
+        where: { matchId },
+        include: {
+          fallOfWickets: {
+            include: {
+              innings:  { select: { name: true } },
+              bowler:   { select: { name: true } },
+              fielder:  { select: { name: true } },
+            },
+            orderBy: { wicketNumber: 'asc' },
           },
         },
-      },
-    });
+        orderBy: { inningsNumber: 'asc' },
+      }),
+      prisma.team.findMany({
+        where: { teamName: { in: [match.team1Name, match.team2Name] } },
+        select: { id: true, teamName: true },
+      }),
+    ]);
 
+    // Build role lookup from team rosters
+    const teamIds = teams.map((t) => t.id);
+    const teamPlayers = await prisma.teamPlayer.findMany({
+      where: { teamId: { in: teamIds } },
+      include: { player: { select: { name: true } } },
+    });
     const playerRoleMap = new Map(
       teamPlayers.map((tp) => [tp.player.name.toLowerCase(), {
-        isCaptain: tp.isCaptain,
+        isCaptain:      tp.isCaptain,
         isWicketKeeper: tp.isWicketKeeper,
-        teamId: tp.teamId,
       }])
     );
 
-    const flattenScore = (ps: typeof batting[number]) => {
-      const playerNameLower = ps.player?.name?.toLowerCase() || '';
-      const roleInfo = playerRoleMap.get(playerNameLower);
+    const flattenBatting = (ps: typeof batting[number]) => {
+      const roleInfo = playerRoleMap.get(ps.player?.name?.toLowerCase() || '');
       return {
-        id: ps.id,
-        match_id: ps.matchId,
-        player_id: ps.playerId,
-        team: ps.team,
-        name: ps.player?.name,
-        runs_scored: ps.runsScored,
-        balls_faced: ps.ballsFaced,
-        fours: ps.fours,
-        sixes: ps.sixes,
-        is_out: ps.isOut,
-        out_type: ps.outType,
-        overs_bowled: ps.oversBowled,
-        runs_conceded: ps.runsConceded,
-        wickets_taken: ps.wicketsTaken,
-        maidens: ps.maidens,
-        catches: ps.catches,
-        run_outs: ps.runOuts,
-        is_captain: roleInfo?.isCaptain ?? false,
+        id:               ps.id,
+        match_id:         ps.matchId,
+        player_id:        ps.playerId,
+        team:             ps.team,
+        name:             ps.player?.name,
+        runs_scored:      ps.runsScored,
+        balls_faced:      ps.ballsFaced,
+        fours:            ps.fours,
+        sixes:            ps.sixes,
+        is_out:           ps.isOut,
+        out_type:         ps.outType,
+        dismissed_by:     ps.dismissedBy?.name ?? null,
+        fielder:          ps.fielder?.name     ?? null,
+        overs_bowled:     ps.oversBowled,
+        runs_conceded:    ps.runsConceded,
+        wickets_taken:    ps.wicketsTaken,
+        maidens:          ps.maidens,
+        catches:          ps.catches,
+        run_outs:         ps.runOuts,
+        is_captain:       roleInfo?.isCaptain      ?? false,
         is_wicket_keeper: roleInfo?.isWicketKeeper ?? false,
       };
     };
-    res.json(toSnake({ match, batting: batting.map(flattenScore), bowling: bowling.map(flattenScore) }));
+
+    const flattenBowling = (ps: typeof bowling[number]) => {
+      const roleInfo = playerRoleMap.get(ps.player?.name?.toLowerCase() || '');
+      return {
+        id:               ps.id,
+        match_id:         ps.matchId,
+        player_id:        ps.playerId,
+        team:             ps.team,
+        name:             ps.player?.name,
+        runs_scored:      ps.runsScored,
+        balls_faced:      ps.ballsFaced,
+        fours:            ps.fours,
+        sixes:            ps.sixes,
+        is_out:           ps.isOut,
+        out_type:         ps.outType,
+        overs_bowled:     ps.oversBowled,
+        runs_conceded:    ps.runsConceded,
+        wickets_taken:    ps.wicketsTaken,
+        maidens:          ps.maidens,
+        catches:          ps.catches,
+        run_outs:         ps.runOuts,
+        is_captain:       roleInfo?.isCaptain      ?? false,
+        is_wicket_keeper: roleInfo?.isWicketKeeper ?? false,
+      };
+    };
+
+    // Shape innings with extras breakdown and fall of wickets
+    const inningsSummaries = inningsRows.map((inn) => ({
+      innings_number:    inn.inningsNumber,
+      total_runs:        inn.totalRuns,
+      total_wickets:     inn.totalWickets,
+      total_overs:       inn.totalOvers,
+      target_runs:       inn.targetRuns,
+      status:            inn.status,
+      extras: {
+        wides:     inn.extrasWides,
+        noballs:   inn.extrasNoballs,
+        byes:      inn.extrasByes,
+        legbyes:   inn.extrasLegbyes,
+        penalties: inn.extrasPenalties,
+        total:     inn.extrasWides + inn.extrasNoballs + inn.extrasByes + inn.extrasLegbyes + inn.extrasPenalties,
+      },
+      fall_of_wickets: inn.fallOfWickets.map((fow) => ({
+        wicket_number:  fow.wicketNumber,
+        batsman_name:   (fow as typeof fow & { innings?: { name: string } | null }).innings?.name ?? null,
+        dismissal_type: fow.dismissalType,
+        bowler_name:    fow.bowler?.name  ?? null,
+        fielder_name:   fow.fielder?.name ?? null,
+        runs_at_fall:   fow.runsAtFall,
+        overs_at_fall:  fow.oversAtFall,
+      })),
+    }));
+
+    res.json(toSnake({
+      match,
+      batting:  batting.map(flattenBatting),
+      bowling:  bowling.map(flattenBowling),
+      innings:  inningsSummaries,
+    }));
   } catch (error: unknown) {
     const err = error as { message: string };
     res.status(500).json({ error: err.message });
@@ -431,5 +609,7 @@ export default {
   getMatchById,
   createMatch,
   updateMatch,
+  setupInnings,
+  endInnings,
   getScorecard,
 };

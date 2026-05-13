@@ -63,11 +63,11 @@ class _TeamRegisteredScreenState extends State<TeamRegisteredScreen> {
         setState(() => _loading = true);
         await ApiService.uploadTeamLogo(widget.teamId, pickedFile.path);
         await _loadTeam();
-        SnackbarUtils.showSuccess(context, 'Logo uploaded successfully');
+        if (mounted) SnackbarUtils.showSuccess(context, 'Logo uploaded successfully');
       } catch (e) {
-        SnackbarUtils.showError(context, e);
+        if (mounted) SnackbarUtils.showError(context, e);
       } finally {
-        setState(() => _loading = false);
+        if (mounted) setState(() => _loading = false);
       }
     }
   }

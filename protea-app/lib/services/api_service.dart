@@ -9,7 +9,7 @@ import '../models/team.dart';
 import '../models/tournament.dart';
 
 class ApiService {
-  static const String baseUrl = 'https://isolatable-babyishly-teresa.ngrok-free.dev/api';
+  static const String baseUrl = 'https://eustolia-jural-unaspiringly.ngrok-free.dev/api';
   // static const String baseUrl = 'http://10.66.199.18:5000/api'; // Local fallback
 
   static Future<String?> _getToken() async {
@@ -452,6 +452,39 @@ class ApiService {
     if (response.statusCode != 200) {
       throw Exception('Failed to clear retired hurt status');
     }
+  }
+
+  static Future<Map<String, dynamic>> abandonMatch(String matchId, {String? reason}) async {
+    final headers = await _headers();
+    final response = await http.post(
+      Uri.parse('$baseUrl/matches/$matchId/abandon'),
+      headers: headers,
+      body: jsonEncode({'reason': reason}),
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+    final data = jsonDecode(response.body);
+    throw Exception(data['error'] ?? 'Failed to abandon match');
+  }
+
+  static Future<Map<String, dynamic>> penaltyRuns(
+    String matchId, {
+    required int innings,
+    required int runs,
+    String? reason,
+  }) async {
+    final headers = await _headers();
+    final response = await http.post(
+      Uri.parse('$baseUrl/matches/$matchId/penalty'),
+      headers: headers,
+      body: jsonEncode({'innings': innings, 'runs': runs, 'reason': reason}),
+    );
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    }
+    final data = jsonDecode(response.body);
+    throw Exception(data['error'] ?? 'Failed to apply penalty runs');
   }
 
   // ==================== PLAYERS (User-based) ====================

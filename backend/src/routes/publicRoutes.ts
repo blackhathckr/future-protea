@@ -59,7 +59,7 @@ router.get('/matches', async (req: Request, res: Response) => {
 router.get('/matches/:id', async (req: Request, res: Response) => {
   try {
     const match = await prisma.match.findUnique({
-      where: { id: req.params.id },
+      where: { id: req.params.id as string },
     });
     if (!match) {
       res.status(404).json({ error: 'Match not found' });
@@ -76,7 +76,7 @@ router.get('/matches/:id', async (req: Request, res: Response) => {
  */
 router.get('/matches/:id/scorecard', async (req: Request, res: Response) => {
   try {
-    const matchId = req.params.id;
+    const matchId = req.params.id as string;
     const [match, scores] = await Promise.all([
       prisma.match.findUnique({ where: { id: matchId } }),
       prisma.playerScore.findMany({
@@ -102,10 +102,24 @@ router.get('/matches/:id/balls', async (req: Request, res: Response) => {
   try {
     const { innings } = req.query as { innings?: string };
     const balls = await prisma.ball.findMany({
-      where: { matchId: req.params.id, ...(innings ? { innings: parseInt(innings) } : {}) },
+      where: {
+        matchId:  req.params.id as string,
+        isActive: true,
+        ...(innings ? { innings: parseInt(innings) } : {}),
+      },
+      include: {
+        batsman:    { select: { name: true } },
+        bowler:     { select: { name: true } },
+        nonStriker: { select: { name: true } },
+      },
       orderBy: [{ innings: 'asc' }, { overNumber: 'asc' }, { ballNumber: 'asc' }],
     });
-    res.json(toSnake(balls));
+    res.json(toSnake(balls.map((b) => ({
+      ...b,
+      batsman_name:     b.batsman?.name     ?? null,
+      bowler_name:      b.bowler?.name      ?? null,
+      non_striker_name: b.nonStriker?.name  ?? null,
+    }))));
   } catch (err: unknown) {
     res.status(500).json({ error: 'Failed to load balls' });
   }
@@ -148,7 +162,7 @@ router.get('/top-players', async (_req: Request, res: Response) => {
       ...bowlingRaw.map(r => r.playerId),
     ])];
 
-    const players = await prisma.user.findMany({
+    const players = await prisma.registeredPlayer.findMany({
       where: { id: { in: allPlayerIds } },
       select: { id: true, name: true, photoUrl: true, battingStyle: true, bowlingStyle: true },
     });
@@ -159,33 +173,33 @@ router.get('/top-players', async (_req: Request, res: Response) => {
       const runs = r._sum.runsScored ?? 0;
       const balls = r._sum.ballsFaced ?? 0;
       return {
-        player_id: r.playerId,
-        name: p?.name ?? 'Unknown',
-        photo_url: p?.photoUrl ?? null,
+        player_id:    r.playerId,
+        name:         p?.name         ?? 'Unknown',
+        photo_url:    p?.photoUrl     ?? null,
         batting_style: p?.battingStyle ?? null,
-        matches: r._count.id,
+        matches:      r._count.id,
         runs,
-        fours: r._sum.fours ?? 0,
-        sixes: r._sum.sixes ?? 0,
-        strike_rate: balls > 0 ? Math.round((runs * 100) / balls * 10) / 10 : 0,
+        fours:        r._sum.fours ?? 0,
+        sixes:        r._sum.sixes ?? 0,
+        strike_rate:  balls > 0 ? Math.round((runs * 100) / balls * 10) / 10 : 0,
       };
     }).filter(r => r.runs > 0);
 
     const topWicketTakers = bowlingRaw.map(r => {
       const p = playerMap.get(r.playerId);
       const wickets = r._sum.wicketsTaken ?? 0;
-      const runs = r._sum.runsConceded ?? 0;
-      const overs = r._sum.oversBowled ?? 0;
+      const runs    = r._sum.runsConceded ?? 0;
+      const overs   = r._sum.oversBowled  ?? 0;
       return {
-        player_id: r.playerId,
-        name: p?.name ?? 'Unknown',
-        photo_url: p?.photoUrl ?? null,
-        bowling_style: p?.bowlingStyle ?? null,
-        matches: r._count.id,
+        player_id:     r.playerId,
+        name:          p?.name          ?? 'Unknown',
+        photo_url:     p?.photoUrl      ?? null,
+        bowling_style: p?.bowlingStyle  ?? null,
+        matches:       r._count.id,
         wickets,
         runs_conceded: runs,
-        overs_bowled: overs,
-        economy: overs > 0 ? Math.round((runs / overs) * 100) / 100 : 0,
+        overs_bowled:  overs,
+        economy:       overs > 0 ? Math.round((runs / overs) * 100) / 100 : 0,
       };
     }).filter(r => r.wickets > 0);
 
@@ -216,17 +230,14 @@ router.get('/search', async (req: Request, res: Response) => {
           OR: [
             { team1Name: { contains: term, mode: 'insensitive' } },
             { team2Name: { contains: term, mode: 'insensitive' } },
-            { venue: { contains: term, mode: 'insensitive' } },
+            { venue:     { contains: term, mode: 'insensitive' } },
           ],
         },
         take: 10,
         orderBy: { matchDate: 'desc' },
       }),
-      prisma.user.findMany({
-        where: {
-          role: 'player',
-          name: { contains: term, mode: 'insensitive' },
-        },
+      prisma.registeredPlayer.findMany({
+        where: { name: { contains: term, mode: 'insensitive' } },
         select: { id: true, name: true, photoUrl: true, battingStyle: true, bowlingStyle: true },
         take: 10,
       }),

@@ -17,13 +17,35 @@ const authenticate = (req: Request, res: Response, next: NextFunction): void => 
       res.status(401).json({ error: 'Invalid token' });
       return;
     }
-    (req as AuthRequest).user = decoded as JwtPayload;
+    const payload = decoded as JwtPayload;
+    // Back-fill roles array for legacy tokens that only carry role string
+    if (!payload.roles || payload.roles.length === 0) {
+      payload.roles = payload.role ? [payload.role] : [];
+    }
+    (req as AuthRequest).user = payload;
     next();
   });
 };
 
+/**
+ * Checks whether the authenticated user has at least one of the required roles.
+ * Checks both:
+ *   1. JWT payload roles[] array  (new multi-role tokens)
+ *   2. JWT payload role string     (legacy single-role tokens — backward compat)
+ * admin role bypasses all checks.
+ */
 const authorize = (roles: string[]) => (req: Request, res: Response, next: NextFunction): void => {
-  if (!roles.includes((req as AuthRequest).user.role)) {
+  const user = (req as AuthRequest).user;
+  const userRoles = user.roles?.length ? user.roles : [user.role];
+
+  // admin bypasses all role gates
+  if (userRoles.includes('admin')) {
+    next();
+    return;
+  }
+
+  const hasRole = roles.some((r) => userRoles.includes(r));
+  if (!hasRole) {
     res.status(403).json({ error: 'Insufficient permissions' });
     return;
   }

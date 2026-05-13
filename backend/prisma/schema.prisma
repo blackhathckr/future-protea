@@ -8,188 +8,155 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id            String    @id @default(cuid())
-  name          String    @db.VarChar(255)
-  email         String    @unique @db.VarChar(255)
-  password      String    @db.VarChar(255)
-  role          String    @db.VarChar(50)
-  phone         String?   @db.VarChar(20)
-  photoUrl      String?   @map("photo_url") @db.VarChar(500)
-  dateOfBirth   DateTime? @map("date_of_birth") @db.Date
-  battingStyle  String?   @map("batting_style") @db.VarChar(50)
-  bowlingStyle  String?   @map("bowling_style") @db.VarChar(50)
-  approved      Boolean   @default(false)
-  createdAt     DateTime  @default(now()) @map("created_at")
-  lastLogin     DateTime? @map("last_login")
+// ─────────────────────────────────────────────
+// IDENTITY & ACCESS
+// ─────────────────────────────────────────────
 
-  createdMatches        Match[]            @relation("MatchCreator")
-  matchPlayers          MatchPlayer[]
-  playerScores          PlayerScore[]
-  batsmanBalls          Ball[]             @relation("BatsmanBalls")
-  bowlerBalls           Ball[]             @relation("BowlerBalls")
-  createdRegisteredPlayers RegisteredPlayer[]
-  createdTeams          Team[]
-  createdTournaments    Tournament[]
+model User {
+  id                   String    @id @default(cuid())
+  name                 String    @db.VarChar(255)
+  email                String    @unique @db.VarChar(255)
+  password             String    @db.VarChar(255)
+  role                 String    @db.VarChar(50)
+  phone                String?   @db.VarChar(20)
+  photoUrl             String?   @map("photo_url") @db.VarChar(500)
+  dateOfBirth          DateTime? @map("date_of_birth") @db.Date
+  battingStyle         String?   @map("batting_style") @db.VarChar(50)
+  bowlingStyle         String?   @map("bowling_style") @db.VarChar(50)
+  approved             Boolean   @default(false)
+  termsAcceptedAt      DateTime? @map("terms_accepted_at")
+  privacyAcceptedAt    DateTime? @map("privacy_accepted_at")
+  passwordResetToken   String?   @map("password_reset_token") @db.VarChar(255)
+  passwordResetExpiresAt DateTime? @map("password_reset_expires_at")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  lastLogin            DateTime? @map("last_login")
+
+  userRoles                UserRole[]
+  createdMatches           Match[]            @relation("MatchCreator")
+  createdRegisteredPlayers RegisteredPlayer[] @relation("PlayerCreator")
+  linkedPlayers            RegisteredPlayer[] @relation("LinkedUser")
+  createdTeams             Team[]
+  createdTournaments       Tournament[]
+  matchOfficials           MatchOfficial[]
+  auditLogs                AuditLog[]         @relation("AuditActor")
+  grantedRoles             UserRole[]         @relation("RoleGranter")
 
   @@map("users")
 }
 
-model Match {
-  id              String   @id @default(cuid())
-  team1Name       String   @map("team1_name") @db.VarChar(255)
-  team2Name       String   @map("team2_name") @db.VarChar(255)
-  venue           String?  @db.VarChar(255)
-  totalOvers      Int      @default(20) @map("total_overs")
-  status          String   @default("upcoming") @db.VarChar(20)
-  tossWinner      String?  @map("toss_winner") @db.VarChar(255)
-  tossDecision    String?  @map("toss_decision") @db.VarChar(20)
-  winner          String?  @db.VarChar(255)
-  team1Score      Int      @default(0) @map("team1_score")
-  team1Wickets    Int      @default(0) @map("team1_wickets")
-  team1Overs      Float    @default(0) @map("team1_overs")
-  team2Score      Int      @default(0) @map("team2_score")
-  team2Wickets    Int      @default(0) @map("team2_wickets")
-  team2Overs      Float    @default(0) @map("team2_overs")
-  currentInnings  Int      @default(1) @map("current_innings")
-  matchDate       DateTime @map("match_date")
-  createdBy       String?  @map("created_by")
-  tournamentId    String?  @map("tournament_id")
-  matchType       String   @default("T20") @map("match_type") @db.VarChar(20)
-  ballsPerOver    Int      @default(6) @map("balls_per_over")
-  umpire          String?  @db.VarChar(255)
-  playerOfMatch   String?  @map("player_of_match") @db.VarChar(255)
-  createdAt       DateTime @default(now()) @map("created_at")
-
-  creator         User?              @relation("MatchCreator", fields: [createdBy], references: [id])
-  tournament      Tournament?        @relation(fields: [tournamentId], references: [id], onDelete: SetNull)
-  matchPlayers    MatchPlayer[]
-  playerScores    PlayerScore[]
-  balls           Ball[]
-  tournamentFixtures TournamentFixture[]
-
-  @@map("matches")
-}
-
-model MatchPlayer {
-  id        String   @id @default(cuid())
-  matchId   String   @map("match_id")
-  playerId  String   @map("player_id")
-  team      Int?
-  status    String   @default("pending") @db.VarChar(20)
-  createdAt DateTime @default(now()) @map("created_at")
-
-  match     Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  player    User     @relation(fields: [playerId], references: [id], onDelete: Cascade)
-
-  @@unique([matchId, playerId])
-  @@map("match_players")
-}
-
-model PlayerScore {
-  id           String   @id @default(cuid())
-  matchId      String   @map("match_id")
-  playerId     String   @map("player_id")
-  team         Int?
-  runsScored   Int      @default(0) @map("runs_scored")
-  ballsFaced   Int      @default(0) @map("balls_faced")
-  fours        Int      @default(0)
-  sixes        Int      @default(0)
-  isOut        Boolean  @default(false) @map("is_out")
-  outType      String?  @map("out_type") @db.VarChar(50)
-  oversBowled  Float    @default(0) @map("overs_bowled")
-  runsConceded Int      @default(0) @map("runs_conceded")
-  wicketsTaken Int      @default(0) @map("wickets_taken")
-  maidens      Int      @default(0)
-  catches      Int      @default(0)
-  runOuts      Int      @default(0) @map("run_outs")
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  match        Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  player       User     @relation(fields: [playerId], references: [id], onDelete: Cascade)
-
-  @@unique([matchId, playerId])
-  @@map("player_scores")
-}
-
-model Ball {
+// Multi-role assignment per BRD §4 stakeholders
+// Roles: scorer, player, team_admin, tournament_organiser, coach, umpire,
+//        spectator, school_admin, club_admin, admin
+model UserRole {
   id          String   @id @default(cuid())
-  matchId     String   @map("match_id")
-  innings     Int
-  overNumber  Int      @map("over_number")
-  ballNumber  Int      @map("ball_number")
-  batsmanId   String?  @map("batsman_id")
-  bowlerId    String?  @map("bowler_id")
-  runs        Int      @default(0)
-  isWide      Boolean  @default(false) @map("is_wide")
-  isNoball    Boolean  @default(false) @map("is_noball")
-  isBye       Boolean  @default(false) @map("is_bye")
-  isLegbye    Boolean  @default(false) @map("is_legbye")
-  isWicket    Boolean  @default(false) @map("is_wicket")
-  wicketType  String?  @map("wicket_type") @db.VarChar(50)
-  extras      Int      @default(0)
-  overthrows  Int      @default(0)
-  shotDirection String? @map("shot_direction") @db.VarChar(30)
-  commentary  String?  @db.Text
-  createdAt   DateTime @default(now()) @map("created_at")
+  userId      String   @map("user_id")
+  role        String   @db.VarChar(30)
+  grantedAt   DateTime @default(now()) @map("granted_at")
+  grantedBy   String?  @map("granted_by")
 
-  match       Match    @relation(fields: [matchId], references: [id], onDelete: Cascade)
-  batsman     User?    @relation("BatsmanBalls", fields: [batsmanId], references: [id])
-  bowler      User?    @relation("BowlerBalls", fields: [bowlerId], references: [id])
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  granter     User?    @relation("RoleGranter", fields: [grantedBy], references: [id], onDelete: SetNull)
 
-  @@map("balls")
+  @@unique([userId, role])
+  @@map("user_roles")
 }
+
+// ─────────────────────────────────────────────
+// PLAYER REGISTRY
+// ─────────────────────────────────────────────
 
 model RegisteredPlayer {
   id            String   @id @default(cuid())
   name          String   @db.VarChar(255)
   playerIdCode  String?  @unique @map("player_id_code") @db.VarChar(50)
   dateOfBirth   DateTime? @map("date_of_birth") @db.Date
-  
+  isMinor       Boolean  @default(false) @map("is_minor")
+  linkedUserId  String?  @map("linked_user_id")
+
   // Contact Information
   email         String?  @db.VarChar(255)
   phone         String?  @db.VarChar(20)
-  emergencyContact String? @map("emergency_contact") @db.VarChar(20)
+  emergencyContact     String? @map("emergency_contact") @db.VarChar(20)
   emergencyContactName String? @map("emergency_contact_name") @db.VarChar(255)
-  
+
   // Address
   address       String?  @db.VarChar(500)
   city          String?  @db.VarChar(100)
   state         String?  @db.VarChar(100)
   country       String?  @db.VarChar(100)
   postalCode    String?  @map("postal_code") @db.VarChar(20)
-  
+
   // Physical Stats
-  height        Float?   // in cm
-  weight        Float?   // in kg
+  height        Float?
+  weight        Float?
   bloodGroup    String?  @map("blood_group") @db.VarChar(10)
-  
+
   // Cricket Details
   schoolName    String?  @map("school_name") @db.VarChar(255)
   clubName      String?  @map("club_name") @db.VarChar(255)
   battingStyle  String?  @map("batting_style") @db.VarChar(50)
   bowlingStyle  String?  @map("bowling_style") @db.VarChar(50)
-  playingRole   String?  @map("playing_role") @db.VarChar(50) // Batsman, Bowler, All-rounder, Wicket-keeper
+  playingRole   String?  @map("playing_role") @db.VarChar(50)
   jerseyNumber  Int?     @map("jersey_number")
-  
+
   // Additional Info
   photoUrl      String?  @map("photo_url") @db.VarChar(500)
   fatherName    String?  @map("father_name") @db.VarChar(255)
   motherName    String?  @map("mother_name") @db.VarChar(255)
   guardianName  String?  @map("guardian_name") @db.VarChar(255)
   nationality   String?  @db.VarChar(100)
-  
+
   createdBy     String?  @map("created_by")
   createdAt     DateTime @default(now()) @map("created_at")
 
-  creator       User?    @relation(fields: [createdBy], references: [id])
-  teamPlayers   TeamPlayer[]
+  creator         User?           @relation("PlayerCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  linkedUser      User?           @relation("LinkedUser", fields: [linkedUserId], references: [id], onDelete: SetNull)
+  teamPlayers     TeamPlayer[]
+  matchPlayers    MatchPlayer[]
+  playerScores    PlayerScore[]
+  batsmanBalls    Ball[]          @relation("BatsmanBalls")
+  bowlerBalls     Ball[]          @relation("BowlerBalls")
+  nonStrikerBalls Ball[]          @relation("NonStrikerBalls")
+  fielderBalls    Ball[]          @relation("FielderBalls")
+  dismissedByScores PlayerScore[] @relation("DismissedBy")
+  fielderScores   PlayerScore[]   @relation("FielderScore")
+  consentRecords  ConsentRecord[]
+  strikerInnings  MatchInnings[]  @relation("StrikerInnings")
+  nonStrikerInnings MatchInnings[] @relation("NonStrikerInnings")
+  currentBowlerInnings MatchInnings[] @relation("CurrentBowlerInnings")
+  partnerships1   Partnership[]   @relation("Batsman1Partnership")
+  partnerships2   Partnership[]   @relation("Batsman2Partnership")
+  fallOfWickets   FallOfWicket[]  @relation("FallenBatsman")
+  fowBowlers      FallOfWicket[]  @relation("FowBowler")
+  fowFielders     FallOfWicket[]  @relation("FowFielder")
+  playerOfMatchIn Match[]         @relation("PlayerOfMatch")
 
   @@map("registered_players")
 }
 
+// POPIA / parental consent for players under 18
+model ConsentRecord {
+  id                     String    @id @default(cuid())
+  playerId               String    @map("player_id")
+  consentType            String    @map("consent_type") @db.VarChar(30)
+  grantedByName          String    @map("granted_by_name") @db.VarChar(255)
+  grantedByRelationship  String    @map("granted_by_relationship") @db.VarChar(50)
+  grantedAt              DateTime  @default(now()) @map("granted_at")
+  evidenceUrl            String?   @map("evidence_url") @db.VarChar(500)
+  revokedAt              DateTime? @map("revoked_at")
+
+  player  RegisteredPlayer @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@map("consent_records")
+}
+
+// ─────────────────────────────────────────────
+// TEAMS
+// ─────────────────────────────────────────────
+
 model Team {
   id          String   @id @default(cuid())
+  teamCode    String?  @unique @map("team_code") @db.VarChar(20)
   teamName    String   @map("team_name") @db.VarChar(255)
   teamType    String   @map("team_type") @db.VarChar(20)
   schoolName  String?  @map("school_name") @db.VarChar(255)
@@ -198,46 +165,299 @@ model Team {
   createdBy   String?  @map("created_by")
   createdAt   DateTime @default(now()) @map("created_at")
 
-  creator     User?    @relation(fields: [createdBy], references: [id])
-  teamPlayers TeamPlayer[]
-  tournamentTeams TournamentTeam[]
+  creator          User?            @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  teamPlayers      TeamPlayer[]
+  tournamentTeams  TournamentTeam[]
+  team1Matches     Match[]          @relation("Team1Match")
+  team2Matches     Match[]          @relation("Team2Match")
+  wonMatches       Match[]          @relation("WinnerTeam")
+  battingInnings   MatchInnings[]   @relation("BattingTeamInnings")
+  bowlingInnings   MatchInnings[]   @relation("BowlingTeamInnings")
 
   @@map("teams")
 }
 
 model TeamPlayer {
-  id              String   @id @default(cuid())
-  teamId          String   @map("team_id")
-  playerId        String   @map("player_id")
-  isCaptain       Boolean  @default(false) @map("is_captain")
-  isWicketKeeper  Boolean  @default(false) @map("is_wicket_keeper")
-  createdAt       DateTime @default(now()) @map("created_at")
+  id             String   @id @default(cuid())
+  teamId         String   @map("team_id")
+  playerId       String   @map("player_id")
+  isCaptain      Boolean  @default(false) @map("is_captain")
+  isWicketKeeper Boolean  @default(false) @map("is_wicket_keeper")
+  createdAt      DateTime @default(now()) @map("created_at")
 
-  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
-  player    RegisteredPlayer @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  team   Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  player RegisteredPlayer @relation(fields: [playerId], references: [id], onDelete: Cascade)
 
   @@unique([teamId, playerId])
   @@map("team_players")
 }
 
+// ─────────────────────────────────────────────
+// MATCHES & SCORING
+// ─────────────────────────────────────────────
+
+model Match {
+  id             String   @id @default(cuid())
+  team1Name      String   @map("team1_name") @db.VarChar(255)
+  team2Name      String   @map("team2_name") @db.VarChar(255)
+  team1Id        String?  @map("team1_id")
+  team2Id        String?  @map("team2_id")
+  venue          String?  @db.VarChar(255)
+  totalOvers     Int      @default(20) @map("total_overs")
+  status         String   @default("upcoming") @db.VarChar(20)
+  tossWinner     String?  @map("toss_winner") @db.VarChar(255)
+  tossDecision   String?  @map("toss_decision") @db.VarChar(20)
+  winner         String?  @db.VarChar(255)
+  winnerTeamId   String?  @map("winner_team_id")
+  resultType     String?  @map("result_type") @db.VarChar(20)
+  resultMargin   Int?     @map("result_margin")
+  team1Score     Int      @default(0) @map("team1_score")
+  team1Wickets   Int      @default(0) @map("team1_wickets")
+  team1Overs     Float    @default(0) @map("team1_overs")
+  team2Score     Int      @default(0) @map("team2_score")
+  team2Wickets   Int      @default(0) @map("team2_wickets")
+  team2Overs     Float    @default(0) @map("team2_overs")
+  currentInnings Int      @default(1) @map("current_innings")
+  matchDate      DateTime @map("match_date")
+  createdBy      String?  @map("created_by")
+  tournamentId   String?  @map("tournament_id")
+  matchType      String   @default("T20") @map("match_type") @db.VarChar(20)
+  ballsPerOver   Int      @default(6) @map("balls_per_over")
+  umpire         String?  @db.VarChar(255)
+  playerOfMatch  String?  @map("player_of_match") @db.VarChar(255)
+  playerOfMatchId String? @map("player_of_match_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  creator            User?               @relation("MatchCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  tournament         Tournament?         @relation(fields: [tournamentId], references: [id], onDelete: SetNull)
+  team1              Team?               @relation("Team1Match", fields: [team1Id], references: [id], onDelete: SetNull)
+  team2              Team?               @relation("Team2Match", fields: [team2Id], references: [id], onDelete: SetNull)
+  winnerTeam         Team?               @relation("WinnerTeam", fields: [winnerTeamId], references: [id], onDelete: SetNull)
+  playerOfMatchRel   RegisteredPlayer?   @relation("PlayerOfMatch", fields: [playerOfMatchId], references: [id], onDelete: SetNull)
+  matchPlayers       MatchPlayer[]
+  playerScores       PlayerScore[]
+  balls              Ball[]
+  matchInnings       MatchInnings[]
+  matchOfficials     MatchOfficial[]
+  tournamentFixtures TournamentFixture[]
+
+  @@map("matches")
+}
+
+// Explicit innings tracking — required for 2nd innings target, extras by type,
+// current batsmen/bowler, and fall-of-wickets / partnerships
+model MatchInnings {
+  id              String    @id @default(cuid())
+  matchId         String    @map("match_id")
+  inningsNumber   Int       @map("innings_number")
+  battingTeamId   String?   @map("batting_team_id")
+  bowlingTeamId   String?   @map("bowling_team_id")
+  strikerId       String?   @map("striker_id")
+  nonStrikerId    String?   @map("non_striker_id")
+  currentBowlerId String?   @map("current_bowler_id")
+  targetRuns      Int?      @map("target_runs")
+  totalRuns       Int       @default(0) @map("total_runs")
+  totalWickets    Int       @default(0) @map("total_wickets")
+  totalOvers      Float     @default(0) @map("total_overs")
+  totalBalls      Int       @default(0) @map("total_balls")
+  extrasWides     Int       @default(0) @map("extras_wides")
+  extrasNoballs   Int       @default(0) @map("extras_noballs")
+  extrasByes      Int       @default(0) @map("extras_byes")
+  extrasLegbyes   Int       @default(0) @map("extras_legbyes")
+  extrasPenalties Int       @default(0) @map("extras_penalties")
+  status          String    @default("in_progress") @db.VarChar(20)
+  startedAt       DateTime? @map("started_at")
+  endedAt         DateTime? @map("ended_at")
+
+  match          Match             @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  battingTeam    Team?             @relation("BattingTeamInnings", fields: [battingTeamId], references: [id], onDelete: SetNull)
+  bowlingTeam    Team?             @relation("BowlingTeamInnings", fields: [bowlingTeamId], references: [id], onDelete: SetNull)
+  striker        RegisteredPlayer? @relation("StrikerInnings", fields: [strikerId], references: [id], onDelete: SetNull)
+  nonStriker     RegisteredPlayer? @relation("NonStrikerInnings", fields: [nonStrikerId], references: [id], onDelete: SetNull)
+  currentBowler  RegisteredPlayer? @relation("CurrentBowlerInnings", fields: [currentBowlerId], references: [id], onDelete: SetNull)
+  partnerships   Partnership[]
+  fallOfWickets  FallOfWicket[]
+
+  @@unique([matchId, inningsNumber])
+  @@map("match_innings")
+}
+
+// Replaces legacy matches.umpire varchar
+model MatchOfficial {
+  id           String   @id @default(cuid())
+  matchId      String   @map("match_id")
+  officialId   String?  @map("official_id")
+  officialName String   @map("official_name") @db.VarChar(255)
+  role         String   @db.VarChar(30)
+  assignedAt   DateTime @default(now()) @map("assigned_at")
+
+  match    Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  official User?  @relation(fields: [officialId], references: [id], onDelete: SetNull)
+
+  @@map("match_officials")
+}
+
+model MatchPlayer {
+  id             String   @id @default(cuid())
+  matchId        String   @map("match_id")
+  playerId       String   @map("player_id")
+  team           Int?
+  isCaptain      Boolean  @default(false) @map("is_captain")
+  isWicketKeeper Boolean  @default(false) @map("is_wicket_keeper")
+  status         String   @default("pending") @db.VarChar(20)
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  match  Match            @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player RegisteredPlayer @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, playerId])
+  @@map("match_players")
+}
+
+model PlayerScore {
+  id             String   @id @default(cuid())
+  matchId        String   @map("match_id")
+  playerId       String   @map("player_id")
+  team           Int?
+  // Batting
+  runsScored     Int      @default(0) @map("runs_scored")
+  ballsFaced     Int      @default(0) @map("balls_faced")
+  fours          Int      @default(0)
+  sixes          Int      @default(0)
+  isOut          Boolean  @default(false) @map("is_out")
+  outType        String?  @map("out_type") @db.VarChar(50)
+  dismissedById  String?  @map("dismissed_by_id")
+  fielderId      String?  @map("fielder_id")
+  // Bowling
+  oversBowled    Float    @default(0) @map("overs_bowled")
+  runsConceded   Int      @default(0) @map("runs_conceded")
+  wicketsTaken   Int      @default(0) @map("wickets_taken")
+  maidens        Int      @default(0)
+  // Fielding
+  catches        Int      @default(0)
+  runOuts        Int      @default(0) @map("run_outs")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  match       Match            @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  player      RegisteredPlayer @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  dismissedBy RegisteredPlayer? @relation("DismissedBy", fields: [dismissedById], references: [id], onDelete: SetNull)
+  fielder     RegisteredPlayer? @relation("FielderScore", fields: [fielderId], references: [id], onDelete: SetNull)
+
+  @@unique([matchId, playerId])
+  @@map("player_scores")
+}
+
+model Ball {
+  id                String   @id @default(cuid())
+  clientBallId      String?  @map("client_ball_id") @db.VarChar(50)
+  matchId           String   @map("match_id")
+  innings           Int
+  overNumber        Int      @map("over_number")
+  ballNumber        Int      @map("ball_number")
+  batsmanId         String?  @map("batsman_id")
+  bowlerId          String?  @map("bowler_id")
+  nonStrikerId      String?  @map("non_striker_id")
+  fielderId         String?  @map("fielder_id")
+  runs              Int      @default(0)
+  isWide            Boolean  @default(false) @map("is_wide")
+  isNoball          Boolean  @default(false) @map("is_noball")
+  isBye             Boolean  @default(false) @map("is_bye")
+  isLegbye          Boolean  @default(false) @map("is_legbye")
+  isWicket          Boolean  @default(false) @map("is_wicket")
+  wicketType        String?  @map("wicket_type") @db.VarChar(50)
+  extras            Int      @default(0)
+  overthrows        Int      @default(0)
+  shotDirection     String?  @map("shot_direction") @db.VarChar(30)
+  commentary        String?  @db.Text
+  isActive          Boolean  @default(true) @map("is_active")
+  supersededByBallId String? @map("superseded_by_ball_id")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  match           Match             @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  batsman         RegisteredPlayer? @relation("BatsmanBalls", fields: [batsmanId], references: [id], onDelete: SetNull)
+  bowler          RegisteredPlayer? @relation("BowlerBalls", fields: [bowlerId], references: [id], onDelete: SetNull)
+  nonStriker      RegisteredPlayer? @relation("NonStrikerBalls", fields: [nonStrikerId], references: [id], onDelete: SetNull)
+  fielder         RegisteredPlayer? @relation("FielderBalls", fields: [fielderId], references: [id], onDelete: SetNull)
+  supersededBy    Ball?             @relation("BallCorrection", fields: [supersededByBallId], references: [id], onDelete: SetNull)
+  corrections     Ball[]            @relation("BallCorrection")
+
+  @@unique([matchId, clientBallId])
+  @@map("balls")
+}
+
+// Batting partnerships between wickets
+model Partnership {
+  id              String   @id @default(cuid())
+  matchId         String   @map("match_id")
+  inningsId       String   @map("innings_id")
+  wicketNumber    Int      @map("wicket_number")
+  batsman1Id      String   @map("batsman1_id")
+  batsman2Id      String   @map("batsman2_id")
+  runs            Int      @default(0)
+  balls           Int      @default(0)
+  fours           Int      @default(0)
+  sixes           Int      @default(0)
+  batsman1Runs    Int      @default(0) @map("batsman1_runs")
+  batsman2Runs    Int      @default(0) @map("batsman2_runs")
+  startedAtScore  Int      @default(0) @map("started_at_score")
+  endedAtScore    Int?     @map("ended_at_score")
+  startedOver     Float    @default(0) @map("started_over")
+  endedOver       Float?   @map("ended_over")
+  unbroken        Boolean  @default(true)
+
+  innings  MatchInnings     @relation(fields: [inningsId], references: [id], onDelete: Cascade)
+  batsman1 RegisteredPlayer @relation("Batsman1Partnership", fields: [batsman1Id], references: [id], onDelete: Cascade)
+  batsman2 RegisteredPlayer @relation("Batsman2Partnership", fields: [batsman2Id], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, inningsId, wicketNumber])
+  @@map("partnerships")
+}
+
+// Wicket-by-wicket history
+model FallOfWicket {
+  id             String   @id @default(cuid())
+  matchId        String   @map("match_id")
+  inningsId      String   @map("innings_id")
+  wicketNumber   Int      @map("wicket_number")
+  batsmanId      String   @map("batsman_id")
+  dismissalType  String   @map("dismissal_type") @db.VarChar(30)
+  bowlerId       String?  @map("bowler_id")
+  fielderId      String?  @map("fielder_id")
+  runsAtFall     Int      @map("runs_at_fall")
+  oversAtFall    Float    @map("overs_at_fall")
+
+  innings RegisteredPlayer  @relation("FallenBatsman", fields: [batsmanId], references: [id], onDelete: Cascade)
+  bowler  RegisteredPlayer? @relation("FowBowler", fields: [bowlerId], references: [id], onDelete: SetNull)
+  fielder RegisteredPlayer? @relation("FowFielder", fields: [fielderId], references: [id], onDelete: SetNull)
+  inningsRef MatchInnings   @relation(fields: [inningsId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, inningsId, wicketNumber])
+  @@map("fall_of_wickets")
+}
+
+// ─────────────────────────────────────────────
+// TOURNAMENTS
+// ─────────────────────────────────────────────
+
 model Tournament {
-  id        String   @id @default(cuid())
-  name      String   @db.VarChar(255)
-  type      String   @default("T20") @db.VarChar(20)
-  overs     Int      @default(20)
+  id        String    @id @default(cuid())
+  name      String    @db.VarChar(255)
+  type      String    @default("T20") @db.VarChar(20)
+  overs     Int       @default(20)
   startDate DateTime? @map("start_date") @db.Date
   endDate   DateTime? @map("end_date") @db.Date
-  venue     String?  @db.VarChar(255)
-  organizer String?  @db.VarChar(255)
-  logoUrl   String?  @map("logo_url") @db.VarChar(500)
-  status    String   @default("upcoming") @db.VarChar(20)
-  createdBy String?  @map("created_by")
-  createdAt DateTime @default(now()) @map("created_at")
+  venue     String?   @db.VarChar(255)
+  organizer String?   @db.VarChar(255)
+  logoUrl   String?   @map("logo_url") @db.VarChar(500)
+  status    String    @default("upcoming") @db.VarChar(20)
+  createdBy String?   @map("created_by")
+  createdAt DateTime  @default(now()) @map("created_at")
 
-  creator   User?    @relation(fields: [createdBy], references: [id])
-  matches   Match[]
-  tournamentTeams TournamentTeam[]
+  creator            User?               @relation(fields: [createdBy], references: [id], onDelete: SetNull)
+  matches            Match[]
+  tournamentTeams    TournamentTeam[]
   tournamentFixtures TournamentFixture[]
+  tournamentStages   TournamentStage[]
 
   @@map("tournaments")
 }
@@ -259,8 +479,8 @@ model TournamentTeam {
   nrr          Float    @default(0)
   createdAt    DateTime @default(now()) @map("created_at")
 
-  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
-  team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  team       Team       @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@unique([tournamentId, teamId])
   @@map("tournament_teams")
@@ -276,11 +496,49 @@ model TournamentFixture {
   venue        String?  @db.VarChar(255)
   status       String   @default("upcoming") @db.VarChar(20)
   groupName    String?  @map("group_name") @db.VarChar(50)
+  stageId      String?  @map("stage_id")
   winner       String?  @db.VarChar(255)
   createdAt    DateTime @default(now()) @map("created_at")
 
-  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
-  match        Match?   @relation(fields: [matchId], references: [id], onDelete: SetNull)
+  tournament Tournament      @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  match      Match?          @relation(fields: [matchId], references: [id], onDelete: SetNull)
+  stage      TournamentStage? @relation(fields: [stageId], references: [id], onDelete: SetNull)
 
   @@map("tournament_fixtures")
+}
+
+// Phase 2 — knockout stage seeding
+model TournamentStage {
+  id           String   @id @default(cuid())
+  tournamentId String   @map("tournament_id")
+  stageName    String   @map("stage_name") @db.VarChar(50)
+  stageOrder   Int      @map("stage_order")
+  seedRule     String?  @db.Text
+
+  tournament Tournament         @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  fixtures   TournamentFixture[]
+
+  @@unique([tournamentId, stageOrder])
+  @@map("tournament_stages")
+}
+
+// ─────────────────────────────────────────────
+// OPERATIONS & COMPLIANCE
+// ─────────────────────────────────────────────
+
+// Audit trail for ball undos, match abandons, profile edits, role grants
+model AuditLog {
+  id           String   @id @default(cuid())
+  actorUserId  String?  @map("actor_user_id")
+  action       String   @db.VarChar(50)
+  entityType   String   @map("entity_type") @db.VarChar(50)
+  entityId     String   @map("entity_id") @db.VarChar(50)
+  before       Json?
+  after        Json?
+  ipAddress    String?  @map("ip_address") @db.VarChar(45)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  actor User? @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@map("audit_log")
 }

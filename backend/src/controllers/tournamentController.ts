@@ -282,9 +282,9 @@ const getTournamentStats = async (req: AuthRequest, res: Response): Promise<void
       _count: { id: true },
     });
 
-    // Get player names
+    // Get player names from registered_players (canonical source post identity-split fix)
     const playerIds = battingStats.map((b) => b.playerId);
-    const players = await prisma.user.findMany({
+    const players = await prisma.registeredPlayer.findMany({
       where: { id: { in: playerIds } },
       select: { id: true, name: true },
     });
@@ -331,7 +331,7 @@ const getTournamentStats = async (req: AuthRequest, res: Response): Promise<void
 
     // Best bowling figures — single match best (most wickets, fewest runs)
     const allBowlingScores = await prisma.playerScore.findMany({
-      where: { matchId: { in: matchIds }, wicketsTaken: { gt: 0 } },
+      where:  { matchId: { in: matchIds }, wicketsTaken: { gt: 0 } },
       select: { playerId: true, wicketsTaken: true, runsConceded: true },
     });
 
@@ -371,6 +371,35 @@ const getTournamentStats = async (req: AuthRequest, res: Response): Promise<void
       most_fours: mostFours,
       most_sixes: mostSixes,
     }));
+  } catch (error: unknown) {
+    const err = error as { message: string };
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const createFixture = async (req: AuthRequest, res: Response): Promise<void> => {
+  const tournamentId = req.params.id as string;
+  const {
+    team1_name, team2_name, team1_id, team2_id,
+    match_date, venue, round, group_name, match_id,
+  } = req.body;
+  try {
+    if (!team1_name || !team2_name) {
+      res.status(400).json({ error: 'team1_name and team2_name are required' });
+      return;
+    }
+    const fixture = await prisma.tournamentFixture.create({
+      data: {
+        tournamentId,
+        team1Name:  team1_name,
+        team2Name:  team2_name,
+        matchDate:  match_date ? new Date(match_date) : new Date(),
+        venue:      venue      || null,
+        groupName:  group_name || null,
+        matchId:    match_id   || null,
+      },
+    });
+    res.status(201).json(toSnake(fixture));
   } catch (error: unknown) {
     const err = error as { message: string };
     res.status(500).json({ error: err.message });
@@ -447,6 +476,7 @@ export default {
   createTournament,
   updateTournament,
   addTeamToTournament,
+  createFixture,
   getTournamentFixtures,
   getTournamentStandings,
   getTournamentStats,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:provider/provider.dart';
 import '../../models/match.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';

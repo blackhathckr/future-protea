@@ -9,6 +9,7 @@ router.get('/tournaments', authenticate, tournamentController.getTournaments as 
 router.get('/tournaments/:id', authenticate, tournamentController.getTournamentById as any);
 router.post('/tournaments', authenticate, authorize(['admin']), tournamentController.createTournament as any);
 router.post('/tournaments/:id/teams', authenticate, authorize(['admin']), tournamentController.addTeamToTournament as any);
+router.post('/tournaments/:id/fixtures', authenticate, authorize(['admin']), tournamentController.createFixture as any);
 router.get('/tournaments/:id/fixtures', authenticate, tournamentController.getTournamentFixtures as any);
 router.get('/tournaments/:id/standings', authenticate, tournamentController.getTournamentStandings as any);
 router.get('/tournaments/:id/stats', authenticate, tournamentController.getTournamentStats as any);

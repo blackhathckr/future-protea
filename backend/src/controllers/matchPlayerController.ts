@@ -3,21 +3,42 @@ import prisma from '../config/database';
 import toSnake from '../utils/toSnake';
 import { AuthRequest } from '../middleware/auth';
 
+/**
+ * POST /matches/:id/join
+ * Body: { registered_player_id, team? }
+ * Allows a logged-in user to join a match on behalf of their linked registered player.
+ */
 const joinMatch = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { team } = req.body;
+  const { registered_player_id, team } = req.body;
+
+  if (!registered_player_id) {
+    res.status(400).json({ error: 'registered_player_id is required' });
+    return;
+  }
+
   try {
+    // Verify the registered player exists
+    const player = await prisma.registeredPlayer.findUnique({
+      where: { id: registered_player_id as string },
+      select: { id: true, name: true },
+    });
+    if (!player) {
+      res.status(404).json({ error: 'Registered player not found' });
+      return;
+    }
+
     const matchPlayer = await prisma.matchPlayer.create({
       data: {
-        matchId: req.params.id as string,
-        playerId: req.user.id,
-        team: team || null,
+        matchId:  req.params.id as string,
+        playerId: registered_player_id as string,
+        team:     team || null,
       },
     });
     res.status(201).json(toSnake(matchPlayer));
   } catch (error: unknown) {
     const err = error as { code?: string; message: string };
     if (err.code === 'P2002') {
-      res.status(400).json({ error: 'Already joined this match' });
+      res.status(400).json({ error: 'Player already joined this match' });
       return;
     }
     res.status(500).json({ error: err.message });
@@ -181,14 +202,16 @@ const getApprovedPlayers = async (req: AuthRequest, res: Response): Promise<void
   }
 };
 
+/**
+ * POST /matches/:id/populate-players
+ * Seeds match_players from the team rosters linked to this match.
+ * Uses registered_player.id directly — no ghost user accounts.
+ */
 const populateMatchPlayers = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const matchId = req.params.id as string;
 
-    const match = await prisma.match.findUnique({
-      where: { id: matchId },
-    });
-
+    const match = await prisma.match.findUnique({ where: { id: matchId } });
     if (!match) {
       res.status(404).json({ error: 'Match not found' });
       return;
@@ -198,96 +221,75 @@ const populateMatchPlayers = async (req: AuthRequest, res: Response): Promise<vo
       teamPlayers: {
         include: {
           player: {
-            select: { id: true, name: true, battingStyle: true, bowlingStyle: true },
+            select: {
+              id: true, name: true,
+              battingStyle: true, bowlingStyle: true,
+            },
           },
         },
       },
     } as const;
 
+    // Prefer team FK, fall back to name match
     const [team1, team2] = await Promise.all([
-      prisma.team.findFirst({ where: { teamName: match.team1Name }, include: teamInclude }),
-      prisma.team.findFirst({ where: { teamName: match.team2Name }, include: teamInclude }),
+      match.team1Id
+        ? prisma.team.findUnique({ where: { id: match.team1Id }, include: teamInclude })
+        : prisma.team.findFirst({ where: { teamName: match.team1Name }, include: teamInclude }),
+      match.team2Id
+        ? prisma.team.findUnique({ where: { id: match.team2Id }, include: teamInclude })
+        : prisma.team.findFirst({ where: { teamName: match.team2Name }, include: teamInclude }),
     ]);
 
-    const createdPlayers: unknown[] = [];
-
-    // Collect all registered player IDs from both teams
     const allTeamPlayers = [
       ...(team1?.teamPlayers ?? []).map((tp) => ({ ...tp, teamNumber: 1 })),
       ...(team2?.teamPlayers ?? []).map((tp) => ({ ...tp, teamNumber: 2 })),
     ];
 
-    // Pre-fetch all existing users for these temp emails in one query
-    const tempEmails = allTeamPlayers.map((tp) => `player_${tp.player.id}@temp.com`);
-    const existingUsers = await prisma.user.findMany({
-      where: { email: { in: tempEmails } },
-      select: { id: true, email: true, name: true },
-    });
-    const userByEmail = new Map(existingUsers.map((u) => [u.email, u]));
-
-    // Pre-fetch existing match players in one query
+    // Pre-fetch existing match_player rows (by registered_player.id)
     const existingMatchPlayers = await prisma.matchPlayer.findMany({
       where: { matchId },
       include: { player: { select: { name: true } } },
     });
-    const seenNamesInMatch = new Set(
-      existingMatchPlayers.map((mp) => mp.player?.name?.toLowerCase().trim() || '')
+    const existingPlayerIds  = new Set(existingMatchPlayers.map((mp) => mp.playerId));
+    const seenNamesInMatch   = new Set(
+      existingMatchPlayers.map((mp) => mp.player.name.toLowerCase().trim()),
     );
-    const existingMatchPlayerIds = new Set(existingMatchPlayers.map((mp) => mp.playerId));
 
-    const seenNamesInTeam = new Set<string>();
+    const created: string[]  = [];
+    const seenInBatch        = new Set<string>();
 
     for (const tp of allTeamPlayers) {
-      const registeredPlayer = tp.player;
-      const nameKey = registeredPlayer.name.toLowerCase().trim();
-      const tempEmail = `player_${registeredPlayer.id}@temp.com`;
+      const nameKey = tp.player.name.toLowerCase().trim();
+      if (seenNamesInMatch.has(nameKey) || seenInBatch.has(nameKey)) continue;
+      seenInBatch.add(nameKey);
 
-      if (seenNamesInMatch.has(nameKey) || seenNamesInTeam.has(nameKey)) continue;
-      seenNamesInTeam.add(nameKey);
-
-      let user = userByEmail.get(tempEmail) ?? null;
-
-      if (!user) {
-        user = await prisma.user.create({
-          data: {
-            name: registeredPlayer.name,
-            email: tempEmail,
-            password: 'temp123',
-            role: 'player',
-            battingStyle: registeredPlayer.battingStyle,
-            bowlingStyle: registeredPlayer.bowlingStyle,
-            approved: true,
-          },
-        });
-        userByEmail.set(tempEmail, user);
-      }
-
-      if (!existingMatchPlayerIds.has(user.id)) {
-        const matchPlayer = await prisma.matchPlayer.create({
+      if (!existingPlayerIds.has(tp.player.id)) {
+        await prisma.matchPlayer.create({
           data: {
             matchId,
-            playerId: user.id,
-            team: tp.teamNumber,
-            status: 'approved',
+            playerId:       tp.player.id,
+            team:           tp.teamNumber,
+            status:         'approved',
+            isCaptain:      tp.isCaptain      ?? false,
+            isWicketKeeper: tp.isWicketKeeper ?? false,
           },
         });
-        createdPlayers.push(matchPlayer);
+        created.push(tp.player.id);
         seenNamesInMatch.add(nameKey);
-        existingMatchPlayerIds.add(user.id);
+        existingPlayerIds.add(tp.player.id);
       }
     }
 
-    // Clean up any pre-existing duplicate match_player rows.
+    // Remove any pre-existing duplicate rows by (team, name)
     const allMatchPlayers = await prisma.matchPlayer.findMany({
       where: { matchId },
       include: { player: { select: { name: true } } },
       orderBy: { id: 'asc' },
     });
-    const seenKeys = new Set<string>();
+    const seenKeys     = new Set<string>();
     const idsToDelete: string[] = [];
     for (const mp of allMatchPlayers) {
-      const nm = mp.player?.name?.toLowerCase().trim() ?? '';
-      const key = `${mp.team ?? 0}|${nm}`;
+      const key = `${mp.team ?? 0}|${mp.player.name.toLowerCase().trim()}`;
       if (seenKeys.has(key)) {
         idsToDelete.push(mp.id);
       } else {
@@ -299,8 +301,8 @@ const populateMatchPlayers = async (req: AuthRequest, res: Response): Promise<vo
     }
 
     res.json({
-      message: 'Match players populated successfully',
-      count: createdPlayers.length,
+      message:           'Match players populated successfully',
+      count:             created.length,
       duplicatesRemoved: idsToDelete.length,
     });
   } catch (error: unknown) {

@@ -24,6 +24,11 @@ router.post('/matches/:id/dedupe-players', authenticate, authorize(['feeder']), 
 router.put('/match-players/:id/approve', authenticate, authorize(['feeder']), matchPlayerController.approveMatchPlayer as any);
 router.get('/matches/:id/approved-players', authenticate, matchPlayerController.getApprovedPlayers as any);
 
+router.post('/matches/:id/innings/:inningsNumber/setup', authenticate, authorize(['feeder']), matchController.setupInnings as any);
+router.post('/matches/:id/innings/:inningsNumber/end', authenticate, authorize(['feeder']), matchController.endInnings as any);
+router.post('/matches/:id/abandon', authenticate, authorize(['feeder']), scoringController.abandonMatch as any);
+router.post('/matches/:id/penalty', authenticate, authorize(['feeder']), scoringController.penaltyRuns as any);
+
 router.post('/matches/:id/ball', authenticate, authorize(['feeder']), scoringController.recordBall as any);
 router.get('/matches/:id/balls', authenticate, scoringController.getBalls as any);
 router.delete('/matches/:id/ball/last', authenticate, authorize(['feeder']), scoringController.deleteLastBall as any);
