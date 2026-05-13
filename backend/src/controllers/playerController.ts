@@ -625,6 +625,27 @@ const getAllPlayers = async (_req: AuthRequest, res: Response): Promise<void> =>
   }
 };
 
+const getTopPlayers = async (_req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const players = await prisma.user.findMany({
+      where: { role: 'player', approved: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        battingStyle: true,
+        bowlingStyle: true,
+      },
+      orderBy: { createdAt: 'asc' },
+      take: 5,
+    });
+    res.json(toSnake(players));
+  } catch (error: unknown) {
+    const err = error as { message: string };
+    res.status(500).json({ error: err.message });
+  }
+};
+
 export default {
   getPlayers,
   approvePlayer,
@@ -632,4 +653,5 @@ export default {
   getPlayerJourneyByName,
   getMyProfile,
   getAllPlayers,
+  getTopPlayers,
 };

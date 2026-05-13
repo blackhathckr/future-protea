@@ -6,12 +6,13 @@ import upload from '../middleware/upload';
 
 const router = Router();
 
-router.get('/players/me/profile', authenticate, playerController.getMyProfile as any);
-router.get('/players/all', authenticate, playerController.getAllPlayers as any);
-router.get('/players/journey-by-name', authenticate, playerController.getPlayerJourneyByName as any);
-router.get('/players', authenticate, authorize(['admin']), playerController.getPlayers as any);
-router.put('/players/:id/approve', authenticate, authorize(['admin']), playerController.approvePlayer as any);
-router.get('/players/:id/journey', authenticate, playerController.getPlayerJourney as any);
+router.get('/me/profile', authenticate, playerController.getMyProfile as any);
+router.get('/all', authenticate, playerController.getAllPlayers as any);
+router.get('/journey-by-name', authenticate, playerController.getPlayerJourneyByName as any);
+router.get('/top', authenticate, playerController.getTopPlayers as any);
+router.get('/', authenticate, authorize(['admin']), playerController.getPlayers as any);
+router.put('/:id/approve', authenticate, authorize(['admin']), playerController.approvePlayer as any);
+router.get('/:id/journey', authenticate, playerController.getPlayerJourney as any);
 
 router.get('/registered-players', authenticate, registeredPlayerController.getRegisteredPlayers as any);
 router.post('/registered-players/backfill-accounts', authenticate, authorize(['admin']), registeredPlayerController.backfillPlayerAccounts as any);

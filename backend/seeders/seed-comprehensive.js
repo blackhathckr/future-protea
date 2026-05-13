@@ -21,12 +21,12 @@ async function insertUser(name, email, hash, role, bat, bowl) {
   return (await pool.query(`SELECT id FROM users WHERE email=$1`, [email])).rows[0].id;
 }
 
-async function createMatch(t1, t2, venue, overs, date, status, tossW, tossD, winner, feederId, tournId) {
+async function createMatch(t1, t2, venue, overs, date, status, tossW, tossD, winner, feederId, tournId, currentInnings = 1) {
   const id = createId();
   const r = await pool.query(
-    `INSERT INTO matches (id,team1_name,team2_name,venue,total_overs,match_date,status,toss_winner,toss_decision,winner,created_by,tournament_id)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING id`,
-    [id,t1,t2,venue,overs,date,status,tossW,tossD,winner,feederId,tournId]);
+    `INSERT INTO matches (id,team1_name,team2_name,venue,total_overs,match_date,status,toss_winner,toss_decision,winner,created_by,tournament_id,current_innings)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING id`,
+    [id,t1,t2,venue,overs,date,status,tossW,tossD,winner,feederId,tournId,currentInnings]);
   return r.rows[0].id;
 }
 
@@ -121,6 +121,7 @@ async function seed() {
 
   // ==================== USERS ====================
   console.log('Creating users...');
+  await insertUser('Admin User','admin@cricket.com',hash,'admin',null,null);
   const feeder = await insertUser('Liam van der Merwe','feeder@cricket.com',hash,'feeder',null,null);
   await insertUser('Cricket Fan','viewer@cricket.com',hash,'viewer',null,null);
 
@@ -435,6 +436,44 @@ async function seed() {
   const liveBalls = genBalls(liveId,1,[T[0][0],T[0][1],T[0][2]],[T[1][0],T[1][1],T[1][2],T[1][3]],95,1,11);
   await insertBalls(liveBalls);
 
+  // ==================== LIVE MATCH 2 (2nd Innings) ====================
+  console.log('Creating live match 2 (2nd innings)...');
+  const live2Id = await createMatch('Blue Sharks','Red Lions','Cape Town Oval',20,'2026-04-21 10:00','live','Blue Sharks','bat',null,feeder,t2Id,2);
+  await assignPlayers(live2Id, T[2], 1); await assignPlayers(live2Id, T[3], 2);
+  
+  // Team 1 (Blue Sharks) - Completed 1st innings
+  await addBatting(live2Id,T[2][0],1,68,45,7,3,false,null);
+  await addBatting(live2Id,T[2][1],1,42,32,4,1,true,'c Fourie b Modise');
+  await addBatting(live2Id,T[2][2],1,35,28,3,2,true,'b Khumalo');
+  await addBatting(live2Id,T[2][3],1,22,18,2,0,true,'lbw b Pillay');
+  await addBatting(live2Id,T[2][4],1,15,12,1,1,false,null);
+  
+  // Team 2 (Red Lions) - Currently batting in 2nd innings
+  await addBatting(live2Id,T[3][0],2,52,38,5,2,false,null);
+  await addBatting(live2Id,T[3][1],2,38,30,4,1,true,'c Brown b Phillips');
+  await addBatting(live2Id,T[3][2],2,28,22,2,1,false,null);
+  await addBatting(live2Id,T[3][3],2,8,6,1,0,true,'b Patel');
+  
+  // Bowling figures
+  await addBowling(live2Id,T[3][0],1,4,38,1,0);
+  await addBowling(live2Id,T[3][1],1,4,35,1,0);
+  await addBowling(live2Id,T[3][2],1,4,32,1,0);
+  await addBowling(live2Id,T[3][4],1,4,28,0,0);
+  await addBowling(live2Id,T[3][5],1,4,49,0,0);
+  
+  await addBowling(live2Id,T[2][0],2,3.2,30,0,0);
+  await addBowling(live2Id,T[2][1],2,4,28,1,0);
+  await addBowling(live2Id,T[2][2],2,4,32,1,0);
+  await addBowling(live2Id,T[2][5],2,3,36,0,0);
+  
+  await updateMatchScore(live2Id,182,4,20,126,2,14.2);
+  
+  // Generate balls for both innings
+  const live2Balls1 = genBalls(live2Id,1,[T[2][0],T[2][1],T[2][2],T[2][3],T[2][4]],[T[3][0],T[3][1],T[3][2],T[3][4],T[3][5]],182,4,20);
+  const live2Balls2 = genBalls(live2Id,2,[T[3][0],T[3][1],T[3][2],T[3][3]],[T[2][0],T[2][1],T[2][2],T[2][5]],126,2,14.2);
+  await insertBalls(live2Balls1); 
+  await insertBalls(live2Balls2);
+
   // ==================== UPCOMING MATCHES ====================
   console.log('Creating upcoming matches...');
   await createMatch('Bishops 1st XI','Hilton College 1st XI','Bishops Ground, Cape Town',20,'2026-04-25 10:00','upcoming',null,null,null,feeder,null);
@@ -451,6 +490,7 @@ async function seed() {
   console.log('Data Summary:');
   for (const [k,v] of Object.entries(counts)) console.log(`  ${k}: ${v}`);
   console.log('\nLogin Accounts:');
+  console.log('  Admin:   admin@cricket.com / password123');
   console.log('  Feeder:  feeder@cricket.com / password123');
   console.log('  Viewer:  viewer@cricket.com / password123');
   console.log('  Player:  shane.vw@p.com / password123');
