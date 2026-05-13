@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../models/team.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
 import '../../shared/utils/snackbar_utils.dart';
@@ -11,7 +12,9 @@ import '../../widgets/protea_buttons.dart';
 import 'team_registered_screen.dart';
 
 class RegisterTeamScreen extends StatefulWidget {
-  const RegisterTeamScreen({super.key});
+  final Team? teamToEdit;
+  
+  const RegisterTeamScreen({super.key, this.teamToEdit});
 
   @override
   State<RegisterTeamScreen> createState() => _RegisterTeamScreenState();
@@ -25,6 +28,20 @@ class _RegisterTeamScreenState extends State<RegisterTeamScreen> {
   bool _loading = false;
   File? _logoFile;
   final _picker = ImagePicker();
+  
+  @override
+  void initState() {
+    super.initState();
+    if (widget.teamToEdit != null) {
+      _teamNameCtrl.text = widget.teamToEdit!.teamName;
+      _teamType = widget.teamToEdit!.teamType;
+      if (widget.teamToEdit!.schoolName != null) {
+        _orgNameCtrl.text = widget.teamToEdit!.schoolName!;
+      } else if (widget.teamToEdit!.clubName != null) {
+        _orgNameCtrl.text = widget.teamToEdit!.clubName!;
+      }
+    }
+  }
 
   Future<void> _pickLogo() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
@@ -37,12 +54,20 @@ class _RegisterTeamScreenState extends State<RegisterTeamScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
     try {
-      final team = await ApiService.createTeam(
-        teamName: _teamNameCtrl.text.trim(),
-        teamType: _teamType,
-        schoolName: _teamType == 'school' ? _orgNameCtrl.text.trim() : null,
-        clubName: _teamType == 'club' ? _orgNameCtrl.text.trim() : null,
-      );
+      final team = widget.teamToEdit != null
+          ? await ApiService.updateTeam(
+              widget.teamToEdit!.id,
+              teamName: _teamNameCtrl.text.trim(),
+              teamType: _teamType,
+              schoolName: _teamType == 'school' ? _orgNameCtrl.text.trim() : null,
+              clubName: _teamType == 'club' ? _orgNameCtrl.text.trim() : null,
+            )
+          : await ApiService.createTeam(
+              teamName: _teamNameCtrl.text.trim(),
+              teamType: _teamType,
+              schoolName: _teamType == 'school' ? _orgNameCtrl.text.trim() : null,
+              clubName: _teamType == 'club' ? _orgNameCtrl.text.trim() : null,
+            );
       
       // Upload logo if selected
       if (_logoFile != null) {

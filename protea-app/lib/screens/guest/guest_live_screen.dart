@@ -8,6 +8,7 @@ import '../../theme/app_theme.dart';
 import '../../shared/widgets/empty_state.dart';
 import '../../widgets/protea_header.dart';
 import '../../widgets/theme_toggle.dart';
+import '../landing/landing_screen.dart';
 import 'guest_match_detail_screen.dart';
 
 class GuestLiveScreen extends StatefulWidget {
@@ -51,7 +52,15 @@ class _GuestLiveScreenState extends State<GuestLiveScreen> {
                   left: 8,
                   child: IconButton(
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => context.read<AuthProvider>().logout(),
+                    onPressed: () async {
+                      await context.read<AuthProvider>().logout();
+                      if (mounted) {
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(builder: (_) => const LandingScreen()),
+                          (_) => false,
+                        );
+                      }
+                    },
                     tooltip: 'Back to Sign In',
                   ),
                 ),

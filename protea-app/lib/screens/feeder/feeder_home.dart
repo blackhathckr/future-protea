@@ -18,6 +18,7 @@ import '../profile/profile_screen.dart';
 import 'feeder_create_match_screen.dart';
 import 'live_scoring_screen.dart';
 import '../matches/toss_screen.dart';
+import 'select_playing_xi_screen.dart';
 import 'player_journey_screen.dart';
 
 class FeederHome extends StatefulWidget {
@@ -454,8 +455,18 @@ class _MatchesHomeTab extends StatelessWidget {
               // Action buttons
               Row(
                 children: [
-                  if (match.status == 'upcoming')
+                  if (match.status == 'upcoming') ...[
+                    _actionButton('Select XI', Icons.people, AppTheme.upcomingBlue, () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => SelectPlayingXIScreen(matchId: match.id),
+                        ),
+                      ).then((_) => onRefresh());
+                    }),
+                    const SizedBox(width: 8),
                     _actionButton('Start', Icons.play_arrow, AppTheme.lightGreen, () => onStartMatch(match)),
+                  ],
                   if (match.status == 'live') ...[
                     _actionButton('Score', Icons.sports_cricket, AppTheme.accentGold, () {
                       Navigator.push(context, MaterialPageRoute(builder: (_) => LiveScoringScreen(matchId: match.id)));

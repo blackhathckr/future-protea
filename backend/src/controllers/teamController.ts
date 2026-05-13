@@ -360,6 +360,40 @@ const deleteTeamLogo = async (req: AuthRequest, res: Response): Promise<void> =>
   }
 };
 
+const deleteTeam = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const teamId = req.params.id as string;
+    const team = await prisma.team.findUnique({
+      where: { id: teamId },
+      select: { logoUrl: true },
+    });
+
+    if (!team) {
+      res.status(404).json({ error: 'Team not found' });
+      return;
+    }
+
+    // Delete logo from storage if exists
+    if (team.logoUrl && team.logoUrl.includes('supabase') && supabaseStorage.isConfigured()) {
+      try {
+        await supabaseStorage.deleteFile(team.logoUrl);
+      } catch (err: unknown) {
+        console.warn('Failed to delete team logo from storage:', (err as Error).message);
+      }
+    }
+
+    // Delete team (cascade will handle teamPlayers, matches, etc.)
+    await prisma.team.delete({
+      where: { id: teamId },
+    });
+
+    res.json({ message: 'Team deleted successfully' });
+  } catch (error: unknown) {
+    const err = error as { message: string };
+    res.status(500).json({ error: err.message });
+  }
+};
+
 export default {
   getTeams,
   getTeamById,
@@ -371,4 +405,5 @@ export default {
   updatePlayerRole,
   uploadTeamLogo,
   deleteTeamLogo,
+  deleteTeam,
 };

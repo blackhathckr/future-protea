@@ -60,13 +60,55 @@ router.get('/matches/:id', async (req: Request, res: Response) => {
   try {
     const match = await prisma.match.findUnique({
       where: { id: req.params.id as string },
+      include: {
+        creator: { select: { name: true } },
+        matchPlayers: {
+          include: {
+            player: {
+              select: { name: true, battingStyle: true, bowlingStyle: true, photoUrl: true },
+            },
+          },
+          orderBy: [{ team: 'asc' }, { player: { name: 'asc' } }],
+        },
+      },
     });
     if (!match) {
       res.status(404).json({ error: 'Match not found' });
       return;
     }
-    res.json(toSnake(match));
+
+    const team1 = await prisma.team.findFirst({
+      where: { teamName: match.team1Name },
+      select: { logoUrl: true, _count: { select: { teamPlayers: true } } },
+    });
+    const team2 = await prisma.team.findFirst({
+      where: { teamName: match.team2Name },
+      select: { logoUrl: true, _count: { select: { teamPlayers: true } } },
+    });
+
+    res.json(toSnake({
+      ...match,
+      created_by_name: match.creator?.name,
+      team1_logo_url: team1?.logoUrl,
+      team2_logo_url: team2?.logoUrl,
+      team1_player_count: team1?._count?.teamPlayers ?? 0,
+      team2_player_count: team2?._count?.teamPlayers ?? 0,
+      players: match.matchPlayers.map((mp) => ({
+        id: mp.id,
+        match_id: mp.matchId,
+        player_id: mp.playerId,
+        team: mp.team,
+        status: mp.status,
+        name: mp.player?.name,
+        batting_style: mp.player?.battingStyle,
+        bowling_style: mp.player?.bowlingStyle,
+        is_captain: mp.isCaptain ?? false,
+        is_wicket_keeper: mp.isWicketKeeper ?? false,
+        is_playing: (mp as any).isPlaying ?? false,
+      })),
+    }));
   } catch (err: unknown) {
+    logger.error('Public match detail error:', err);
     res.status(500).json({ error: 'Failed to load match' });
   }
 });

@@ -8,6 +8,7 @@ import 'theme/app_theme.dart';
 import 'screens/core/home_screen.dart';
 import 'screens/landing/landing_screen.dart';
 import 'screens/core/splash_screen.dart';
+import 'screens/guest/guest_live_screen.dart';
 
 /// Cached logo image provider - decoded once, used everywhere
 const _logoAsset = AssetImage('assets/images/Future_Protea_Logo.png');
@@ -78,7 +79,7 @@ class _FutureProteaAppState extends State<FutureProteaApp> {
                   }
 
                   if (auth.isGuest) {
-                    return const LandingScreen();
+                    return const GuestLiveScreen();
                   }
 
                   return const HomeScreen();

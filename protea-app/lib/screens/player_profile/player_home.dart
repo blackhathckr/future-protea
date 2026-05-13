@@ -8,8 +8,9 @@ import '../../models/tournament.dart';
 import '../../services/api_service.dart';
 import '../../providers/auth_provider.dart';
 import '../../shared/utils/snackbar_utils.dart';
-import '../../providers/theme_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/protea_header.dart';
+import '../../widgets/theme_toggle.dart';
 import '../viewer/match_detail_screen.dart';
 import '../tournaments/tournament_detail_screen.dart';
 import '../profile/profile_screen.dart';
@@ -87,45 +88,72 @@ class _PlayerHomeState extends State<PlayerHome> {
     ];
 
     final isProfileTab = _currentIndex == 4;
+    final photo = user?.photoUrl;
+    final userName = user?.name.split(' ').first ?? 'Player';
 
     return Scaffold(
-      appBar: isProfileTab
-          ? null
-          : AppBar(
-              leading: IconButton(
-                icon: const Icon(Icons.sports_cricket, color: AppTheme.accentGold),
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())).then((_) => setState(() {})),
-              ),
-              title: Text(
-                tabLabels[_currentIndex],
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 18),
-                overflow: TextOverflow.ellipsis,
-              ),
-              actions: [
-                Consumer<ThemeProvider>(
-                  builder: (_, theme, __) => IconButton(
-                    icon: Icon(theme.isDark ? Icons.light_mode : Icons.dark_mode),
-                    tooltip: theme.isDark ? 'Light mode' : 'Dark mode',
-                    onPressed: theme.toggle,
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            if (!isProfileTab)
+              Stack(
+                children: [
+                  const ProteaHeader(height: 90),
+                  Positioned(
+                    top: MediaQuery.of(context).padding.top + 6,
+                    left: 8,
+                    child: GestureDetector(
+                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileScreen())).then((_) => setState(() {})),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: AppTheme.accentGold, width: 2.5),
+                          boxShadow: [BoxShadow(color: AppTheme.accentGold.withValues(alpha: 0.3), blurRadius: 10)],
+                        ),
+                        child: CircleAvatar(
+                          radius: 20,
+                          backgroundColor: Colors.white,
+                          backgroundImage: photo != null && photo.isNotEmpty ? NetworkImage(ApiService.getPhotoUrl(photo)) : null,
+                          child: photo == null || photo.isEmpty
+                              ? Text(userName[0].toUpperCase(), style: GoogleFonts.poppins(color: AppTheme.primaryGreen, fontSize: 16, fontWeight: FontWeight.bold))
+                              : null,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                if (_currentIndex == 0 || _currentIndex == 3)
-                  IconButton(
-                    icon: const Icon(Icons.refresh),
-                    onPressed: () {
-                      if (_currentIndex == 3) {
-                        _loadMatches();
-                        _loadTournaments();
-                      } else if (_currentIndex == 0) {
-                        setState(() => _dashboardReloadTrigger++);
-                      }
-                    },
+                  Positioned(
+                    top: MediaQuery.of(context).padding.top + 2,
+                    right: 4,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (_currentIndex == 0 || _currentIndex == 3)
+                          IconButton(
+                            icon: const Icon(Icons.refresh, color: Colors.white, size: 22),
+                            onPressed: () {
+                              if (_currentIndex == 3) { _loadMatches(); _loadTournaments(); }
+                              else if (_currentIndex == 0) { setState(() => _dashboardReloadTrigger++); }
+                            },
+                          ),
+                        const ThemeToggleButton(),
+                        IconButton(
+                          icon: const Icon(Icons.logout, color: Colors.white, size: 22),
+                          onPressed: () => _confirmLogout(context),
+                        ),
+                      ],
+                    ),
                   ),
-              ],
+                ],
+              ),
+            Expanded(
+              child: IndexedStack(
+                index: _currentIndex,
+                children: tabs,
+              ),
             ),
-      body: IndexedStack(
-        index: _currentIndex,
-        children: tabs,
+          ],
+        ),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
@@ -282,20 +310,18 @@ class _PlayerHomeState extends State<PlayerHome> {
                 const SizedBox(height: 10),
                 Row(children: [
                   Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => _joinMatch(match, 1),
-                      icon: const Icon(Icons.group_add, size: 16),
-                      label: Text('Join ${match.team1Name}', overflow: TextOverflow.ellipsis),
-                      style: ElevatedButton.styleFrom(backgroundColor: AppTheme.team1Color, padding: const EdgeInsets.symmetric(vertical: 8)),
+                    child: _joinButton(
+                      label: 'Join ${match.team1Name}',
+                      color: AppTheme.team1Color,
+                      onTap: () => _joinMatch(match, 1),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => _joinMatch(match, 2),
-                      icon: const Icon(Icons.group_add, size: 16),
-                      label: Text('Join ${match.team2Name}', overflow: TextOverflow.ellipsis),
-                      style: ElevatedButton.styleFrom(backgroundColor: AppTheme.team2Color, padding: const EdgeInsets.symmetric(vertical: 8)),
+                    child: _joinButton(
+                      label: 'Join ${match.team2Name}',
+                      color: AppTheme.team2Color,
+                      onTap: () => _joinMatch(match, 2),
                     ),
                   ),
                 ]),
@@ -305,6 +331,39 @@ class _PlayerHomeState extends State<PlayerHome> {
         ),
       ),
     ).animate().slideY(begin: 0.05, delay: (index * 60).ms).fadeIn();
+  }
+
+  Widget _joinButton({required String label, required Color color, required VoidCallback onTap}) {
+    return Material(
+      color: color,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 9, horizontal: 8),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.group_add, size: 15, color: Colors.white),
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _scoreChip(String team, int runs, int wickets, double overs, {bool isWinner = false}) {
@@ -462,5 +521,25 @@ class _PlayerHomeState extends State<PlayerHome> {
         SnackbarUtils.showError(context, e);
       }
     }
+  }
+
+  void _confirmLogout(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await context.read<AuthProvider>().logout();
+            },
+            child: const Text('Logout', style: TextStyle(color: AppTheme.wicketRed)),
+          ),
+        ],
+      ),
+    );
   }
 }

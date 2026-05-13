@@ -13,7 +13,8 @@ import 'match_detail_screen.dart';
 
 class UpcomingMatchDetailScreen extends StatefulWidget {
   final String matchId;
-  const UpcomingMatchDetailScreen({super.key, required this.matchId});
+  final bool isPublic;
+  const UpcomingMatchDetailScreen({super.key, required this.matchId, this.isPublic = false});
 
   @override
   State<UpcomingMatchDetailScreen> createState() => _UpcomingMatchDetailScreenState();
@@ -47,36 +48,21 @@ class _UpcomingMatchDetailScreenState extends State<UpcomingMatchDetailScreen>
 
   Future<void> _loadData() async {
     try {
-      final match = await ApiService.getMatch(widget.matchId);
+      CricketMatch match;
+      if (widget.isPublic) {
+        final raw = await ApiService.getPublicMatch(widget.matchId);
+        match = CricketMatch.fromJson(raw);
+      } else {
+        match = await ApiService.getMatch(widget.matchId);
+      }
       if (!mounted) return;
       if (match.status != 'upcoming') {
         _navigateToMatchDetail();
         return;
       }
-      List<TeamPlayer> t1 = [];
-      List<TeamPlayer> t2 = [];
-      try {
-        // Find teams by name then load their full rosters
-        final allTeams = await ApiService.getTeams();
-        final team1 = allTeams.firstWhere(
-          (t) => t.teamName.toLowerCase().trim() == match.team1Name.toLowerCase().trim(),
-          orElse: () => allTeams.firstWhere(
-            (t) => match.team1Name.toLowerCase().contains(t.teamName.toLowerCase()),
-            orElse: () => allTeams.first,
-          ),
-        );
-        final team2 = allTeams.firstWhere(
-          (t) => t.teamName.toLowerCase().trim() == match.team2Name.toLowerCase().trim(),
-          orElse: () => allTeams.firstWhere(
-            (t) => match.team2Name.toLowerCase().contains(t.teamName.toLowerCase()),
-            orElse: () => allTeams.last,
-          ),
-        );
-        final fullTeam1 = await ApiService.getTeam(team1.id);
-        final fullTeam2 = await ApiService.getTeam(team2.id);
-        t1 = fullTeam1.players ?? [];
-        t2 = fullTeam2.players ?? [];
-      } catch (_) {}
+      // Build player lists from the match's embedded approved players
+      final t1 = _playersForTeam(match, 1);
+      final t2 = _playersForTeam(match, 2);
       if (!mounted) return;
       setState(() {
         _match = match;
@@ -89,9 +75,31 @@ class _UpcomingMatchDetailScreenState extends State<UpcomingMatchDetailScreen>
     }
   }
 
+  List<TeamPlayer> _playersForTeam(CricketMatch match, int teamNum) {
+    final matchPlayers = match.players;
+    if (matchPlayers == null || matchPlayers.isEmpty) return [];
+    return matchPlayers
+        .where((p) => p.team == teamNum && p.status == 'approved' && p.isPlaying)
+        .map((p) => TeamPlayer(
+              id: p.id,
+              teamId: '',
+              playerId: p.playerId,
+              playerName: p.name,
+              isCaptain: p.isCaptain,
+              isWicketKeeper: p.isWicketKeeper,
+            ))
+        .toList();
+  }
+
   Future<void> _pollStatus() async {
     try {
-      final match = await ApiService.getMatch(widget.matchId);
+      CricketMatch match;
+      if (widget.isPublic) {
+        final raw = await ApiService.getPublicMatch(widget.matchId);
+        match = CricketMatch.fromJson(raw);
+      } else {
+        match = await ApiService.getMatch(widget.matchId);
+      }
       if (!mounted) return;
       if (match.status != 'upcoming') {
         _navigateToMatchDetail();
@@ -103,7 +111,7 @@ class _UpcomingMatchDetailScreenState extends State<UpcomingMatchDetailScreen>
     if (!mounted) return;
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => MatchDetailScreen(matchId: widget.matchId)),
+      MaterialPageRoute(builder: (_) => MatchDetailScreen(matchId: widget.matchId, isGuest: widget.isPublic)),
     );
   }
 

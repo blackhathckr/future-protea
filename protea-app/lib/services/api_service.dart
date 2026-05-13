@@ -352,6 +352,18 @@ class ApiService {
     }
   }
 
+  static Future<void> togglePlayerPlaying(String matchId, String playerId, bool isPlaying) async {
+    final headers = await _headers();
+    final response = await http.put(
+      Uri.parse('$baseUrl/matches/$matchId/players/$playerId/toggle-playing'),
+      headers: headers,
+      body: jsonEncode({'is_playing': isPlaying}),
+    );
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update playing status');
+    }
+  }
+
   // ==================== SCORING ====================
 
   static Future<Map<String, dynamic>> addBall({
@@ -794,6 +806,18 @@ class ApiService {
       return Team.fromJson(jsonDecode(response.body));
     }
     throw Exception('Failed to upload logo');
+  }
+
+  static Future<void> deleteTeam(String teamId) async {
+    final headers = await _headers();
+    final response = await http.delete(
+      Uri.parse('$baseUrl/teams/$teamId'),
+      headers: headers,
+    );
+    if (response.statusCode != 200) {
+      final data = jsonDecode(response.body);
+      throw Exception(data['error'] ?? 'Failed to delete team');
+    }
   }
 
   static Future<Team> deleteTeamLogo(String teamId) async {

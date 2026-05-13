@@ -9,6 +9,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/protea_header.dart';
 import '../auth/login_screen.dart';
 import '../guest/guest_match_detail_screen.dart';
+import '../viewer/upcoming_match_detail_screen.dart';
 import 'news_detail_screen.dart';
 
 class LandingScreen extends StatefulWidget {
@@ -107,10 +108,14 @@ class _LandingScreenState extends State<LandingScreen> {
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const LoginScreen()));
   }
 
-  void _openMatch(String id) {
+  void _openMatch(String id, {bool isUpcoming = false}) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => GuestMatchDetailScreen(matchId: id)),
+      MaterialPageRoute(
+        builder: (_) => isUpcoming
+            ? UpcomingMatchDetailScreen(matchId: id, isPublic: true)
+            : GuestMatchDetailScreen(matchId: id),
+      ),
     );
   }
 
@@ -159,33 +164,35 @@ class _LandingScreenState extends State<LandingScreen> {
     return Stack(
       children: [
         const ProteaHeader(height: 200),
+        // Theme toggle on the LEFT
+        Positioned(
+          top: MediaQuery.of(context).padding.top + 8,
+          left: 0,
+          child: Consumer<ThemeProvider>(
+            builder: (context, theme, _) => IconButton(
+              icon: Icon(
+                theme.isDark ? Icons.light_mode : Icons.dark_mode,
+                color: Colors.white,
+              ),
+              onPressed: theme.toggle,
+            ),
+          ),
+        ),
+        // Sign In on the RIGHT
         Positioned(
           top: MediaQuery.of(context).padding.top + 8,
           right: 8,
-          child: Row(
-            children: [
-              Consumer<ThemeProvider>(
-                builder: (context, theme, _) => IconButton(
-                  icon: Icon(
-                    theme.isDark ? Icons.light_mode : Icons.dark_mode,
-                    color: Colors.white,
-                  ),
-                  onPressed: theme.toggle,
-                ),
+          child: TextButton.icon(
+            onPressed: _navigateToLogin,
+            icon: const Icon(Icons.login, color: Colors.white, size: 18),
+            label: Text(
+              'Sign In',
+              style: GoogleFonts.poppins(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+                fontSize: 13,
               ),
-              TextButton.icon(
-                onPressed: _navigateToLogin,
-                icon: const Icon(Icons.login, color: Colors.white, size: 18),
-                label: Text(
-                  'Sign In',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ],
@@ -733,7 +740,7 @@ class _LandingScreenState extends State<LandingScreen> {
               margin: const EdgeInsets.only(bottom: 10),
               child: InkWell(
                 borderRadius: BorderRadius.circular(12),
-                onTap: () => _openMatch(match.id),
+                onTap: () => _openMatch(match.id, isUpcoming: true),
                 child: Padding(
                   padding: const EdgeInsets.all(12),
                   child: Row(

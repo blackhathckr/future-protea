@@ -146,11 +146,15 @@ const getMatchById = async (req: Request, res: Response): Promise<void> => {
             batting_style: mp.player?.battingStyle,
             bowling_style: mp.player?.bowlingStyle,
             phone: (mp.player as Record<string, unknown>)?.phone,
+            is_captain: mp.isCaptain ?? false,
+            is_wicket_keeper: mp.isWicketKeeper ?? false,
+            is_playing: (mp as any).isPlaying ?? false,
           }))
           .filter((p) => {
-            const teamKey = p.team ?? 0;
             const nameKey = (p.name ?? '').toLowerCase().trim();
             if (!nameKey) return false;
+            // Use team ?? -1 to group unassigned players separately
+            const teamKey = p.team ?? -1;
             let seen = seenPerTeam.get(teamKey);
             if (!seen) { seen = new Set(); seenPerTeam.set(teamKey, seen); }
             if (seen.has(nameKey)) return false;

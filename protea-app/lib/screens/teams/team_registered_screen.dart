@@ -193,7 +193,18 @@ class _TeamRegisteredScreenState extends State<TeamRegisteredScreen> {
                             Positioned(
                               top: MediaQuery.of(context).padding.top + 8,
                               right: 8,
-                              child: const ThemeToggleButton(),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  if (canEdit)
+                                    IconButton(
+                                      icon: const Icon(Icons.delete, color: Colors.white),
+                                      onPressed: _deleteTeam,
+                                      tooltip: 'Delete Team',
+                                    ),
+                                  const ThemeToggleButton(),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -635,7 +646,15 @@ class _TeamRegisteredScreenState extends State<TeamRegisteredScreen> {
                                               ],
                                             ),
                                           ),
-                                          Icon(Icons.chevron_right, color: AppTheme.ts(context), size: 20),
+                                          if (canEdit)
+                                            IconButton(
+                                              icon: const Icon(Icons.remove_circle_outline, size: 20),
+                                              color: AppTheme.wicketRed,
+                                              onPressed: () => _removePlayer(p),
+                                              tooltip: 'Remove from team',
+                                            )
+                                          else
+                                            Icon(Icons.chevron_right, color: AppTheme.ts(context), size: 20),
                                         ],
                                       ),
                                     ),
@@ -727,6 +746,86 @@ class _TeamRegisteredScreenState extends State<TeamRegisteredScreen> {
       }
     } finally {
       if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _deleteTeam() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Delete Team', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+        content: Text(
+          'Are you sure you want to delete "${_team!.teamName}"? This action cannot be undone and will remove all associated data.',
+          style: GoogleFonts.poppins(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel', style: GoogleFonts.poppins()),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: AppTheme.wicketRed),
+            child: Text('Delete', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _loading = true);
+    try {
+      await ApiService.deleteTeam(_team!.id);
+      if (mounted) {
+        SnackbarUtils.showSuccess(context, 'Team deleted successfully');
+        Navigator.pop(context, true); // Return to previous screen
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loading = false);
+        SnackbarUtils.showError(context, 'Failed to delete team: $e');
+      }
+    }
+  }
+
+  Future<void> _removePlayer(TeamPlayer player) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Remove Player', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+        content: Text(
+          'Remove ${player.playerName} from ${_team!.teamName}?',
+          style: GoogleFonts.poppins(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel', style: GoogleFonts.poppins()),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: AppTheme.wicketRed),
+            child: Text('Remove', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _loading = true);
+    try {
+      await ApiService.removePlayerFromTeam(_team!.id, player.playerId);
+      await _loadTeam();
+      if (mounted) {
+        SnackbarUtils.showSuccess(context, 'Player removed from team');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loading = false);
+        SnackbarUtils.showError(context, 'Failed to remove player: $e');
+      }
     }
   }
 

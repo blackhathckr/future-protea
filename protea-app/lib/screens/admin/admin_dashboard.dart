@@ -17,6 +17,7 @@ import '../teams/register_team_screen.dart';
 import '../tournaments/create_tournament_screen.dart';
 import '../viewer/match_detail_screen.dart';
 import '../viewer/upcoming_match_detail_screen.dart';
+import 'manage_teams_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -331,46 +332,55 @@ class _AdminDashboardState extends State<AdminDashboard> with TickerProviderStat
   Widget _statTile(_StatTileData t) {
     return Card(
       margin: EdgeInsets.zero,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: t.color.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: t.label == 'Teams' 
+            ? () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ManageTeamsScreen()),
+                )
+            : null,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: t.color.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(t.icon, color: t.color, size: 20),
               ),
-              child: Icon(t.icon, color: t.color, size: 20),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              t.value.toString(),
-              style: GoogleFonts.poppins(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.tp(context),
-                height: 1,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              t.label,
-              style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.ts(context)),
-            ),
-            if (t.badge != null) ...[
-              const SizedBox(height: 2),
+              const SizedBox(height: 8),
               Text(
-                t.badge!,
+                t.value.toString(),
                 style: GoogleFonts.poppins(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  color: t.color,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.tp(context),
+                  height: 1,
                 ),
               ),
+              const SizedBox(height: 2),
+              Text(
+                t.label,
+                style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.ts(context)),
+              ),
+              if (t.badge != null) ...[
+                const SizedBox(height: 2),
+                Text(
+                  t.badge!,
+                  style: GoogleFonts.poppins(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    color: t.color,
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

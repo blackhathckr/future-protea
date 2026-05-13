@@ -8,6 +8,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/protea_header.dart';
 import '../core/home_screen.dart';
 import '../landing/landing_screen.dart';
+import '../guest/guest_live_screen.dart';
 import 'register_screen.dart';
 import 'forgot_password_screen.dart';
 
@@ -265,9 +266,14 @@ class _LoginScreenState extends State<LoginScreen> {
                             // Continue as Guest
                             Center(
                               child: TextButton(
-                                onPressed: context
-                                    .read<AuthProvider>()
-                                    .continueAsGuest,
+                                onPressed: () {
+                                  context.read<AuthProvider>().continueAsGuest();
+                                  Navigator.of(context).pushAndRemoveUntil(
+                                    MaterialPageRoute(
+                                        builder: (_) => const GuestLiveScreen()),
+                                    (_) => false,
+                                  );
+                                },
                                 child: Text(
                                   'Continue as Guest',
                                   style: GoogleFonts.poppins(

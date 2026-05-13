@@ -534,6 +534,11 @@ class _MatchDetailScreenState extends State<MatchDetailScreen>
           final hasWicket = over.value.any((b) => b.isWicket);
           final hasSix = over.value.any((b) => b.runs == 6 && !b.isBye && !b.isLegbye);
           final hasFour = over.value.any((b) => b.runs == 4 && !b.isBye && !b.isLegbye);
+          // Bowler name from the first ball in the over that has a bowler
+          final bowlerName = over.value
+              .firstWhere((b) => b.bowlerName != null && b.bowlerName!.isNotEmpty,
+                  orElse: () => over.value.first)
+              .bowlerName;
 
           return Container(
             margin: const EdgeInsets.only(bottom: 10),
@@ -547,59 +552,80 @@ class _MatchDetailScreenState extends State<MatchDetailScreen>
                       : null,
               boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06), blurRadius: 6, offset: const Offset(0, 2))],
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Over header
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(colors: [Color(0xFF1B5E20), Color(0xFF2E7D32)]),
-                          borderRadius: BorderRadius.circular(10),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(14),
+              onTap: () => _showOverDetailSheet(context, over.key, over.value, bowlerName, isDark),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Over header
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(colors: [Color(0xFF1B5E20), Color(0xFF2E7D32)]),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text('Over ${over.key}', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 11)),
                         ),
-                        child: Text('Over ${over.key}', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 11)),
-                      ),
-                      const Spacer(),
-                      // Over highlights
-                      if (hasWicket) _overHighlight('W', AppTheme.wicketRed),
-                      if (hasSix) _overHighlight('6', AppTheme.sixColor),
-                      if (hasFour) _overHighlight('4', AppTheme.fourColor),
-                      const SizedBox(width: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                        decoration: BoxDecoration(color: AppTheme.accentGold.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
-                        child: Text('$overRuns runs', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.accentAmber)),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  // Ball badges
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: over.value.asMap().entries.map((bEntry) {
-                      final ball = bEntry.value;
-                      final bi = bEntry.key;
-                      Color bg; Color fg = Colors.white;
-                      List<BoxShadow>? shadow;
-                      if (ball.isWicket) { bg = AppTheme.wicketRed; shadow = [BoxShadow(color: AppTheme.wicketRed.withValues(alpha: 0.4), blurRadius: 6)]; }
-                      else if (ball.runs == 4 && !ball.isBye && !ball.isLegbye) { bg = AppTheme.fourColor; fg = Colors.black; shadow = [BoxShadow(color: AppTheme.fourColor.withValues(alpha: 0.3), blurRadius: 4)]; }
-                      else if (ball.runs == 6 && !ball.isBye && !ball.isLegbye) { bg = AppTheme.sixColor; fg = Colors.black; shadow = [BoxShadow(color: AppTheme.sixColor.withValues(alpha: 0.4), blurRadius: 6)]; }
-                      else if (ball.runs == 0 && !ball.isWide && !ball.isNoball) { bg = isDark ? const Color(0xFF424242) : AppTheme.dotBallColor; }
-                      else { bg = isDark ? const Color(0xFF2C2C2C) : const Color(0xFFE0E0E0); fg = AppTheme.tp(context); }
-                      return Container(
-                        width: 40, height: 40,
-                        decoration: BoxDecoration(shape: BoxShape.circle, color: bg, boxShadow: shadow),
-                        alignment: Alignment.center,
-                        child: Text(ball.displayText, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: fg)),
-                      ).animate().fadeIn(duration: 250.ms, delay: (bi * 40).ms).scale(begin: const Offset(0.7, 0.7), duration: 250.ms, delay: (bi * 40).ms, curve: Curves.easeOutBack);
-                    }).toList(),
-                  ),
-                ],
+                        const SizedBox(width: 8),
+                        if (bowlerName != null) ...[
+                          Icon(Icons.sports_baseball, size: 11, color: AppTheme.ts(context)),
+                          const SizedBox(width: 3),
+                          Flexible(
+                            child: Text(bowlerName, style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.ts(context), fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis),
+                          ),
+                        ],
+                        const Spacer(),
+                        // Over highlights
+                        if (hasWicket) _overHighlight('W', AppTheme.wicketRed),
+                        if (hasSix) _overHighlight('6', AppTheme.sixColor),
+                        if (hasFour) _overHighlight('4', AppTheme.fourColor),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                          decoration: BoxDecoration(color: AppTheme.accentGold.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
+                          child: Text('$overRuns runs', style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.accentAmber)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    // Ball badges
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: over.value.asMap().entries.map((bEntry) {
+                        final ball = bEntry.value;
+                        final bi = bEntry.key;
+                        Color bg; Color fg = Colors.white;
+                        List<BoxShadow>? shadow;
+                        if (ball.isWicket) { bg = AppTheme.wicketRed; shadow = [BoxShadow(color: AppTheme.wicketRed.withValues(alpha: 0.4), blurRadius: 6)]; }
+                        else if (ball.runs == 4 && !ball.isBye && !ball.isLegbye) { bg = AppTheme.fourColor; fg = Colors.black; shadow = [BoxShadow(color: AppTheme.fourColor.withValues(alpha: 0.3), blurRadius: 4)]; }
+                        else if (ball.runs == 6 && !ball.isBye && !ball.isLegbye) { bg = AppTheme.sixColor; fg = Colors.black; shadow = [BoxShadow(color: AppTheme.sixColor.withValues(alpha: 0.4), blurRadius: 6)]; }
+                        else if (ball.runs == 0 && !ball.isWide && !ball.isNoball) { bg = isDark ? const Color(0xFF424242) : AppTheme.dotBallColor; }
+                        else { bg = isDark ? const Color(0xFF2C2C2C) : const Color(0xFFE0E0E0); fg = AppTheme.tp(context); }
+                        return Container(
+                          width: 40, height: 40,
+                          decoration: BoxDecoration(shape: BoxShape.circle, color: bg, boxShadow: shadow),
+                          alignment: Alignment.center,
+                          child: Text(ball.displayText, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: fg)),
+                        ).animate().fadeIn(duration: 250.ms, delay: (bi * 40).ms).scale(begin: const Offset(0.7, 0.7), duration: 250.ms, delay: (bi * 40).ms, curve: Curves.easeOutBack);
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        Icon(Icons.info_outline_rounded, size: 12, color: AppTheme.ts(context).withValues(alpha: 0.4)),
+                        const SizedBox(width: 3),
+                        Text('Tap for over details', style: GoogleFonts.poppins(fontSize: 10, color: AppTheme.ts(context).withValues(alpha: 0.4))),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ).animate().fadeIn(duration: 400.ms, delay: (idx * 70).ms).slideX(begin: 0.04);
@@ -625,6 +651,165 @@ class _MatchDetailScreenState extends State<MatchDetailScreen>
       width: 22, height: 22,
       decoration: BoxDecoration(shape: BoxShape.circle, color: color.withValues(alpha: 0.15), border: Border.all(color: color.withValues(alpha: 0.5), width: 1)),
       child: Center(child: Text(text, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: color))),
+    );
+  }
+
+  void _showOverDetailSheet(BuildContext context, int overNum, List<Ball> balls, String? bowlerName, bool isDark) {
+    final overRuns = balls.fold<int>(0, (s, b) => s + b.runs + b.extras);
+    final wickets = balls.where((b) => b.isWicket).length;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => DraggableScrollableSheet(
+        initialChildSize: 0.55,
+        minChildSize: 0.35,
+        maxChildSize: 0.9,
+        builder: (_, scrollCtrl) => Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1A1A1A) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            children: [
+              // Handle
+              Container(
+                margin: const EdgeInsets.only(top: 10),
+                width: 40, height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.withValues(alpha: 0.4),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Header
+              Container(
+                margin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [Color(0xFF0D3B12), Color(0xFF1B5E20)]),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(10)),
+                      child: Text('Over $overNum', style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 14)),
+                    ),
+                    const SizedBox(width: 10),
+                    if (bowlerName != null) ...[
+                      Icon(Icons.sports_baseball, size: 13, color: Colors.white70),
+                      const SizedBox(width: 4),
+                      Flexible(child: Text(bowlerName, style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13), overflow: TextOverflow.ellipsis)),
+                    ],
+                    const Spacer(),
+                    Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                      Text('$overRuns runs', style: GoogleFonts.poppins(color: AppTheme.accentGold, fontWeight: FontWeight.w700, fontSize: 13)),
+                      if (wickets > 0) Text('$wickets wkt${wickets > 1 ? "s" : ""}', style: GoogleFonts.poppins(color: AppTheme.wicketRed, fontWeight: FontWeight.w600, fontSize: 11)),
+                    ]),
+                  ],
+                ),
+              ),
+              // Ball list
+              Expanded(
+                child: ListView.builder(
+                  controller: scrollCtrl,
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+                  itemCount: balls.length,
+                  itemBuilder: (_, i) {
+                    final ball = balls[i];
+                    Color ballColor;
+                    if (ball.isWicket) ballColor = AppTheme.wicketRed;
+                    else if (ball.runs == 6 && !ball.isBye && !ball.isLegbye) ballColor = AppTheme.sixColor;
+                    else if (ball.runs == 4 && !ball.isBye && !ball.isLegbye) ballColor = AppTheme.fourColor;
+                    else if (ball.runs == 0 && !ball.isWide && !ball.isNoball) ballColor = Colors.grey;
+                    else ballColor = AppTheme.primaryGreen;
+
+                    final ballLabel = '${overNum}.${ball.ballNumber}';
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(12),
+                        color: isDark ? Colors.white.withValues(alpha: 0.05) : Colors.grey.withValues(alpha: 0.06),
+                        border: Border.all(
+                          color: ball.isWicket
+                              ? AppTheme.wicketRed.withValues(alpha: 0.3)
+                              : isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          // Ball number + result
+                          Column(
+                            children: [
+                              Container(
+                                width: 42, height: 42,
+                                decoration: BoxDecoration(shape: BoxShape.circle, color: ballColor.withValues(alpha: 0.15), border: Border.all(color: ballColor.withValues(alpha: 0.5), width: 1.5)),
+                                alignment: Alignment.center,
+                                child: Text(ball.displayText, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12, color: ballColor)),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(ballLabel, style: TextStyle(fontSize: 9, color: AppTheme.ts(context))),
+                            ],
+                          ),
+                          const SizedBox(width: 12),
+                          // Batsman + bowler info
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                if (ball.batsmanName != null)
+                                  Row(children: [
+                                    Icon(Icons.sports_cricket, size: 12, color: AppTheme.primaryGreen),
+                                    const SizedBox(width: 4),
+                                    Flexible(child: Text(ball.batsmanName!, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13, color: isDark ? Colors.white : Colors.black87), overflow: TextOverflow.ellipsis)),
+                                  ]),
+                                if (ball.bowlerName != null) ...[
+                                  const SizedBox(height: 2),
+                                  Row(children: [
+                                    Icon(Icons.sports_baseball, size: 11, color: AppTheme.ts(context)),
+                                    const SizedBox(width: 4),
+                                    Flexible(child: Text(ball.bowlerName!, style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.ts(context)), overflow: TextOverflow.ellipsis)),
+                                  ]),
+                                ],
+                                if (ball.isWicket && ball.wicketType != null) ...[
+                                  const SizedBox(height: 3),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                    decoration: BoxDecoration(color: AppTheme.wicketRed.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(6)),
+                                    child: Text(ball.wicketType!.toUpperCase(), style: TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppTheme.wicketRed, letterSpacing: 0.5)),
+                                  ),
+                                ],
+                                if (ball.commentary != null && ball.commentary!.isNotEmpty) ...[
+                                  const SizedBox(height: 3),
+                                  Text(ball.commentary!, style: GoogleFonts.poppins(fontSize: 10, color: AppTheme.ts(context), fontStyle: FontStyle.italic), maxLines: 2, overflow: TextOverflow.ellipsis),
+                                ],
+                              ],
+                            ),
+                          ),
+                          // Extras tag
+                          if (ball.isWide || ball.isNoball || ball.isBye || ball.isLegbye)
+                            Container(
+                              margin: const EdgeInsets.only(left: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                              decoration: BoxDecoration(color: Colors.orange.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(6)),
+                              child: Text(
+                                ball.isWide ? 'WD' : ball.isNoball ? 'NB' : ball.isBye ? 'B' : 'LB',
+                                style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Colors.orange),
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

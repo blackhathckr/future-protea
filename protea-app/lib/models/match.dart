@@ -211,6 +211,7 @@ class MatchPlayer {
   final String? phone;
   final bool isCaptain;
   final bool isWicketKeeper;
+  final bool isPlaying;
 
   MatchPlayer({
     required this.id,
@@ -224,6 +225,7 @@ class MatchPlayer {
     this.phone,
     this.isCaptain = false,
     this.isWicketKeeper = false,
+    this.isPlaying = false,
   });
 
   factory MatchPlayer.fromJson(Map<String, dynamic> json) {
@@ -239,6 +241,7 @@ class MatchPlayer {
       phone: json['phone'],
       isCaptain: json['is_captain'] ?? false,
       isWicketKeeper: json['is_wicket_keeper'] ?? false,
+      isPlaying: json['is_playing'] ?? false,
     );
   }
 }

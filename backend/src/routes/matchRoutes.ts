@@ -23,6 +23,7 @@ router.post('/matches/:id/populate-players', authenticate, authorize(['feeder'])
 router.post('/matches/:id/dedupe-players', authenticate, authorize(['feeder']), matchPlayerController.dedupeMatchPlayers as any);
 router.put('/match-players/:id/approve', authenticate, authorize(['feeder']), matchPlayerController.approveMatchPlayer as any);
 router.get('/matches/:id/approved-players', authenticate, matchPlayerController.getApprovedPlayers as any);
+router.put('/matches/:id/players/:playerId/toggle-playing', authenticate, authorize(['feeder']), matchPlayerController.togglePlaying as any);
 
 router.post('/matches/:id/innings/:inningsNumber/setup', authenticate, authorize(['feeder']), matchController.setupInnings as any);
 router.post('/matches/:id/innings/:inningsNumber/end', authenticate, authorize(['feeder']), matchController.endInnings as any);

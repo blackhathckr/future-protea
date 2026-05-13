@@ -354,6 +354,49 @@ const dedupeMatchPlayers = async (req: AuthRequest, res: Response): Promise<void
   }
 };
 
+/**
+ * PUT /matches/:id/players/:playerId/toggle-playing
+ * Toggle whether an approved player is in the playing XI for the match
+ */
+const togglePlaying = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const matchId = req.params.id as string;
+    const playerId = req.params.playerId as string;
+    const { is_playing } = req.body;
+
+    if (typeof is_playing !== 'boolean') {
+      res.status(400).json({ error: 'is_playing must be a boolean' });
+      return;
+    }
+
+    // Find the match player
+    const matchPlayer = await prisma.matchPlayer.findUnique({
+      where: { matchId_playerId: { matchId, playerId } },
+    });
+
+    if (!matchPlayer) {
+      res.status(404).json({ error: 'Player not found in this match' });
+      return;
+    }
+
+    if (matchPlayer.status !== 'approved') {
+      res.status(400).json({ error: 'Only approved players can be added to playing XI' });
+      return;
+    }
+
+    // Update the playing status
+    const updated = await prisma.matchPlayer.update({
+      where: { matchId_playerId: { matchId, playerId } },
+      data: { isPlaying: is_playing },
+    });
+
+    res.json(toSnake(updated));
+  } catch (error: unknown) {
+    const err = error as { message: string };
+    res.status(500).json({ error: err.message });
+  }
+};
+
 export default {
   joinMatch,
   getMatchPlayers,
@@ -361,4 +404,5 @@ export default {
   getApprovedPlayers,
   populateMatchPlayers,
   dedupeMatchPlayers,
+  togglePlaying,
 };
