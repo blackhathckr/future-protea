@@ -1,0 +1,33 @@
+pool: hashxpert
+
+variables:
+  - group: cloudflare-credentials
+  - ${{ if eq(variables['Build.SourceBranchName'], 'develop') }}:
+    - group: sbwisdom-frontend-dev
+  - ${{ if eq(variables['Build.SourceBranchName'], 'qa') }}:
+    - group: sbwisdom-frontend-qa
+  - ${{ if eq(variables['Build.SourceBranchName'], 'staging') }}:
+    - group: sbwisdom-frontend-staging
+  - ${{ if eq(variables['Build.SourceBranchName'], 'main') }}:
+    - group: sbwisdom-frontend-prod
+
+steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '20.x'
+    displayName: 'Install Node.js'
+
+  - script: npm install -g pnpm && cd sbwisdom-admin && pnpm install --frozen-lockfile
+    displayName: 'Install dependencies'
+
+  - script: cd sbwisdom-admin && pnpm build
+    displayName: 'Build'
+    env:
+      VITE_API_URL: $(VITE_API_URL)
+      VITE_RAZORPAY_KEY_ID: $(VITE_RAZORPAY_KEY_ID)
+
+  - script: cd sbwisdom-admin && npx wrangler pages deploy ./dist --project-name=sbwisdom-admin --branch=$(Build.SourceBranchName)
+    displayName: 'Deploy to Cloudflare Pages'
+    env:
+      CLOUDFLARE_ACCOUNT_ID: $(CLOUDFLARE_ACCOUNT_ID)
+      CLOUDFLARE_API_TOKEN: $(CLOUDFLARE_API_TOKEN)

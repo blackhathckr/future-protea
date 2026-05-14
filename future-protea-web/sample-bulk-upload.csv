@@ -1,0 +1,8 @@
+firstName,lastName,email,phone,role,battingStyle,bowlingStyle,specialization
+Virat,Kohli,virat.kohli@futureprotea.com,9876543210,PLAYER,Right-hand bat,Right-arm medium,Batsman
+Rohit,Sharma,rohit.sharma@futureprotea.com,9876543211,PLAYER,Right-hand bat,Right-arm off break,Batsman
+Jasprit,Bumrah,jasprit.bumrah@futureprotea.com,9876543212,PLAYER,Right-hand bat,Right-arm fast,Bowler
+Ravindra,Jadeja,ravindra.jadeja@futureprotea.com,9876543213,PLAYER,Left-hand bat,Left-arm orthodox,All-rounder
+KL,Rahul,kl.rahul@futureprotea.com,9876543214,PLAYER,Right-hand bat,Right-arm off break,Wicket-keeper
+Ravi,Shastri,ravi.shastri@futureprotea.com,9876543215,COACH,,,Head Coach
+Rahul,Dravid,rahul.dravid@futureprotea.com,9876543216,MANAGER,,,Team Manager
