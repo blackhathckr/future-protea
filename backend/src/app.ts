@@ -1,12 +1,14 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+import http from 'http';
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import path from 'path';
 import routes from './routes';
 import requestLogger from './middleware/requestLogger';
 import logger from './utils/logger';
+import { initSocketIO } from './services/socketService';
 
 const app = express();
 
@@ -32,7 +34,11 @@ app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT as number, '0.0.0.0', () => {
+const httpServer = http.createServer(app);
+
+initSocketIO(httpServer);
+
+httpServer.listen(PORT as number, '0.0.0.0', () => {
   console.log('\n' + '='.repeat(60));
   logger.info('Cricket Match Management API Server Started');
   console.log('='.repeat(60));
@@ -40,6 +46,7 @@ app.listen(PORT as number, '0.0.0.0', () => {
   logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
   logger.info(`Log Level: ${process.env.LOG_LEVEL || 'info'}`);
   logger.info(`Health Check: http://localhost:${PORT}/health`);
+  logger.info(`Socket.IO: ws://localhost:${PORT}`);
   logger.info(`Logs Directory: ./logs/`);
   console.log('='.repeat(60) + '\n');
   logger.info('Server ready to accept requests...\n');
