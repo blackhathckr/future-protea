@@ -4,6 +4,7 @@ import prisma from '../config/database';
 import toSnake from '../utils/toSnake';
 import { AuthRequest } from '../middleware/auth';
 import LiveScoreService from '../services/liveScoreService';
+import { emitBallEvent } from '../services/socketService';
 import logger from '../utils/logger';
 
 // ---------------------------------------------------------------------------
@@ -367,7 +368,7 @@ const recordBall = async (req: AuthRequest, res: Response): Promise<void> => {
       const currentScore   = innings === 1 ? result.match?.team1Score   : result.match?.team2Score;
       const currentWickets = innings === 1 ? result.match?.team1Wickets : result.match?.team2Wickets;
 
-      await LiveScoreService.publishScoreUpdate(matchId, {
+      const livePayload = {
         matchId,
         innings,
         over:        over_number,
@@ -379,9 +380,15 @@ const recordBall = async (req: AuthRequest, res: Response): Promise<void> => {
         bowlerName:  bowler?.name   || 'Unknown',
         commentary:  commentary     || `${batsman?.name ?? 'Batter'} ${runs} run${runs !== 1 ? 's' : ''}`,
         timestamp:   new Date().toISOString(),
-      });
+      };
+
+      // Emit directly via Socket.IO (low-latency, no Redis round-trip)
+      emitBallEvent(matchId, livePayload);
+
+      // Also publish to Redis for SSE clients and multi-instance fan-out
+      await LiveScoreService.publishScoreUpdate(matchId, livePayload);
     } catch (pubErr) {
-      logger.error('Redis publish failed (non-fatal):', pubErr);
+      logger.error('Redis/Socket publish failed (non-fatal):', pubErr);
     }
 
     res.status(201).json(toSnake(result));

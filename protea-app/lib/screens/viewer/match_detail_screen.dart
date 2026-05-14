@@ -11,6 +11,7 @@ import 'package:printing/printing.dart';
 import '../../models/match.dart';
 import '../../models/ball.dart';
 import '../../services/api_service.dart';
+import '../../services/socket_service.dart';
 import '../../theme/app_theme.dart';
 import '../../shared/widgets/loading_state.dart';
 import '../../shared/utils/snackbar_utils.dart';
@@ -41,6 +42,11 @@ class _MatchDetailScreenState extends State<MatchDetailScreen>
   Timer? _refreshTimer;
   Offset _fabOffset = const Offset(16, 80);
 
+  // Socket.IO
+  StreamSubscription<SocketStatus>? _socketStatusSub;
+  StreamSubscription<Map<String, dynamic>>? _ballEventSub;
+  SocketStatus _socketStatus = SocketStatus.disconnected;
+
   @override
   void initState() {
     super.initState();
@@ -49,37 +55,84 @@ class _MatchDetailScreenState extends State<MatchDetailScreen>
     _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) {
       if (mounted && _match?.status == 'live') _loadData();
     });
+    _initSocket();
+  }
+
+  void _initSocket() {
+    final svc = SocketService.instance;
+    _socketStatusSub = svc.statusStream.listen((status) {
+      if (mounted) {
+        // Defer setState to avoid re-entrant layout if event arrives during build
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) setState(() => _socketStatus = status);
+        });
+      }
+    });
+    _ballEventSub = svc.ballEventStream.listen((event) {
+      if (!mounted) return;
+      final type = event['type'] as String?;
+      if (type == 'update' || type == 'snapshot') {
+        // Defer _loadData to next frame to avoid re-entrant layout assertion
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _loadData();
+        });
+      }
+    });
+    svc.connect(widget.matchId);
   }
 
   @override
   void dispose() {
     _refreshTimer?.cancel();
     _tabCtrl.dispose();
+    _socketStatusSub?.cancel();
+    _ballEventSub?.cancel();
+    SocketService.instance.leaveMatch();
     super.dispose();
   }
 
   Future<void> _loadData() async {
     try {
       CricketMatch match;
+      List<MatchPlayer> players = [];
+      
       if (widget.isGuest) {
         final raw = await ApiService.getPublicMatch(widget.matchId);
         match = CricketMatch.fromJson(raw);
+        
+        // Parse players from public API response
+        if (raw['players'] != null && raw['players'] is List) {
+          players = (raw['players'] as List)
+              .map((p) => MatchPlayer.fromJson(p as Map<String, dynamic>))
+              .toList();
+        }
       } else {
         match = await ApiService.getMatch(widget.matchId);
       }
+      
       final battingFirstTeam = _getBattingFirstTeam(match);
+      if (!mounted) return;
       setState(() {
         _match = match;
         if (_selectedTeam == 0) _selectedTeam = battingFirstTeam;
+        // Set players for guest users immediately
+        if (widget.isGuest && players.isNotEmpty) {
+          _players = players;
+        }
       });
+      
       try {
         final sc = widget.isGuest
             ? await ApiService.getPublicScorecard(widget.matchId)
             : await ApiService.getScorecard(widget.matchId);
         if (mounted) {
-          setState(() {
-            _batting = (sc['batting'] as List).map((b) => PlayerScore.fromJson(b)).toList();
-            _bowling = (sc['bowling'] as List).map((b) => PlayerScore.fromJson(b)).toList();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              setState(() {
+                _batting = (sc['batting'] as List).map((b) => PlayerScore.fromJson(b)).toList();
+                _bowling = (sc['bowling'] as List).map((b) => PlayerScore.fromJson(b)).toList();
+              });
+            }
           });
         }
       } catch (_) {}
@@ -87,16 +140,30 @@ class _MatchDetailScreenState extends State<MatchDetailScreen>
         final balls = widget.isGuest
             ? await ApiService.getPublicBalls(widget.matchId)
             : await ApiService.getBalls(widget.matchId);
-        if (mounted) setState(() => _balls = balls);
+        if (mounted) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) setState(() => _balls = balls);
+          });
+        }
       } catch (_) {}
       try {
         if (!widget.isGuest) {
           final players = await ApiService.getMatchPlayers(widget.matchId);
-          if (mounted) setState(() => _players = players);
+          if (mounted) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) setState(() => _players = players);
+            });
+          }
         }
       } catch (_) {}
     } catch (_) {}
-    finally { if (mounted) setState(() => _loading = false); }
+    finally { 
+      if (mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) setState(() => _loading = false);
+        });
+      }
+    }
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -197,6 +264,41 @@ class _MatchDetailScreenState extends State<MatchDetailScreen>
                     ],
                   ),
                   _buildDraggableFab(context),
+                  // ── Reconnecting banner (overlay, never in Column) ─────
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      height: _socketStatus == SocketStatus.reconnecting ? 32 : 0,
+                      color: Colors.orange.shade700,
+                      child: _socketStatus == SocketStatus.reconnecting
+                          ? Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const SizedBox(
+                                  width: 14,
+                                  height: 14,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Reconnecting…',
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+                  ),
                 ],
               ),
       ),
@@ -210,10 +312,15 @@ class _MatchDetailScreenState extends State<MatchDetailScreen>
       bottom: _fabOffset.dy,
       child: GestureDetector(
         onPanUpdate: (details) {
-          setState(() {
-            final newRight = (_fabOffset.dx - details.delta.dx).clamp(8.0, size.width - 64.0);
-            final newBottom = (_fabOffset.dy - details.delta.dy).clamp(8.0, size.height - 120.0);
-            _fabOffset = Offset(newRight, newBottom);
+          // Defer setState to avoid layout exceptions during drag
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              setState(() {
+                final newRight = (_fabOffset.dx - details.delta.dx).clamp(8.0, size.width - 64.0);
+                final newBottom = (_fabOffset.dy - details.delta.dy).clamp(8.0, size.height - 120.0);
+                _fabOffset = Offset(newRight, newBottom);
+              });
+            }
           });
         },
         child: FloatingActionButton(
@@ -906,16 +1013,61 @@ class _MatchDetailScreenState extends State<MatchDetailScreen>
         const SizedBox(height: 6),
         Text(m.status == 'completed' ? 'DID NOT BAT' : 'YET TO BAT', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 12, color: AppTheme.ts(context))),
         const SizedBox(height: 8),
-        Wrap(spacing: 14, runSpacing: 10, children: yetToBat.map((p) => SizedBox(width: (MediaQuery.of(context).size.width - 56) / 2, child: Row(children: [
-          CircleAvatar(radius: 18, backgroundColor: AppTheme.primaryGreen.withValues(alpha: 0.15), child: Text(p.name.isNotEmpty ? p.name[0].toUpperCase() : '?', style: GoogleFonts.poppins(fontWeight: FontWeight.bold, fontSize: 14, color: AppTheme.primaryGreen))),
-          const SizedBox(width: 6),
-          Expanded(child: Row(children: [
-            Flexible(child: Text(p.name, style: GoogleFonts.poppins(fontWeight: FontWeight.w500, fontSize: 12), overflow: TextOverflow.ellipsis)),
-            if (p.isCaptain) ...[const SizedBox(width: 3), _roleBadge('C', AppTheme.primaryGreen)],
-            if (p.isWicketKeeper) ...[const SizedBox(width: 3), _roleBadge('WK', Colors.orange)],
-          ])),
-        ]))).toList()),
-        const SizedBox(height: 12), const Divider(),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final itemWidth = (constraints.maxWidth - 14) / 2;
+            return Wrap(
+              spacing: 14,
+              runSpacing: 10,
+              children: yetToBat.map((p) => SizedBox(
+                width: itemWidth,
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 18,
+                      backgroundColor: AppTheme.primaryGreen.withValues(alpha: 0.15),
+                      child: Text(
+                        p.name.isNotEmpty ? p.name[0].toUpperCase() : '?',
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: AppTheme.primaryGreen,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              p.name,
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 12,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (p.isCaptain) ...[
+                            const SizedBox(width: 3),
+                            _roleBadge('C', AppTheme.primaryGreen),
+                          ],
+                          if (p.isWicketKeeper) ...[
+                            const SizedBox(width: 3),
+                            _roleBadge('WK', Colors.orange),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              )).toList(),
+            );
+          },
+        ),
+        const SizedBox(height: 12),
+        const Divider(),
       ],
       if (bowlers.isNotEmpty) ...[const SizedBox(height: 6), _sectionHeader('BOWLING'), _bowlingTable(bowlers), const SizedBox(height: 6), const Divider()],
       if (fallOfWickets.isNotEmpty) ...[

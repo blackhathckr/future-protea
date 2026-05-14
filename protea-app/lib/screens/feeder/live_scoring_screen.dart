@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../models/match.dart';
 import '../../services/api_service.dart';
+import '../../services/socket_service.dart';
 import '../../theme/app_theme.dart';
 import '../../shared/utils/snackbar_utils.dart';
 import '../../shared/widgets/section_label.dart';
@@ -39,17 +41,40 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
   int _partnershipBalls = 0;
   String? _selectedZone; // Wagon wheel shot direction for next ball
 
+  // Socket.IO
+  StreamSubscription<SocketStatus>? _socketStatusSub;
+  SocketStatus _socketStatus = SocketStatus.disconnected;
+
   @override
   void initState() {
     super.initState();
     _loadData();
+    _initSocket();
+  }
+
+  void _initSocket() {
+    final svc = SocketService.instance;
+    _socketStatusSub = svc.statusStream.listen((status) {
+      if (mounted) {
+        // Defer setState to avoid re-entrant layout if event arrives during build
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) setState(() => _socketStatus = status);
+        });
+      }
+    });
+    svc.connect(widget.matchId);
   }
 
   Future<void> _reloadMatchStats() async {
     try {
       final match = await ApiService.getMatch(widget.matchId);
-      setState(() {
-        _match = match;
+      if (!mounted) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _match = match;
+          });
+        }
       });
     } catch (e) {
       print('DEBUG: Error reloading stats: $e');
@@ -105,6 +130,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
       _overBalls = [];
       _matchStarted = false;
       
+      if (!mounted) return;
       setState(() {
         _match = match;
         _team1Players = players.where((p) => p.team == 1).toList();
@@ -214,6 +240,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
           if (!balls[i].isWide && !balls[i].isNoball) _partnershipBalls++;
         }
 
+        if (!mounted) return;
         setState(() {
           _currentOver = lastBall.overNumber;
           _currentBall = lastBall.ballNumber;
@@ -236,9 +263,14 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
       }
     } catch (e) {
       print('DEBUG: Error loading data: $e');
-      setState(() {
-        _loading = false;
-        _error = e.toString();
+      if (!mounted) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() {
+            _loading = false;
+            _error = e.toString();
+          });
+        }
       });
     }
   }
@@ -319,6 +351,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
         displayText = runs.toString();
       }
 
+      if (!mounted) return;
       setState(() {
         _match = updatedMatch;
         _selectedZone = null; // Clear zone after ball is recorded
@@ -467,6 +500,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
       try {
         // Mark as retired hurt in backend
         await ApiService.markRetiredHurt(widget.matchId, _striker!.playerId);
+        if (!mounted) return;
         setState(() {
           _retiredHurtBatsmen.add(_striker!.playerId);
           _striker = null;
@@ -483,6 +517,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
       try {
         // Mark as retired hurt in backend
         await ApiService.markRetiredHurt(widget.matchId, _nonStriker!.playerId);
+        if (!mounted) return;
         setState(() {
           _retiredHurtBatsmen.add(_nonStriker!.playerId);
           _nonStriker = null;
@@ -642,6 +677,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
                                 if (isRetiredHurt) {
                                   try {
                                     await ApiService.clearRetiredHurt(widget.matchId, p.playerId);
+                                    if (!mounted) return;
                                     setState(() {
                                       _retiredHurtBatsmen.remove(p.playerId);
                                     });
@@ -689,6 +725,13 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _socketStatusSub?.cancel();
+    SocketService.instance.leaveMatch();
+    super.dispose();
   }
 
   @override
@@ -763,6 +806,37 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            // ── Reconnecting banner ──────────────────────────────
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              width: double.infinity,
+              height: _socketStatus == SocketStatus.reconnecting ? 32 : 0,
+              color: Colors.orange.shade700,
+              child: _socketStatus == SocketStatus.reconnecting
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Reconnecting…',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    )
+                  : const SizedBox.shrink(),
+            ),
             // Header with back button
             Container(
               color: AppTheme.surface(context),
@@ -1204,27 +1278,27 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         _runButton('0', const Color(0xFF424242), Colors.white70, () {
-                          setState(() => _lastBallWasNoBall = false);
+                          _lastBallWasNoBall = false;
                           _addBall(runs: 0);
                         }),
                         _runButton('1', AppTheme.surface(context), AppTheme.tp(context), () {
-                          setState(() => _lastBallWasNoBall = false);
+                          _lastBallWasNoBall = false;
                           _addBall(runs: 1);
                         }),
                         _runButton('2', AppTheme.surface(context), AppTheme.tp(context), () {
-                          setState(() => _lastBallWasNoBall = false);
+                          _lastBallWasNoBall = false;
                           _addBall(runs: 2);
                         }),
                         _runButton('3', AppTheme.surface(context), AppTheme.tp(context), () {
-                          setState(() => _lastBallWasNoBall = false);
+                          _lastBallWasNoBall = false;
                           _addBall(runs: 3);
                         }),
                         _runButton('4', const Color(0xFF1565C0), Colors.white, () {
-                          setState(() => _lastBallWasNoBall = false);
+                          _lastBallWasNoBall = false;
                           _addBall(runs: 4);
                         }),
                         _runButton('6', const Color(0xFF4A148C), Colors.white, () {
-                          setState(() => _lastBallWasNoBall = false);
+                          _lastBallWasNoBall = false;
                           _addBall(runs: 6);
                         }),
                       ],
@@ -1235,11 +1309,11 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         _chipButton('WIDE', () {
-                          setState(() => _lastBallWasNoBall = false);
+                          _lastBallWasNoBall = false;
                           _showWideOptions();
                         }),
                         _chipButton('NO BALL', () {
-                          setState(() => _lastBallWasNoBall = true);
+                          _lastBallWasNoBall = true;
                           _showNoBallOptions();
                         }),
                         _chipButton('BYE', () => _addBall(runs: 1, isBye: true)),
@@ -2490,11 +2564,11 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
       }
     } catch (e) {
       print('DEBUG: ERROR starting 2nd innings: $e');
-      setState(() {
-        _loading = false;
-        _error = e.toString();
-      });
       if (mounted) {
+        setState(() {
+          _loading = false;
+          _error = e.toString();
+        });
         SnackbarUtils.showError(context, 'Error starting 2nd innings: $e');
       }
     } finally {
