@@ -47,7 +47,7 @@ class _TeamStatsScreenState extends State<TeamStatsScreen> {
           children: [
             Stack(
               children: [
-                const ProteaHeader(height: 160),
+                const ProteaHeader(height: 120),
                 Positioned(
                   top: MediaQuery.of(context).padding.top + 8,
                   left: 8,
@@ -68,7 +68,7 @@ class _TeamStatsScreenState extends State<TeamStatsScreen> {
                       color: AppTheme.accentAmber.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.bar_chart_rounded,
+                    child: Icon(Icons.bar_chart_rounded,
                         color: AppTheme.accentAmber, size: 24),
                   ),
                   const SizedBox(width: 12),
@@ -97,7 +97,7 @@ class _TeamStatsScreenState extends State<TeamStatsScreen> {
 
   Widget _buildBody() {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen));
+      return Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen));
     }
     if (_error != null) {
       return Center(
@@ -149,7 +149,7 @@ class _TeamStatsScreenState extends State<TeamStatsScreen> {
                       color: AppTheme.accentGold.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(Icons.show_chart, color: AppTheme.accentAmber, size: 22),
+                    child: Icon(Icons.show_chart, color: AppTheme.accentAmber, size: 22),
                   ),
                   const SizedBox(width: 12),
                   Expanded(

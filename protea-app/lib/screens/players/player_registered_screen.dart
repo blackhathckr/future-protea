@@ -24,7 +24,7 @@ class PlayerRegisteredScreen extends StatelessWidget {
             children: [
               Stack(
                 children: [
-                  const ProteaHeader(height: 175),
+                  const ProteaHeader(height: 120),
                   Positioned(
                     top: MediaQuery.of(context).padding.top + 8,
                     right: 8,

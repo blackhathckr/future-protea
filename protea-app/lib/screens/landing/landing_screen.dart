@@ -7,6 +7,7 @@ import '../../providers/theme_provider.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/protea_header.dart';
+import '../../widgets/theme_toggle.dart';
 import '../auth/login_screen.dart';
 import '../guest/guest_match_detail_screen.dart';
 import '../viewer/upcoming_match_detail_screen.dart';
@@ -134,7 +135,7 @@ class _LandingScreenState extends State<LandingScreen> {
                 _buildHeader(),
                 _buildSearchBar(),
                 if (_loading)
-                  const Padding(
+                  Padding(
                     padding: EdgeInsets.symmetric(vertical: 80),
                     child: CircularProgressIndicator(color: AppTheme.primaryGreen),
                   )
@@ -163,19 +164,25 @@ class _LandingScreenState extends State<LandingScreen> {
   Widget _buildHeader() {
     return Stack(
       children: [
-        const ProteaHeader(height: 200),
-        // Theme toggle on the LEFT
+        const ProteaHeader(height: 125),
+        // Theme toggle + Appearance entry on the LEFT
         Positioned(
           top: MediaQuery.of(context).padding.top + 8,
           left: 0,
-          child: Consumer<ThemeProvider>(
-            builder: (context, theme, _) => IconButton(
-              icon: Icon(
-                theme.isDark ? Icons.light_mode : Icons.dark_mode,
-                color: Colors.white,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Consumer<ThemeProvider>(
+                builder: (context, theme, _) => IconButton(
+                  icon: Icon(
+                    theme.isDark ? Icons.light_mode : Icons.dark_mode,
+                    color: Colors.white,
+                  ),
+                  onPressed: theme.toggle,
+                ),
               ),
-              onPressed: theme.toggle,
-            ),
+              const AppearanceButton(),
+            ],
           ),
         ),
         // Sign In on the RIGHT
@@ -218,7 +225,7 @@ class _LandingScreenState extends State<LandingScreen> {
               decoration: InputDecoration(
                 hintText: 'Search matches, players, venues…',
                 hintStyle: TextStyle(color: AppTheme.ts(context), fontSize: 14),
-                prefixIcon: const Icon(Icons.search, color: AppTheme.primaryGreen),
+                prefixIcon: Icon(Icons.search, color: AppTheme.primaryGreen),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
                         icon: const Icon(Icons.clear),
@@ -262,7 +269,7 @@ class _LandingScreenState extends State<LandingScreen> {
               return Card(
                 margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
-                  leading: const CircleAvatar(
+                  leading: CircleAvatar(
                     backgroundColor: AppTheme.primaryGreen,
                     child: Icon(Icons.sports_cricket, color: Colors.white, size: 16),
                   ),
@@ -303,7 +310,7 @@ class _LandingScreenState extends State<LandingScreen> {
                         ? NetworkImage(ApiService.getPhotoUrl(p['photo_url']))
                         : null,
                     child: p['photo_url'] == null
-                        ? const Icon(Icons.person, color: AppTheme.primaryGreen)
+                        ? Icon(Icons.person, color: AppTheme.primaryGreen)
                         : null,
                   ),
                   title: Text(
@@ -894,7 +901,7 @@ class _LandingScreenState extends State<LandingScreen> {
                           const Spacer(),
                           Row(
                             children: [
-                              const Icon(Icons.emoji_events,
+                              Icon(Icons.emoji_events,
                                   color: AppTheme.accentAmber, size: 14),
                               const SizedBox(width: 4),
                               Expanded(
@@ -1121,7 +1128,7 @@ class _LandingScreenState extends State<LandingScreen> {
                 errorBuilder: (_, __, ___) => Container(
                   height: 190,
                   color: AppTheme.surfaceLight(context),
-                  child: const Icon(Icons.image_not_supported,
+                  child: Icon(Icons.image_not_supported,
                       size: 48, color: AppTheme.textSecondary),
                 ),
               ),
@@ -1157,7 +1164,7 @@ class _LandingScreenState extends State<LandingScreen> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(Icons.public, size: 12, color: AppTheme.primaryGreen),
+                      Icon(Icons.public, size: 12, color: AppTheme.primaryGreen),
                       const SizedBox(width: 4),
                       Text(
                         source,
@@ -1206,14 +1213,14 @@ class _LandingScreenState extends State<LandingScreen> {
                           width: 92,
                           height: 88,
                           color: AppTheme.surfaceLight(context),
-                          child: const Icon(Icons.article, color: AppTheme.textSecondary),
+                          child: Icon(Icons.article, color: AppTheme.textSecondary),
                         ),
                       )
                     : Container(
                         width: 92,
                         height: 88,
                         color: AppTheme.surfaceLight(context),
-                        child: const Icon(Icons.article, color: AppTheme.textSecondary),
+                        child: Icon(Icons.article, color: AppTheme.textSecondary),
                       ),
               ),
               const SizedBox(width: 12),
@@ -1279,7 +1286,7 @@ class _LandingScreenState extends State<LandingScreen> {
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              const Icon(Icons.sports_cricket, color: AppTheme.primaryGreen, size: 36),
+              Icon(Icons.sports_cricket, color: AppTheme.primaryGreen, size: 36),
               const SizedBox(height: 10),
               Text(
                 'Ready to manage your team?',

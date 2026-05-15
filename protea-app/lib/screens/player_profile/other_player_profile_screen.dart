@@ -44,7 +44,9 @@ class _OtherPlayerProfileScreenState extends State<OtherPlayerProfileScreen>
       setState(() {
         _player = User.fromJson(data['player']);
         _stats = data['career_stats'] != null ? CareerStats.fromJson(data['career_stats']) : null;
-        _matches = (data['matches'] as List).map((m) => PlayerScore.fromJson(m)).toList();
+        _matches = (data['matches'] as List? ?? const [])
+            .map((m) => PlayerScore.fromJson(m))
+            .toList();
         _loading = false;
       });
     } catch (e) {
@@ -68,7 +70,7 @@ class _OtherPlayerProfileScreenState extends State<OtherPlayerProfileScreen>
       body: SafeArea(
         top: false,
         child: _loading
-            ? const Center(child: CircularProgressIndicator(color: AppTheme.accentGold))
+            ? Center(child: CircularProgressIndicator(color: AppTheme.accentGold))
             : _error != null
                 ? _buildError()
                 : _buildContent(),
@@ -168,7 +170,7 @@ class _OtherPlayerProfileScreenState extends State<OtherPlayerProfileScreen>
 
   Widget _buildHeader() {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [Color(0xFF0D2B1A), AppTheme.primaryGreen],
           begin: Alignment.topLeft, end: Alignment.bottomRight,
@@ -205,7 +207,7 @@ class _OtherPlayerProfileScreenState extends State<OtherPlayerProfileScreen>
     final bowling = _player?.bowlingStyle;
 
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [Color(0xFF0D2B1A), AppTheme.primaryGreen],
           begin: Alignment.topLeft, end: Alignment.bottomRight,

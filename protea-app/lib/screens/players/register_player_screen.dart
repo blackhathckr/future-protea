@@ -102,7 +102,7 @@ class _RegisterPlayerScreenState extends State<RegisterPlayerScreen> {
                     color: AppTheme.primaryGreen.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.camera_alt, color: AppTheme.primaryGreen),
+                  child: Icon(Icons.camera_alt, color: AppTheme.primaryGreen),
                 ),
                 title: const Text('Take Photo'),
                 subtitle: const Text('Use camera to take a new photo'),
@@ -118,7 +118,7 @@ class _RegisterPlayerScreenState extends State<RegisterPlayerScreen> {
                     color: AppTheme.primaryGreen.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.photo_library, color: AppTheme.primaryGreen),
+                  child: Icon(Icons.photo_library, color: AppTheme.primaryGreen),
                 ),
                 title: const Text('Choose from Gallery'),
                 subtitle: const Text('Select an existing photo'),
@@ -218,7 +218,7 @@ class _RegisterPlayerScreenState extends State<RegisterPlayerScreen> {
             children: [
               Stack(
                 children: [
-                  const ProteaHeader(height: 175),
+                  const ProteaHeader(height: 120),
                   Positioned(
                     top: MediaQuery.of(context).padding.top + 8,
                     left: 8,
@@ -345,7 +345,7 @@ class _RegisterPlayerScreenState extends State<RegisterPlayerScreen> {
           Container(
             width: 32,
             height: 32,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: AppTheme.primaryGreen,
             ),
@@ -416,7 +416,8 @@ class _RegisterPlayerScreenState extends State<RegisterPlayerScreen> {
     );
   }
 
-  Widget _photoActionButton(IconData icon, String label, VoidCallback onTap, {Color color = AppTheme.primaryGreen}) {
+  Widget _photoActionButton(IconData icon, String label, VoidCallback onTap, {Color? color}) {
+    color ??= AppTheme.primaryGreen;
     return GestureDetector(
       onTap: onTap,
       child: Container(

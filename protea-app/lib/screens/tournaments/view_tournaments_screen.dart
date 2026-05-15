@@ -59,7 +59,7 @@ class _ViewTournamentsScreenState extends State<ViewTournamentsScreen> {
           children: [
             Stack(
               children: [
-                const ProteaHeader(height: 175),
+                const ProteaHeader(height: 120),
                 Positioned(
                   top: MediaQuery.of(context).padding.top + 8,
                   left: 8,
@@ -120,7 +120,7 @@ class _ViewTournamentsScreenState extends State<ViewTournamentsScreen> {
             // Tournament list
             Expanded(
               child: _loading
-                  ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen))
+                  ? Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen))
                   : _filtered.isEmpty
                       ? Center(child: Text('No tournaments found',
                           style: GoogleFonts.poppins(color: AppTheme.ts(context))))

@@ -82,7 +82,7 @@ class _TournamentOrganiserHomeState extends State<TournamentOrganiserHome> {
             // ── Header ─────────────────────────────────────────────
             Stack(
               children: [
-                const ProteaHeader(height: 150),
+                const ProteaHeader(height: 125),
                 Positioned(
                   top: MediaQuery.of(context).padding.top + 6,
                   left: 8,
@@ -177,7 +177,7 @@ class _TournamentOrganiserHomeState extends State<TournamentOrganiserHome> {
             // ── Body ────────────────────────────────────────────────
             Expanded(
               child: _loading
-                  ? const LoadingState(label: 'Loading tournaments…')
+                  ? LoadingState(label: 'Loading tournaments…')
                   : RefreshIndicator(
                       onRefresh: _load,
                       child: ListView(

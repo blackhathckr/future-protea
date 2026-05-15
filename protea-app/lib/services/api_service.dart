@@ -9,7 +9,7 @@ import '../models/team.dart';
 import '../models/tournament.dart';
 
 class ApiService {
-  static const String baseUrl = 'https://isolatable-babyishly-teresa.ngrok-free.dev/api';
+  static const String baseUrl = 'https://eustolia-jural-unaspiringly.ngrok-free.dev/api';
   // static const String baseUrl = 'http://10.66.199.18:5000/api'; // Local fallback
 
   static Future<String?> _getToken() async {
@@ -25,6 +25,21 @@ class ApiService {
       'User-Agent': 'Mozilla/5.0',
       if (token != null) 'Authorization': 'Bearer $token',
     };
+  }
+
+  // Decode a response body as JSON, or surface a clean error when the
+  // server returns HTML (Express 404 page, ngrok warning, proxy timeout).
+  // Without this, callers would propagate the raw FormatException whose
+  // message embeds the literal "<!DOCTYPE html>" payload to the UI.
+  static dynamic _decodeJson(http.Response response) {
+    try {
+      return jsonDecode(response.body);
+    } on FormatException {
+      throw Exception(
+        'Unexpected server response (HTTP ${response.statusCode}). '
+        'Please try again.',
+      );
+    }
   }
 
   // ==================== AUTH ====================
@@ -53,7 +68,7 @@ class ApiService {
         'date_of_birth': dateOfBirth,
       }),
     );
-    final data = jsonDecode(response.body);
+    final data = _decodeJson(response);
     if (response.statusCode == 201) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('token', data['token']);
@@ -69,7 +84,7 @@ class ApiService {
       headers: {'Content-Type': 'application/json', 'ngrok-skip-browser-warning': '69420', 'User-Agent': 'Mozilla/5.0'},
       body: jsonEncode({'email': email, 'password': password}),
     );
-    final data = jsonDecode(response.body);
+    final data = _decodeJson(response);
     if (response.statusCode == 200) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('token', data['token']);
@@ -130,7 +145,7 @@ class ApiService {
       body: jsonEncode(body),
     );
     if (response.statusCode == 200) {
-      final userData = jsonDecode(response.body);
+      final userData = _decodeJson(response);
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('user', jsonEncode(userData));
       return User.fromJson(userData);
@@ -166,7 +181,7 @@ class ApiService {
       headers: headers,
     );
     if (response.statusCode == 200) {
-      final userData = jsonDecode(response.body);
+      final userData = _decodeJson(response);
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('user', jsonEncode(userData));
       return User.fromJson(userData);
@@ -188,7 +203,7 @@ class ApiService {
       }),
     );
     if (response.statusCode != 200) {
-      final data = jsonDecode(response.body);
+      final data = _decodeJson(response);
       throw Exception(data['error'] ?? 'Failed to change password');
     }
   }
@@ -200,7 +215,7 @@ class ApiService {
       body: jsonEncode({'email': email}),
     );
     if (response.statusCode != 200) {
-      final data = jsonDecode(response.body);
+      final data = _decodeJson(response);
       throw Exception(data['error'] ?? 'Failed to send OTP');
     }
   }
@@ -220,7 +235,7 @@ class ApiService {
       }),
     );
     if (response.statusCode != 200) {
-      final data = jsonDecode(response.body);
+      final data = _decodeJson(response);
       throw Exception(data['error'] ?? 'Failed to reset password');
     }
   }

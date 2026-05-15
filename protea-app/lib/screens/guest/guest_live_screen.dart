@@ -45,7 +45,7 @@ class _GuestLiveScreenState extends State<GuestLiveScreen> {
           children: [
             Stack(
               children: [
-                const ProteaHeader(height: 185),
+                const ProteaHeader(height: 120),
                 // Back / Sign In button
                 Positioned(
                   top: MediaQuery.of(context).padding.top + 8,
@@ -147,7 +147,7 @@ class _GuestLiveScreenState extends State<GuestLiveScreen> {
             // Match list
             Expanded(
               child: _loading
-                  ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen))
+                  ? Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen))
                   : _liveMatches.isEmpty
                       ? EmptyState(
                           message: 'No live matches at the moment',

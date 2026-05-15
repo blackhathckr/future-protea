@@ -137,7 +137,7 @@ class _ManageTeamsScreenState extends State<ManageTeamsScreen> {
           children: [
             Stack(
               children: [
-                const ProteaHeader(height: 90),
+                const ProteaHeader(height: 115),
                 Positioned(
                   top: MediaQuery.of(context).padding.top + 6,
                   left: 4,
@@ -160,7 +160,7 @@ class _ManageTeamsScreenState extends State<ManageTeamsScreen> {
             ),
 
             if (_loading)
-              const Expanded(child: Center(child: CircularProgressIndicator()))
+              Expanded(child: Center(child: CircularProgressIndicator()))
             else if (_teams.isEmpty)
               Expanded(
                 child: Center(

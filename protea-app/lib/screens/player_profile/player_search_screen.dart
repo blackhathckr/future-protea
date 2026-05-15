@@ -112,7 +112,7 @@ class _PlayerSearchScreenState extends State<PlayerSearchScreen> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
+                      borderSide: BorderSide(color: AppTheme.primaryGreen, width: 1.5),
                     ),
                     filled: true,
                     fillColor: AppTheme.surfaceLight(context),
@@ -133,7 +133,7 @@ class _PlayerSearchScreenState extends State<PlayerSearchScreen> {
                         top: -4, right: -4,
                         child: Container(
                           width: 10, height: 10,
-                          decoration: const BoxDecoration(color: AppTheme.accentGold, shape: BoxShape.circle),
+                          decoration: BoxDecoration(color: AppTheme.accentGold, shape: BoxShape.circle),
                         ),
                       ),
                   ],
@@ -175,7 +175,7 @@ class _PlayerSearchScreenState extends State<PlayerSearchScreen> {
         // Content
         Expanded(
           child: _loading
-              ? const Center(child: CircularProgressIndicator(color: AppTheme.accentGold))
+              ? Center(child: CircularProgressIndicator(color: AppTheme.accentGold))
               : _error != null
                   ? Center(child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -257,16 +257,16 @@ class _PlayerSearchScreenState extends State<PlayerSearchScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(color: AppTheme.accentAmber.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(6)),
-                    child: const Text('Pending', style: TextStyle(fontSize: 9, color: AppTheme.accentAmber, fontWeight: FontWeight.bold)),
+                    child: Text('Pending', style: TextStyle(fontSize: 9, color: AppTheme.accentAmber, fontWeight: FontWeight.bold)),
                   )
                 else
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(color: AppTheme.lightGreen.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(6)),
-                    child: const Text('Approved', style: TextStyle(fontSize: 9, color: AppTheme.lightGreen, fontWeight: FontWeight.bold)),
+                    child: Text('Approved', style: TextStyle(fontSize: 9, color: AppTheme.lightGreen, fontWeight: FontWeight.bold)),
                   ),
                 const SizedBox(height: 6),
-                const Icon(Icons.chevron_right, size: 18, color: AppTheme.textSecondary),
+                Icon(Icons.chevron_right, size: 18, color: AppTheme.textSecondary),
               ],
             ),
           ],

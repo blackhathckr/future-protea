@@ -74,7 +74,7 @@ class _SearchAddPlayerScreenState extends State<SearchAddPlayerScreen> {
           children: [
             Stack(
               children: [
-                const ProteaHeader(height: 175),
+                const ProteaHeader(height: 120),
                 Positioned(
                   top: MediaQuery.of(context).padding.top + 8,
                   left: 8,
@@ -186,7 +186,7 @@ class _SearchAddPlayerScreenState extends State<SearchAddPlayerScreen> {
             ),
             Expanded(
               child: _loading
-                  ? const Center(
+                  ? Center(
                       child: CircularProgressIndicator(color: AppTheme.primaryGreen))
                   : _players.isEmpty
                       ? Center(

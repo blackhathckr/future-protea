@@ -109,7 +109,7 @@ class _TournamentFixturesScreenState extends State<TournamentFixturesScreen>
           children: [
             Stack(
               children: [
-                const ProteaHeader(height: 160),
+                const ProteaHeader(height: 120),
                 Positioned(
                   top: MediaQuery.of(context).padding.top + 8,
                   left: 8,
@@ -146,7 +146,7 @@ class _TournamentFixturesScreenState extends State<TournamentFixturesScreen>
             // Fixtures list
             Expanded(
               child: _loading
-                  ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen))
+                  ? Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen))
                   : _filtered.isEmpty
                       ? Center(child: Text(
                           widget.showResultsOnly ? 'No results yet' : 'No upcoming fixtures',
@@ -234,7 +234,7 @@ class _FixtureCard extends StatelessWidget {
                     ),
                     if (canTap) ...[
                       const SizedBox(width: 4),
-                      const Icon(Icons.chevron_right, size: 18, color: AppTheme.primaryGreen),
+                      Icon(Icons.chevron_right, size: 18, color: AppTheme.primaryGreen),
                     ],
                   ],
                 ),
@@ -274,7 +274,7 @@ class _FixtureCard extends StatelessWidget {
               const SizedBox(height: 6),
               Row(
                 children: [
-                  const Icon(Icons.emoji_events, size: 14, color: AppTheme.accentAmber),
+                  Icon(Icons.emoji_events, size: 14, color: AppTheme.accentAmber),
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text('${fixture.winner} won',
@@ -288,7 +288,7 @@ class _FixtureCard extends StatelessWidget {
               const SizedBox(height: 4),
               Row(
                 children: [
-                  const Icon(Icons.star, size: 13, color: AppTheme.accentGold),
+                  Icon(Icons.star, size: 13, color: AppTheme.accentGold),
                   const SizedBox(width: 4),
                   Text('MoM: ${fixture.playerOfMatch}',
                       style: GoogleFonts.poppins(fontSize: 11, color: AppTheme.ts(context))),

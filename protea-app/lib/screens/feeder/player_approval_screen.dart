@@ -52,7 +52,7 @@ class _PlayerApprovalScreenState extends State<PlayerApprovalScreen> {
 
   Widget _buildBody() {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: AppTheme.accentGold));
+      return Center(child: CircularProgressIndicator(color: AppTheme.accentGold));
     }
 
     if (widget.matchId != null) {
@@ -105,14 +105,14 @@ class _PlayerApprovalScreenState extends State<PlayerApprovalScreen> {
                 children: [
                   if (!player.approved)
                     IconButton(
-                      icon: const Icon(Icons.check_circle_outline, color: AppTheme.lightGreen),
+                      icon: Icon(Icons.check_circle_outline, color: AppTheme.lightGreen),
                       onPressed: () async {
                         await ApiService.approveUser(player.id);
                         _load();
                       },
                     ),
                   IconButton(
-                    icon: const Icon(Icons.timeline, color: AppTheme.accentGold),
+                    icon: Icon(Icons.timeline, color: AppTheme.accentGold),
                     onPressed: () => Navigator.push(
                       context,
                       MaterialPageRoute(builder: (_) => PlayerJourneyScreen(playerId: player.id)),
@@ -204,7 +204,7 @@ class _PlayerApprovalScreenState extends State<PlayerApprovalScreen> {
             if (player.status == 'pending') ...[
               // Team assignment + approve
               PopupMenuButton<int>(
-                icon: const Icon(Icons.group_add, color: AppTheme.accentGold),
+                icon: Icon(Icons.group_add, color: AppTheme.accentGold),
                 itemBuilder: (ctx) => [
                   const PopupMenuItem(value: 1, child: Text('Approve → Team 1')),
                   const PopupMenuItem(value: 2, child: Text('Approve → Team 2')),
@@ -223,7 +223,7 @@ class _PlayerApprovalScreenState extends State<PlayerApprovalScreen> {
               ),
             ],
             if (player.status == 'approved')
-              const Icon(Icons.check_circle, color: AppTheme.lightGreen),
+              Icon(Icons.check_circle, color: AppTheme.lightGreen),
           ],
         ),
       ),

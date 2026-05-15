@@ -72,7 +72,7 @@ class _TossScreenState extends State<TossScreen> {
             children: [
               Stack(
                 children: [
-                  const ProteaHeader(height: 175),
+                  const ProteaHeader(height: 120),
                   Positioned(
                     top: MediaQuery.of(context).padding.top + 8,
                     left: 8,
@@ -239,7 +239,7 @@ class _TeamTossCard extends StatelessWidget {
         child: Column(
           children: [
             if (selected)
-              const Align(
+              Align(
                 alignment: Alignment.topLeft,
                 child: Icon(Icons.check_circle, color: AppTheme.primaryGreen, size: 20),
               ),
@@ -306,7 +306,7 @@ class _DecisionCard extends StatelessWidget {
         child: Column(
           children: [
             if (selected)
-              const Icon(Icons.check_circle, color: AppTheme.primaryGreen, size: 20),
+              Icon(Icons.check_circle, color: AppTheme.primaryGreen, size: 20),
             Icon(icon, size: 48, color: selected ? AppTheme.primaryGreen : AppTheme.textSecondary),
             const SizedBox(height: 8),
             Text(label,

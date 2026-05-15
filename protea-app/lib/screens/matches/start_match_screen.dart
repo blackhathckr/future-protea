@@ -92,13 +92,13 @@ class _StartMatchScreenState extends State<StartMatchScreen> {
       body: SafeArea(
         top: false,
         child: _loading
-            ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen))
+            ? Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen))
             : SingleChildScrollView(
                 child: Column(
                   children: [
                     Stack(
                       children: [
-                        const ProteaHeader(height: 160),
+                        const ProteaHeader(height: 120),
                         Positioned(
                           top: MediaQuery.of(context).padding.top + 8,
                           left: 8,

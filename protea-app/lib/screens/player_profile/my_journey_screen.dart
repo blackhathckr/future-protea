@@ -40,8 +40,12 @@ class _MyJourneyScreenState extends State<MyJourneyScreen> with SingleTickerProv
       final data = await ApiService.getPlayerJourney(widget.playerId);
       setState(() {
         _player = User.fromJson(data['player']);
-        _stats = CareerStats.fromJson(data['career_stats']);
-        _matches = (data['matches'] as List).map((m) => PlayerScore.fromJson(m)).toList();
+        _stats = data['career_stats'] != null
+            ? CareerStats.fromJson(data['career_stats'])
+            : null;
+        _matches = (data['matches'] as List? ?? const [])
+            .map((m) => PlayerScore.fromJson(m))
+            .toList();
         _loading = false;
       });
     } catch (e) {
@@ -102,7 +106,7 @@ class _MyJourneyScreenState extends State<MyJourneyScreen> with SingleTickerProv
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen));
+      return Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen));
     }
 
     if (_error != null) {
@@ -185,7 +189,7 @@ class _MyJourneyScreenState extends State<MyJourneyScreen> with SingleTickerProv
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           colors: [AppTheme.darkGreen, AppTheme.primaryGreen],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -290,7 +294,7 @@ class _MyJourneyScreenState extends State<MyJourneyScreen> with SingleTickerProv
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('$_totalWins Wins', style: const TextStyle(color: AppTheme.lightGreen, fontWeight: FontWeight.bold)),
+                    Text('$_totalWins Wins', style: TextStyle(color: AppTheme.lightGreen, fontWeight: FontWeight.bold)),
                     Text('${_matches.length - _totalWins} Losses', style: const TextStyle(color: AppTheme.wicketRed, fontWeight: FontWeight.bold)),
                   ],
                 ),
@@ -300,7 +304,7 @@ class _MyJourneyScreenState extends State<MyJourneyScreen> with SingleTickerProv
                   child: LinearProgressIndicator(
                     value: _matches.isNotEmpty ? _totalWins / _matches.length : 0,
                     backgroundColor: AppTheme.wicketRed.withValues(alpha: 0.3),
-                    valueColor: const AlwaysStoppedAnimation(AppTheme.lightGreen),
+                    valueColor: AlwaysStoppedAnimation(AppTheme.lightGreen),
                     minHeight: 12,
                   ),
                 ),
@@ -342,7 +346,7 @@ class _MyJourneyScreenState extends State<MyJourneyScreen> with SingleTickerProv
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('${_boundaryPercentage.toStringAsFixed(0)}%',
-                          style: const TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen)),
+                          style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen)),
                       Text('Runs from Boundaries',
                           style: TextStyle(fontSize: 12, color: AppTheme.ts(context))),
                       const SizedBox(height: 12),

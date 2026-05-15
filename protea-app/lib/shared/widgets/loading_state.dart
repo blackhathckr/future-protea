@@ -17,25 +17,29 @@ class LoadingState extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final lottieSize = (constraints.maxHeight * 0.4).clamp(40.0, size);
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              SizedBox(
-                width: lottieSize,
-                height: lottieSize,
-                child: Lottie.asset('assets/images/lottie/Bat ball.json', repeat: true),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.ts(context)),
-              ),
-            ],
-          ),
+        final lottieSize = constraints.hasBoundedHeight
+            ? (constraints.maxHeight * 0.4).clamp(40.0, size)
+            : size;
+        final column = Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: lottieSize,
+              height: lottieSize,
+              child: Lottie.asset('assets/images/lottie/Bat ball.json', repeat: true),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.ts(context)),
+            ),
+          ],
         );
+        if (!constraints.hasBoundedHeight) {
+          return Align(alignment: Alignment.topCenter, child: column);
+        }
+        return Center(child: column);
       },
     );
   }

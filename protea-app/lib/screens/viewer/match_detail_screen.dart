@@ -129,8 +129,14 @@ class _MatchDetailScreenState extends State<MatchDetailScreen>
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
               setState(() {
-                _batting = (sc['batting'] as List).map((b) => PlayerScore.fromJson(b)).toList();
-                _bowling = (sc['bowling'] as List).map((b) => PlayerScore.fromJson(b)).toList();
+                final battingRaw = sc['batting'];
+                final bowlingRaw = sc['bowling'];
+                _batting = battingRaw is List
+                    ? battingRaw.map((b) => PlayerScore.fromJson(b)).toList()
+                    : <PlayerScore>[];
+                _bowling = bowlingRaw is List
+                    ? bowlingRaw.map((b) => PlayerScore.fromJson(b)).toList()
+                    : <PlayerScore>[];
               });
             }
           });
@@ -186,14 +192,14 @@ class _MatchDetailScreenState extends State<MatchDetailScreen>
                 ),
               )
             : _match == null
-                ? const Center(child: Text('Match not found'))
+                ? Center(child: Text('Match not found'))
                 : Stack(
                     children: [
                       Column(
                         children: [
                       Stack(
                         children: [
-                          const ProteaHeader(height: 90),
+                          const ProteaHeader(height: 115),
                           Positioned(
                             top: MediaQuery.of(context).padding.top + 6,
                             left: 4,
@@ -384,7 +390,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen>
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
-      decoration: const BoxDecoration(gradient: LinearGradient(colors: [AppTheme.darkGreen, AppTheme.primaryGreen])),
+      decoration: BoxDecoration(gradient: LinearGradient(colors: [AppTheme.darkGreen, AppTheme.primaryGreen])),
       child: Column(
         children: [
           Row(
@@ -413,7 +419,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen>
           if (m.tossWinner != null && m.tossDecision != null)
             Padding(padding: const EdgeInsets.only(top: 4), child: Text('${m.tossWinner} won toss, chose to ${m.tossDecision}', style: const TextStyle(color: Colors.white54, fontSize: 10, fontStyle: FontStyle.italic))),
           if (m.winner != null && m.status == 'completed')
-            Padding(padding: const EdgeInsets.only(top: 4), child: Text(_getVictoryMessage(m), style: const TextStyle(color: AppTheme.accentGold, fontWeight: FontWeight.bold, fontSize: 13))),
+            Padding(padding: const EdgeInsets.only(top: 4), child: Text(_getVictoryMessage(m), style: TextStyle(color: AppTheme.accentGold, fontWeight: FontWeight.bold, fontSize: 13))),
           // CRR / RRR
           if (m.status == 'live' || m.status == 'completed') ...[
             const SizedBox(height: 6),
@@ -444,7 +450,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen>
     final wicketsRemaining = maxW - batWickets;
     if (batScore <= 0) return const SizedBox.shrink();
     if (runsNeeded <= 0) {
-      return Padding(padding: const EdgeInsets.only(top: 4), child: Text('Won by $wicketsRemaining wickets (${batOvers.toStringAsFixed(1)} ov)', style: const TextStyle(color: AppTheme.lightGreen, fontSize: 12, fontWeight: FontWeight.bold)));
+      return Padding(padding: const EdgeInsets.only(top: 4), child: Text('Won by $wicketsRemaining wickets (${batOvers.toStringAsFixed(1)} ov)', style: TextStyle(color: AppTheme.lightGreen, fontSize: 12, fontWeight: FontWeight.bold)));
     }
     return Padding(
       padding: const EdgeInsets.only(top: 4),
@@ -2641,7 +2647,7 @@ class _MatchDetailScreenState extends State<MatchDetailScreen>
         return Padding(padding: const EdgeInsets.symmetric(vertical: 3), child: Row(children: [
           Expanded(flex: 3, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
-              if (active) Container(width: 7, height: 7, margin: const EdgeInsets.only(right: 4), decoration: const BoxDecoration(shape: BoxShape.circle, color: AppTheme.lightGreen)),
+              if (active) Container(width: 7, height: 7, margin: const EdgeInsets.only(right: 4), decoration: BoxDecoration(shape: BoxShape.circle, color: AppTheme.lightGreen)),
               Flexible(child: Text(p.name, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: notOut ? AppTheme.primaryGreen : null))),
               if (p.isCaptain) ...[const SizedBox(width: 3), _roleBadge('C', AppTheme.primaryGreen)],
               if (p.isWicketKeeper) ...[const SizedBox(width: 3), _roleBadge('WK', Colors.orange)],

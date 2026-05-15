@@ -101,7 +101,7 @@ class _UmpireHomeState extends State<UmpireHome> {
             // ── Header ─────────────────────────────────────────────
             Stack(
               children: [
-                const ProteaHeader(height: 150),
+                const ProteaHeader(height: 125),
                 Positioned(
                   top: MediaQuery.of(context).padding.top + 6,
                   left: 8,

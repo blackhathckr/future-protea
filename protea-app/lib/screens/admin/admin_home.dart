@@ -36,7 +36,7 @@ class _AdminHomeState extends State<AdminHome> {
         indicatorColor: AppTheme.primaryGreen.withValues(alpha: 0.15),
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         height: 70,
-        destinations: const [
+        destinations: [
           NavigationDestination(
             icon: Icon(Icons.dashboard_outlined),
             selectedIcon: Icon(Icons.dashboard, color: AppTheme.primaryGreen),

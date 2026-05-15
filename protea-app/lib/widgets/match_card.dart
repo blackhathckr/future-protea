@@ -54,7 +54,7 @@ class MatchCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis),
                         if (match.status != 'upcoming')
                           Text(match.team1Display,
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.accentGold)),
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.accentGold)),
                       ],
                     ),
                   ),
@@ -65,7 +65,7 @@ class MatchCard extends StatelessWidget {
                       shape: BoxShape.circle,
                       color: AppTheme.surfaceCardLight,
                     ),
-                    child: const Text('VS',
+                    child: Text('VS',
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppTheme.accentGold)),
                   ),
                   Expanded(
@@ -87,7 +87,7 @@ class MatchCard extends StatelessWidget {
                             overflow: TextOverflow.ellipsis),
                         if (match.status != 'upcoming')
                           Text(match.team2Display,
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.accentGold)),
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppTheme.accentGold)),
                       ],
                     ),
                   ),
@@ -123,7 +123,7 @@ class MatchCard extends StatelessWidget {
                   ),
                   child: Text(
                     '${match.winner} won!',
-                    style: const TextStyle(color: AppTheme.accentGold, fontWeight: FontWeight.bold, fontSize: 13),
+                    style: TextStyle(color: AppTheme.accentGold, fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                 ),
               ],

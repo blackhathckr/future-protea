@@ -62,7 +62,7 @@ class _TournamentBracketScreenState extends State<TournamentBracketScreen> {
           children: [
             Stack(
               children: [
-                const ProteaHeader(height: 160),
+                const ProteaHeader(height: 120),
                 Positioned(
                   top: MediaQuery.of(context).padding.top + 8,
                   left: 8,
@@ -89,7 +89,7 @@ class _TournamentBracketScreenState extends State<TournamentBracketScreen> {
             ),
             Expanded(
               child: _loading
-                  ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen))
+                  ? Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen))
                   : (semis.isEmpty && finals.isEmpty)
                       ? _emptyState()
                       : RefreshIndicator(
@@ -207,7 +207,7 @@ class _TournamentBracketScreenState extends State<TournamentBracketScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.emoji_events,
+                      Icon(Icons.emoji_events,
                           size: 14, color: AppTheme.accentAmber),
                       const SizedBox(width: 4),
                       Text('${f.winner} won',

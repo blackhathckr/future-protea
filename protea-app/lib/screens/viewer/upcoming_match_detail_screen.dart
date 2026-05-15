@@ -122,15 +122,15 @@ class _UpcomingMatchDetailScreenState extends State<UpcomingMatchDetailScreen>
       body: SafeArea(
         top: false,
         child: _loading
-            ? const Center(child: CircularProgressIndicator())
+            ? Center(child: CircularProgressIndicator())
             : _match == null
-                ? const Center(child: Text('Match not found'))
+                ? Center(child: Text('Match not found'))
                 : Column(
                     children: [
                       // ── Header ──────────────────────────────
                       Stack(
                         children: [
-                          const ProteaHeader(height: 90),
+                          const ProteaHeader(height: 115),
                           Positioned(
                             top: MediaQuery.of(context).padding.top + 6,
                             left: 4,

@@ -11,6 +11,7 @@ import '../../shared/utils/snackbar_utils.dart';
 import '../../providers/theme_provider.dart';
 import '../../theme/app_theme.dart';
 import '../support/support_screen.dart';
+import '../../widgets/theme_toggle.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -246,18 +247,16 @@ class _ProfileScreenState extends State<ProfileScreen>
                     theme.isDark ? Icons.light_mode : Icons.dark_mode,
                     color: Colors.white,
                   ),
+                  tooltip: theme.isDark ? 'Light mode' : 'Dark mode',
                   onPressed: theme.toggle,
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.logout, color: Colors.white),
-                onPressed: () => _confirmLogout(context),
-              ),
+              const AppearanceButton(),
             ],
             flexibleSpace: FlexibleSpaceBar(
               collapseMode: CollapseMode.pin,
               background: Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: AppTheme.headerGradient,
                 ),
                 child: SafeArea(
@@ -318,7 +317,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                                     shape: BoxShape.circle,
                                     border: Border.all(color: Colors.white, width: 2),
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.camera_alt,
                                     color: AppTheme.darkGreen,
                                     size: 14,
@@ -360,7 +359,7 @@ class _ProfileScreenState extends State<ProfileScreen>
           ),
         ],
         body: _loading
-            ? const LoadingState(label: 'Saving...')
+            ? LoadingState(label: 'Saving...')
             : TabBarView(
                 controller: _tabController,
                 children: [
@@ -648,7 +647,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                                           .withValues(alpha: 0.10),
                                       borderRadius: BorderRadius.circular(10),
                                     ),
-                                    child: const Icon(
+                                    child: Icon(
                                       Icons.help_outline,
                                       color: AppTheme.primaryGreen,
                                       size: 22,
@@ -713,7 +712,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                                         color: AppTheme.accentAmber.withValues(alpha: 0.12),
                                         borderRadius: BorderRadius.circular(8),
                                       ),
-                                      child: const Icon(Icons.lock_outline, color: AppTheme.accentAmber, size: 20),
+                                      child: Icon(Icons.lock_outline, color: AppTheme.accentAmber, size: 20),
                                     ),
                                     const SizedBox(width: 12),
                                     Expanded(
@@ -903,7 +902,7 @@ class _ProfileScreenState extends State<ProfileScreen>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline, color: AppTheme.accentAmber, size: 20),
+          Icon(Icons.info_outline, color: AppTheme.accentAmber, size: 20),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -931,7 +930,7 @@ class _ProfileScreenState extends State<ProfileScreen>
                     color: AppTheme.primaryGreen.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.sports_cricket, color: AppTheme.primaryGreen, size: 18),
+                  child: Icon(Icons.sports_cricket, color: AppTheme.primaryGreen, size: 18),
                 ),
                 const SizedBox(width: 10),
                 Expanded(

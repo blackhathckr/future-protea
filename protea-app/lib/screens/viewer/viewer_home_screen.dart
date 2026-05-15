@@ -68,7 +68,7 @@ class _ViewerHomeScreenState extends State<ViewerHomeScreen> {
         backgroundColor: isDark ? AppTheme.darkCardBg : Colors.white,
         indicatorColor: AppTheme.primaryGreen.withValues(alpha: 0.15),
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        destinations: const [
+        destinations: [
           NavigationDestination(
             icon: Icon(Icons.live_tv_outlined),
             selectedIcon:
@@ -108,7 +108,7 @@ class _ViewerHomeScreenState extends State<ViewerHomeScreen> {
             // ── Compact Header ──────────────────────────────────────
             Stack(
               children: [
-                const ProteaHeader(height: 140),
+                const ProteaHeader(height: 120),
                 Positioned(
                   top: MediaQuery.of(context).padding.top + 6,
                   left: 8,

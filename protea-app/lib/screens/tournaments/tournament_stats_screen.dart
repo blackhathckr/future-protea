@@ -60,7 +60,7 @@ class _TournamentStatsScreenState extends State<TournamentStatsScreen>
           children: [
             Stack(
               children: [
-                const ProteaHeader(height: 130),
+                const ProteaHeader(height: 115),
                 Positioned(
                   top: MediaQuery.of(context).padding.top + 8,
                   left: 8,

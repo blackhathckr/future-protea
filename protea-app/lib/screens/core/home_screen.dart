@@ -7,6 +7,7 @@ import '../../providers/theme_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/notification_bell.dart';
 import '../../widgets/protea_header.dart';
+import '../../widgets/theme_toggle.dart';
 import '../players/players_home_screen.dart';
 import '../teams/teams_home_screen.dart';
 import '../matches/match_home_screen.dart';
@@ -84,59 +85,66 @@ class HomeScreen extends StatelessWidget {
             // Header with logo
             Stack(
               children: [
-                const ProteaHeader(height: 185),
-                // Profile avatar on left
+                const ProteaHeader(height: 120),
+                // Profile avatar + notification bell on left
                 Positioned(
-                  top: MediaQuery.of(context).padding.top + 8,
+                  top: MediaQuery.of(context).padding.top + 4,
                   left: 8,
-                  child: GestureDetector(
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ProfileScreen()),
-                    ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppTheme.accentGold,
-                          width: 3,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const ProfileScreen()),
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.2),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: AppTheme.accentGold,
+                              width: 3,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.2),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
-                        ],
+                          child: CircleAvatar(
+                            radius: 24,
+                            backgroundColor: Colors.white,
+                            backgroundImage: auth.user?.photoUrl != null && auth.user!.photoUrl!.isNotEmpty
+                                ? NetworkImage(ApiService.getPhotoUrl(auth.user!.photoUrl!))
+                                : null,
+                            child: auth.user?.photoUrl == null || auth.user!.photoUrl!.isEmpty
+                                ? Text(
+                                    userName[0].toUpperCase(),
+                                    style: GoogleFonts.poppins(
+                                      color: AppTheme.primaryGreen,
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  )
+                                : null,
+                          ),
+                        ),
                       ),
-                      child: CircleAvatar(
-                        radius: 24,
-                        backgroundColor: Colors.white,
-                        backgroundImage: auth.user?.photoUrl != null && auth.user!.photoUrl!.isNotEmpty
-                            ? NetworkImage(ApiService.getPhotoUrl(auth.user!.photoUrl!))
-                            : null,
-                        child: auth.user?.photoUrl == null || auth.user!.photoUrl!.isEmpty
-                            ? Text(
-                                userName[0].toUpperCase(),
-                                style: GoogleFonts.poppins(
-                                  color: AppTheme.primaryGreen,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              )
-                            : null,
-                      ),
-                    ),
+                      const SizedBox(width: 4),
+                      const NotificationBell(),
+                    ],
                   ),
                 ),
-                // Theme toggle and logout on right
+                // Theme toggle + Appearance on right
+                // (Logout lives in Profile → danger zone — not a header action.)
                 Positioned(
                   top: MediaQuery.of(context).padding.top + 8,
                   right: 8,
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const NotificationBell(),
                       Consumer<ThemeProvider>(
                         builder: (context, theme, _) => IconButton(
                           icon: Icon(
@@ -147,10 +155,7 @@ class HomeScreen extends StatelessWidget {
                           onPressed: () => theme.toggle(),
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.logout, color: Colors.white),
-                        onPressed: () => _confirmLogout(context),
-                      ),
+                      const AppearanceButton(),
                     ],
                   ),
                 ),
@@ -268,27 +273,6 @@ class HomeScreen extends StatelessWidget {
     }
   }
 
-  void _confirmLogout(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              final navigator = Navigator.of(context);
-              navigator.popUntil((route) => route.isFirst);
-              await context.read<AuthProvider>().logout();
-            },
-            child: const Text('Logout', style: TextStyle(color: AppTheme.wicketRed)),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _MenuButton extends StatelessWidget {

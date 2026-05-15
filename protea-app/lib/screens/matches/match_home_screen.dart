@@ -60,7 +60,7 @@ class _MatchHomeScreenState extends State<MatchHomeScreen> {
           children: [
             Stack(
               children: [
-                const ProteaHeader(height: 175),
+                const ProteaHeader(height: 120),
                 Positioned(
                   top: MediaQuery.of(context).padding.top + 8,
                   left: 8,
@@ -97,7 +97,7 @@ class _MatchHomeScreenState extends State<MatchHomeScreen> {
               ),
             Expanded(
               child: _loading
-                  ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen))
+                  ? Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen))
                   : _matches.isEmpty
                       ? Center(
                           child: Text('No matches yet',

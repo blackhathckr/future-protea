@@ -52,7 +52,7 @@ class _PlayerJourneyScreenState extends State<PlayerJourneyScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Player Journeys')),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen))
+          ? Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen))
           : _buildMatchScores(),
     );
   }
@@ -125,7 +125,7 @@ class _PlayerJourneyScreenState extends State<PlayerJourneyScreen> {
                     Text(s.name, style: const TextStyle(fontWeight: FontWeight.w600)),
                     Row(
                       children: [
-                        Text('${s.runsScored}(${s.ballsFaced})', style: const TextStyle(fontSize: 13, color: AppTheme.primaryGreen, fontWeight: FontWeight.bold)),
+                        Text('${s.runsScored}(${s.ballsFaced})', style: TextStyle(fontSize: 13, color: AppTheme.primaryGreen, fontWeight: FontWeight.bold)),
                         const SizedBox(width: 8),
                         if (s.fours > 0) Text('${s.fours}x4 ', style: const TextStyle(fontSize: 11, color: AppTheme.fourColor)),
                         if (s.sixes > 0) Text('${s.sixes}x6 ', style: const TextStyle(fontSize: 11, color: AppTheme.sixColor)),
@@ -140,7 +140,7 @@ class _PlayerJourneyScreenState extends State<PlayerJourneyScreen> {
                 children: [
                   Text('SR ${s.strikeRate.toStringAsFixed(0)}', style: TextStyle(fontSize: 12, color: AppTheme.ts(context))),
                   const SizedBox(height: 2),
-                  const Row(
+                  Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text('Journey', style: TextStyle(fontSize: 11, color: AppTheme.primaryGreen, fontWeight: FontWeight.w600)),

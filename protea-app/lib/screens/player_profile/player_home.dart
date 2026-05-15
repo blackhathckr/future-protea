@@ -100,7 +100,7 @@ class _PlayerHomeState extends State<PlayerHome> {
             if (!isProfileTab)
               Stack(
                 children: [
-                  const ProteaHeader(height: 90),
+                  const ProteaHeader(height: 115),
                   Positioned(
                     top: MediaQuery.of(context).padding.top + 6,
                     left: 8,
@@ -179,7 +179,7 @@ class _PlayerHomeState extends State<PlayerHome> {
         children: [
           Container(
             color: Theme.of(context).scaffoldBackgroundColor,
-            child: const TabBar(
+            child: TabBar(
               indicatorColor: AppTheme.accentGold,
               labelColor: AppTheme.accentGold,
               unselectedLabelColor: AppTheme.textSecondary,
@@ -204,7 +204,7 @@ class _PlayerHomeState extends State<PlayerHome> {
 
   Widget _buildMatchesTab() {
     if (_matchesLoading) {
-      return const Center(child: CircularProgressIndicator(color: AppTheme.accentGold));
+      return Center(child: CircularProgressIndicator(color: AppTheme.accentGold));
     }
 
     final live = _matches.where((m) => m.status == 'live').toList();
@@ -289,7 +289,7 @@ class _PlayerHomeState extends State<PlayerHome> {
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(color: AppTheme.accentAmber.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                    child: const Text('Account pending approval to join', style: TextStyle(fontSize: 11, color: AppTheme.accentAmber)),
+                    child: Text('Account pending approval to join', style: TextStyle(fontSize: 11, color: AppTheme.accentAmber)),
                   ),
                 ),
               if (isLive || isCompleted) ...[
@@ -303,9 +303,9 @@ class _PlayerHomeState extends State<PlayerHome> {
               if (match.winner != null) ...[
                 const SizedBox(height: 6),
                 Row(children: [
-                  const Icon(Icons.emoji_events, size: 14, color: AppTheme.accentGold),
+                  Icon(Icons.emoji_events, size: 14, color: AppTheme.accentGold),
                   const SizedBox(width: 4),
-                  Text('${match.winner} wins', style: const TextStyle(color: AppTheme.accentGold, fontWeight: FontWeight.w600, fontSize: 12)),
+                  Text('${match.winner} wins', style: TextStyle(color: AppTheme.accentGold, fontWeight: FontWeight.w600, fontSize: 12)),
                 ]),
               ],
               if (match.status == 'upcoming') ...[
@@ -388,7 +388,7 @@ class _PlayerHomeState extends State<PlayerHome> {
 
   Widget _buildTournamentsTab() {
     if (_tournamentsLoading) {
-      return const Center(child: CircularProgressIndicator(color: AppTheme.accentGold));
+      return Center(child: CircularProgressIndicator(color: AppTheme.accentGold));
     }
 
     final active = _tournaments.where((t) => t.status == 'active' || t.status == 'in_progress').toList();
@@ -471,7 +471,7 @@ class _PlayerHomeState extends State<PlayerHome> {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: AppTheme.textSecondary),
+              Icon(Icons.chevron_right, color: AppTheme.textSecondary),
             ],
           ),
         ),

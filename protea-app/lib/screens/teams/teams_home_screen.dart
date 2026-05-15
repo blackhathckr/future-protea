@@ -76,7 +76,7 @@ class _TeamsHomeScreenState extends State<TeamsHomeScreen> {
             // ── Header ──────────────────────────────────────────────────
             Stack(
               children: [
-                const ProteaHeader(height: 160),
+                const ProteaHeader(height: 120),
                 Positioned(
                   top: MediaQuery.of(context).padding.top + 8,
                   right: 8,
@@ -93,7 +93,7 @@ class _TeamsHomeScreenState extends State<TeamsHomeScreen> {
                   Container(
                     width: 4, height: 22,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
+                      gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [AppTheme.accentGold, AppTheme.primaryGreen],
@@ -146,7 +146,7 @@ class _TeamsHomeScreenState extends State<TeamsHomeScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(14),
-                    borderSide: const BorderSide(color: AppTheme.primaryGreen, width: 1.5),
+                    borderSide: BorderSide(color: AppTheme.primaryGreen, width: 1.5),
                   ),
                   filled: true,
                   isDense: true,

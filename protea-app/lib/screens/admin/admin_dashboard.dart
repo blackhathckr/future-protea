@@ -12,6 +12,7 @@ import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/notification_bell.dart';
 import '../../widgets/protea_header.dart';
+import '../../widgets/theme_toggle.dart';
 import '../players/register_player_screen.dart';
 import '../profile/profile_screen.dart';
 import '../teams/register_team_screen.dart';
@@ -119,7 +120,7 @@ class _AdminDashboardState extends State<AdminDashboard> with TickerProviderStat
               _buildHeader(context, auth, userName),
               if (_loading) ...[
                 const SizedBox(height: 80),
-                const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen)),
+                Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen)),
               ] else ...[
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -174,38 +175,45 @@ class _AdminDashboardState extends State<AdminDashboard> with TickerProviderStat
   Widget _buildHeader(BuildContext context, AuthProvider auth, String userName) {
     return Stack(
       children: [
-        const ProteaHeader(height: 220),
+        const ProteaHeader(height: 125),
         Positioned(
-          top: MediaQuery.of(context).padding.top + 8,
-          left: 12,
-          child: GestureDetector(
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ProfileScreen()),
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppTheme.accentGold, width: 2.5),
+          top: MediaQuery.of(context).padding.top + 4,
+          left: 8,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GestureDetector(
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                ),
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppTheme.accentGold, width: 2.5),
+                  ),
+                  child: CircleAvatar(
+                    radius: 22,
+                    backgroundColor: Colors.white,
+                    backgroundImage: auth.user?.photoUrl != null && auth.user!.photoUrl!.isNotEmpty
+                        ? NetworkImage(ApiService.getPhotoUrl(auth.user!.photoUrl!))
+                        : null,
+                    child: auth.user?.photoUrl == null || auth.user!.photoUrl!.isEmpty
+                        ? Text(
+                            userName[0].toUpperCase(),
+                            style: GoogleFonts.poppins(
+                              color: AppTheme.primaryGreen,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          )
+                        : null,
+                  ),
+                ),
               ),
-              child: CircleAvatar(
-                radius: 22,
-                backgroundColor: Colors.white,
-                backgroundImage: auth.user?.photoUrl != null && auth.user!.photoUrl!.isNotEmpty
-                    ? NetworkImage(ApiService.getPhotoUrl(auth.user!.photoUrl!))
-                    : null,
-                child: auth.user?.photoUrl == null || auth.user!.photoUrl!.isEmpty
-                    ? Text(
-                        userName[0].toUpperCase(),
-                        style: GoogleFonts.poppins(
-                          color: AppTheme.primaryGreen,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      )
-                    : null,
-              ),
-            ),
+              const SizedBox(width: 4),
+              const NotificationBell(),
+            ],
           ),
         ),
         Positioned(
@@ -214,7 +222,6 @@ class _AdminDashboardState extends State<AdminDashboard> with TickerProviderStat
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const NotificationBell(),
               Consumer<ThemeProvider>(
                 builder: (context, theme, _) => IconButton(
                   icon: Icon(
@@ -224,6 +231,7 @@ class _AdminDashboardState extends State<AdminDashboard> with TickerProviderStat
                   onPressed: theme.toggle,
                 ),
               ),
+              const AppearanceButton(),
               IconButton(
                 icon: const Icon(Icons.logout, color: Colors.white),
                 onPressed: () => _confirmLogout(context),
@@ -280,7 +288,7 @@ class _AdminDashboardState extends State<AdminDashboard> with TickerProviderStat
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.admin_panel_settings,
+                    Icon(Icons.admin_panel_settings,
                         size: 14, color: AppTheme.textPrimary),
                     const SizedBox(width: 4),
                     Text(
@@ -843,7 +851,7 @@ class _AdminDashboardState extends State<AdminDashboard> with TickerProviderStat
                           if (m.winner != null)
                             Row(
                               children: [
-                                const Icon(Icons.emoji_events,
+                                Icon(Icons.emoji_events,
                                     size: 13, color: AppTheme.accentAmber),
                                 const SizedBox(width: 3),
                                 Text(

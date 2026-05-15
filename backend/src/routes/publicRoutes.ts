@@ -115,24 +115,153 @@ router.get('/matches/:id', async (req: Request, res: Response) => {
 
 /**
  * GET /api/public/matches/:id/scorecard
+ * Returns the same `{ match, batting, bowling, innings }` shape as the
+ * authenticated endpoint so the Flutter MatchDetailScreen can render guest
+ * scorecards identically to viewer scorecards.
  */
 router.get('/matches/:id/scorecard', async (req: Request, res: Response) => {
   try {
     const matchId = req.params.id as string;
-    const [match, scores] = await Promise.all([
-      prisma.match.findUnique({ where: { id: matchId } }),
-      prisma.playerScore.findMany({
-        where: { matchId },
-        include: { player: { select: { name: true, photoUrl: true } } },
-        orderBy: [{ team: 'asc' }, { runsScored: 'desc' }],
-      }),
-    ]);
+
+    const match = await prisma.match.findUnique({ where: { id: matchId } });
     if (!match) {
       res.status(404).json({ error: 'Match not found' });
       return;
     }
-    res.json(toSnake({ ...match, scores }));
+
+    const [batting, bowling, inningsRows, teams] = await Promise.all([
+      prisma.playerScore.findMany({
+        where: { matchId, ballsFaced: { gt: 0 } },
+        include: {
+          player:      { select: { name: true } },
+          dismissedBy: { select: { name: true } },
+          fielder:     { select: { name: true } },
+        },
+        orderBy: [{ team: 'asc' }, { runsScored: 'desc' }],
+      }),
+      prisma.playerScore.findMany({
+        where: { matchId, oversBowled: { gt: 0 } },
+        include: { player: { select: { name: true } } },
+        orderBy: [{ team: 'asc' }, { wicketsTaken: 'desc' }],
+      }),
+      prisma.matchInnings.findMany({
+        where: { matchId },
+        include: {
+          fallOfWickets: {
+            include: {
+              innings:  { select: { name: true } },
+              bowler:   { select: { name: true } },
+              fielder:  { select: { name: true } },
+            },
+            orderBy: { wicketNumber: 'asc' },
+          },
+        },
+        orderBy: { inningsNumber: 'asc' },
+      }),
+      prisma.team.findMany({
+        where: { teamName: { in: [match.team1Name, match.team2Name] } },
+        select: { id: true, teamName: true },
+      }),
+    ]);
+
+    const teamIds = teams.map((t) => t.id);
+    const teamPlayers = await prisma.teamPlayer.findMany({
+      where: { teamId: { in: teamIds } },
+      include: { player: { select: { name: true } } },
+    });
+    const playerRoleMap = new Map(
+      teamPlayers.map((tp) => [tp.player.name.toLowerCase(), {
+        isCaptain:      tp.isCaptain,
+        isWicketKeeper: tp.isWicketKeeper,
+      }])
+    );
+
+    const flattenBatting = (ps: typeof batting[number]) => {
+      const roleInfo = playerRoleMap.get(ps.player?.name?.toLowerCase() || '');
+      return {
+        id:               ps.id,
+        match_id:         ps.matchId,
+        player_id:        ps.playerId,
+        team:             ps.team,
+        name:             ps.player?.name,
+        runs_scored:      ps.runsScored,
+        balls_faced:      ps.ballsFaced,
+        fours:            ps.fours,
+        sixes:            ps.sixes,
+        is_out:           ps.isOut,
+        out_type:         ps.outType,
+        dismissed_by:     ps.dismissedBy?.name ?? null,
+        fielder:          ps.fielder?.name     ?? null,
+        overs_bowled:     ps.oversBowled,
+        runs_conceded:    ps.runsConceded,
+        wickets_taken:    ps.wicketsTaken,
+        maidens:          ps.maidens,
+        catches:          ps.catches,
+        run_outs:         ps.runOuts,
+        is_captain:       roleInfo?.isCaptain      ?? false,
+        is_wicket_keeper: roleInfo?.isWicketKeeper ?? false,
+      };
+    };
+
+    const flattenBowling = (ps: typeof bowling[number]) => {
+      const roleInfo = playerRoleMap.get(ps.player?.name?.toLowerCase() || '');
+      return {
+        id:               ps.id,
+        match_id:         ps.matchId,
+        player_id:        ps.playerId,
+        team:             ps.team,
+        name:             ps.player?.name,
+        runs_scored:      ps.runsScored,
+        balls_faced:      ps.ballsFaced,
+        fours:            ps.fours,
+        sixes:            ps.sixes,
+        is_out:           ps.isOut,
+        out_type:         ps.outType,
+        overs_bowled:     ps.oversBowled,
+        runs_conceded:    ps.runsConceded,
+        wickets_taken:    ps.wicketsTaken,
+        maidens:          ps.maidens,
+        catches:          ps.catches,
+        run_outs:         ps.runOuts,
+        is_captain:       roleInfo?.isCaptain      ?? false,
+        is_wicket_keeper: roleInfo?.isWicketKeeper ?? false,
+      };
+    };
+
+    const inningsSummaries = inningsRows.map((inn) => ({
+      innings_number:    inn.inningsNumber,
+      total_runs:        inn.totalRuns,
+      total_wickets:     inn.totalWickets,
+      total_overs:       inn.totalOvers,
+      target_runs:       inn.targetRuns,
+      status:            inn.status,
+      extras: {
+        wides:     inn.extrasWides,
+        noballs:   inn.extrasNoballs,
+        byes:      inn.extrasByes,
+        legbyes:   inn.extrasLegbyes,
+        penalties: inn.extrasPenalties,
+        total:     inn.extrasWides + inn.extrasNoballs + inn.extrasByes + inn.extrasLegbyes + inn.extrasPenalties,
+      },
+      fall_of_wickets: inn.fallOfWickets.map((fow) => ({
+        wicket_number:  fow.wicketNumber,
+        batsman_name:   (fow as typeof fow & { innings?: { name: string } | null }).innings?.name ?? null,
+        dismissal_type: fow.dismissalType,
+        bowler_name:    fow.bowler?.name  ?? null,
+        fielder_name:   fow.fielder?.name ?? null,
+        runs_at_fall:   fow.runsAtFall,
+        overs_at_fall:  fow.oversAtFall,
+      })),
+    }));
+
+    res.json(toSnake({
+      match,
+      batting: batting.map(flattenBatting),
+      bowling: bowling.map(flattenBowling),
+      innings: inningsSummaries,
+    }));
   } catch (err: unknown) {
+    logger.error('Public scorecard error:', err);
     res.status(500).json({ error: 'Failed to load scorecard' });
   }
 });

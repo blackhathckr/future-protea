@@ -54,7 +54,7 @@ class _PlayerDashboardScreenState extends State<PlayerDashboardScreen> {
     final authUser = context.watch<AuthProvider>().user;
 
     if (_loading) {
-      return const Center(child: CircularProgressIndicator(color: AppTheme.accentGold));
+      return Center(child: CircularProgressIndicator(color: AppTheme.accentGold));
     }
 
     if (_error != null) {
@@ -128,7 +128,7 @@ class _PlayerDashboardScreenState extends State<PlayerDashboardScreen> {
     return Container(
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           colors: [Color(0xFF0D2B1A), AppTheme.primaryGreen],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -303,7 +303,7 @@ class _PlayerDashboardScreenState extends State<PlayerDashboardScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppTheme.accentAmber.withValues(alpha: 0.4)),
       ),
-      child: const Row(children: [
+      child: Row(children: [
         Icon(Icons.hourglass_empty, color: AppTheme.accentAmber, size: 20),
         SizedBox(width: 10),
         Expanded(child: Text('Your account is pending approval. You can browse, but join requests need approval.',
@@ -616,7 +616,7 @@ class _PlayerDashboardScreenState extends State<PlayerDashboardScreen> {
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                         decoration: BoxDecoration(color: AppTheme.primaryGreen.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(4)),
-                        child: Text(m.matchType!, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: AppTheme.primaryGreen)),
+                        child: Text(m.matchType!, style: TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: AppTheme.primaryGreen)),
                       ),
                     ],
                   ]),
@@ -638,7 +638,7 @@ class _PlayerDashboardScreenState extends State<PlayerDashboardScreen> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Icon(Icons.chevron_right, size: 18, color: AppTheme.textSecondary),
+                Icon(Icons.chevron_right, size: 18, color: AppTheme.textSecondary),
               ],
             ),
           ],
@@ -724,7 +724,7 @@ class _PlayerDashboardScreenState extends State<PlayerDashboardScreen> {
                       style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: isActive ? AppTheme.accentGold : AppTheme.upcomingBlue)),
                 ),
                 const SizedBox(height: 4),
-                const Icon(Icons.chevron_right, size: 18, color: AppTheme.textSecondary),
+                Icon(Icons.chevron_right, size: 18, color: AppTheme.textSecondary),
               ],
             ),
           ],

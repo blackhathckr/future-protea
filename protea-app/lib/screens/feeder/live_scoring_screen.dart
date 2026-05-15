@@ -111,11 +111,13 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
       // Load retired hurt batsmen from scorecard
       try {
         final scorecard = await ApiService.getScorecard(widget.matchId);
-        final batting = (scorecard['batting'] as List);
-        for (var b in batting) {
-          if (b['out_type'] == 'retired hurt' && b['is_out'] == false) {
-            _retiredHurtBatsmen.add(b['player_id'] as String);
-            print('DEBUG: Loaded retired hurt batsman: ${b['name']}');
+        final batting = scorecard['batting'];
+        if (batting is List) {
+          for (var b in batting) {
+            if (b['out_type'] == 'retired hurt' && b['is_out'] == false) {
+              _retiredHurtBatsmen.add(b['player_id'] as String);
+              print('DEBUG: Loaded retired hurt batsman: ${b['name']}');
+            }
           }
         }
       } catch (e) {
@@ -646,7 +648,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
                 const SizedBox(height: 12),
                 Expanded(
                   child: available.isEmpty
-                      ? const Padding(
+                      ? Padding(
                           padding: EdgeInsets.all(20),
                           child: Text('All batsmen are out!', style: TextStyle(color: AppTheme.wicketRed)),
                         )
@@ -720,7 +722,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
               print('DEBUG: Switch Innings button clicked');
               await _startSecondInnings();
             },
-            child: const Text('Start 2nd Innings', style: TextStyle(color: AppTheme.primaryGreen)),
+            child: Text('Start 2nd Innings', style: TextStyle(color: AppTheme.primaryGreen)),
           ),
         ],
       ),
@@ -739,7 +741,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
     if (_loading) {
       return Scaffold(
         appBar: AppBar(title: const Text('Live Scoring')),
-        body: const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen)),
+        body: Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen)),
       );
     }
 
@@ -859,7 +861,13 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
                       textAlign: TextAlign.center,
                     ),
                   ),
-                  const SizedBox(width: 40), // Balance the back button
+                  IconButton(
+                    icon: const Icon(Icons.ios_share_rounded),
+                    tooltip: 'Share match link',
+                    onPressed: _shareMatchLink,
+                    padding: const EdgeInsets.all(8),
+                    constraints: const BoxConstraints(),
+                  ),
                 ],
               ),
             ),
@@ -868,7 +876,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -966,7 +974,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
                               Text('  •  ',
                                   style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 11)),
                               Text('CRR ${crr.toStringAsFixed(2)}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                       color: AppTheme.accentGold, fontSize: 11, fontWeight: FontWeight.w700)),
                             ],
                           ),
@@ -1093,7 +1101,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
                 child: Row(
                   children: [
                     if (_striker != null || _nonStriker != null) ...[
-                      const Icon(Icons.handshake, size: 12, color: AppTheme.accentAmber),
+                      Icon(Icons.handshake, size: 12, color: AppTheme.accentAmber),
                       const SizedBox(width: 4),
                       Text('P:',
                           style: TextStyle(fontSize: 10, color: AppTheme.ts(context), fontWeight: FontWeight.w600)),
@@ -1152,7 +1160,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
                 ),
                 child: Column(
                   children: [
-                    const Icon(Icons.warning_amber_rounded, color: AppTheme.accentAmber, size: 48),
+                    Icon(Icons.warning_amber_rounded, color: AppTheme.accentAmber, size: 48),
                     const SizedBox(height: 12),
                     Text('No Players Assigned',
                         style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600, color: AppTheme.accentAmber)),
@@ -1397,25 +1405,27 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    // More actions row
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _actionBtn('DECLARE\nINNINGS', const Color(0xFF37474F), Colors.white, _showDeclareDialog),
+                    // Critical / rarely-used actions are tucked behind a single entry
+                    SizedBox(
+                      width: double.infinity,
+                      height: 44,
+                      child: OutlinedButton.icon(
+                        onPressed: _showFurtherActionsSheet,
+                        icon: const Icon(Icons.more_horiz_rounded, size: 18),
+                        label: Text(
+                          'FURTHER ACTIONS',
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1,
+                            fontSize: 12,
+                          ),
                         ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: _actionBtn('PENALTY\nRUNS', const Color(0xFF37474F), Colors.white, _showPenaltyDialog),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppTheme.tp(context),
+                          side: BorderSide(color: AppTheme.divider(context)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: _actionBtn('ABANDON\nMATCH', const Color(0xFF37474F), Colors.white, _showAbandonDialog),
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: _actionBtn('SHARE\nLINK', const Color(0xFF37474F), Colors.white, _shareMatchLink),
-                        ),
-                      ],
+                      ),
                     ),
                     if (_currentInnings == 1 && _currentOver >= (_match?.totalOvers ?? 20)) ...[
                       const SizedBox(height: 8),
@@ -1935,6 +1945,148 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
     );
   }
 
+  void _showFurtherActionsSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppTheme.surface(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetCtx) {
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppTheme.divider(context),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  'Further actions',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.tp(context),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Use these only when required — they materially change the match.',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    color: AppTheme.ts(context),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _furtherActionTile(
+                  icon: Icons.flag_rounded,
+                  iconColor: Colors.amber.shade700,
+                  label: 'Declare innings',
+                  subtitle: 'End the current innings now',
+                  onTap: () {
+                    Navigator.pop(sheetCtx);
+                    _showDeclareDialog();
+                  },
+                ),
+                _furtherActionTile(
+                  icon: Icons.add_circle_outline_rounded,
+                  iconColor: Colors.blueGrey,
+                  label: 'Penalty runs',
+                  subtitle: 'Award extra runs to a side',
+                  onTap: () {
+                    Navigator.pop(sheetCtx);
+                    _showPenaltyDialog();
+                  },
+                ),
+                _furtherActionTile(
+                  icon: Icons.cancel_rounded,
+                  iconColor: Colors.red.shade600,
+                  label: 'Abandon match',
+                  subtitle: 'Stop the match — cannot be undone',
+                  onTap: () {
+                    Navigator.pop(sheetCtx);
+                    _showAbandonDialog();
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _furtherActionTile({
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: AppTheme.divider(context)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: iconColor, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.tp(context),
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        color: AppTheme.ts(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: AppTheme.ts(context)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<String?> _selectPlayerOfMatch() async {
     final allPlayers = [..._team1Players, ..._team2Players];
     return showModalBottomSheet<String>(
@@ -1955,7 +2107,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
                 shrinkWrap: true,
                 children: [
                   ListTile(
-                    leading: const Icon(Icons.skip_next, color: AppTheme.textSecondary),
+                    leading: Icon(Icons.skip_next, color: AppTheme.textSecondary),
                     title: const Text('Skip'),
                     subtitle: const Text('No selection'),
                     onTap: () => Navigator.pop(ctx, null),
@@ -2466,7 +2618,7 @@ class _LiveScoringScreenState extends State<LiveScoringScreen> {
       builder: (ctx) => AlertDialog(
         title: Row(
           children: [
-            const Icon(Icons.sports_cricket, color: AppTheme.primaryGreen, size: 28),
+            Icon(Icons.sports_cricket, color: AppTheme.primaryGreen, size: 28),
             const SizedBox(width: 8),
             const Text('1st Innings Complete!'),
           ],

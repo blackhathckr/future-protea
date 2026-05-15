@@ -114,13 +114,13 @@ class _CreateMatchScreenState extends State<CreateMatchScreen> {
       body: SafeArea(
         top: false,
         child: _dataLoading
-            ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen))
+            ? Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen))
             : SingleChildScrollView(
                 child: Column(
                   children: [
                     Stack(
                       children: [
-                        const ProteaHeader(height: 160),
+                        const ProteaHeader(height: 120),
                         Positioned(
                           top: MediaQuery.of(context).padding.top + 8,
                           left: 8,

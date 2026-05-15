@@ -10,6 +10,7 @@ import '../../theme/app_theme.dart';
 import '../../shared/utils/snackbar_utils.dart';
 import '../../widgets/notification_bell.dart';
 import '../../widgets/protea_header.dart';
+import '../../widgets/theme_toggle.dart';
 import '../viewer/match_detail_screen.dart';
 import '../viewer/upcoming_match_detail_screen.dart';
 import '../players/players_home_screen.dart';
@@ -89,7 +90,7 @@ class _FeederHomeState extends State<FeederHome> {
             : Colors.white,
         indicatorColor: AppTheme.primaryGreen.withValues(alpha: 0.15),
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        destinations: const [
+        destinations: [
           NavigationDestination(
             icon: Icon(Icons.sports_cricket_outlined),
             selectedIcon: Icon(Icons.sports_cricket, color: AppTheme.primaryGreen),
@@ -188,45 +189,52 @@ class _MatchesHomeTab extends StatelessWidget {
             // ── Header with logo + controls ──────────────────────────────
             Stack(
               children: [
-                const ProteaHeader(height: 180),
-                // Profile avatar top-left
+                const ProteaHeader(height: 120),
+                // Profile avatar + notification bell top-left
                 Positioned(
-                  top: MediaQuery.of(context).padding.top + 8,
-                  left: 12,
-                  child: GestureDetector(
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const ProfileScreen()),
-                    ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppTheme.accentGold, width: 2.5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.2),
-                            blurRadius: 6,
+                  top: MediaQuery.of(context).padding.top + 4,
+                  left: 8,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const ProfileScreen()),
+                        ),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: AppTheme.accentGold, width: 2.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.2),
+                                blurRadius: 6,
+                              ),
+                            ],
                           ),
-                        ],
+                          child: CircleAvatar(
+                            radius: 22,
+                            backgroundColor: Colors.white,
+                            backgroundImage: auth.user?.photoUrl != null && auth.user!.photoUrl!.isNotEmpty
+                                ? NetworkImage(ApiService.getPhotoUrl(auth.user!.photoUrl!))
+                                : null,
+                            child: auth.user?.photoUrl == null || auth.user!.photoUrl!.isEmpty
+                                ? Text(
+                                    userName[0].toUpperCase(),
+                                    style: GoogleFonts.poppins(
+                                      color: AppTheme.primaryGreen,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  )
+                                : null,
+                          ),
+                        ),
                       ),
-                      child: CircleAvatar(
-                        radius: 22,
-                        backgroundColor: Colors.white,
-                        backgroundImage: auth.user?.photoUrl != null && auth.user!.photoUrl!.isNotEmpty
-                            ? NetworkImage(ApiService.getPhotoUrl(auth.user!.photoUrl!))
-                            : null,
-                        child: auth.user?.photoUrl == null || auth.user!.photoUrl!.isEmpty
-                            ? Text(
-                                userName[0].toUpperCase(),
-                                style: GoogleFonts.poppins(
-                                  color: AppTheme.primaryGreen,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              )
-                            : null,
-                      ),
-                    ),
+                      const SizedBox(width: 4),
+                      const NotificationBell(),
+                    ],
                   ),
                 ),
                 // Theme toggle + logout top-right
@@ -236,7 +244,6 @@ class _MatchesHomeTab extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const NotificationBell(),
                       Consumer<ThemeProvider>(
                         builder: (context, theme, _) => IconButton(
                           icon: Icon(
@@ -246,6 +253,7 @@ class _MatchesHomeTab extends StatelessWidget {
                           onPressed: () => theme.toggle(),
                         ),
                       ),
+                      const AppearanceButton(),
                       IconButton(
                         icon: const Icon(Icons.logout, color: Colors.white),
                         onPressed: () => _confirmLogout(context),
@@ -305,7 +313,7 @@ class _MatchesHomeTab extends StatelessWidget {
 
   Widget _buildMatchesList(BuildContext context) {
     if (loading) {
-      return const Center(child: CircularProgressIndicator(color: AppTheme.accentGold));
+      return Center(child: CircularProgressIndicator(color: AppTheme.accentGold));
     }
 
     final live = matches.where((m) => m.status == 'live').toList();
@@ -470,9 +478,19 @@ class _MatchesHomeTab extends StatelessWidget {
                     _actionButton('Start', Icons.play_arrow, AppTheme.lightGreen, () => onStartMatch(match)),
                   ],
                   if (match.status == 'live') ...[
-                    _actionButton('Score', Icons.sports_cricket, AppTheme.accentGold, () {
-                      Navigator.push(context, MaterialPageRoute(builder: (_) => LiveScoringScreen(matchId: match.id)));
-                    }),
+                    _primaryActionButton(
+                      'Score',
+                      Icons.sports_cricket,
+                      AppTheme.primaryGreen,
+                      () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => LiveScoringScreen(matchId: match.id),
+                          ),
+                        );
+                      },
+                    ),
                     const SizedBox(width: 8),
                     _actionButton('End', Icons.stop_circle, AppTheme.wicketRed, () => onEndMatch(match)),
                   ],
@@ -492,7 +510,7 @@ class _MatchesHomeTab extends StatelessWidget {
                       ),
                       child: Text(
                         match.matchType!.toUpperCase(),
-                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen),
+                        style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppTheme.primaryGreen),
                       ),
                     ),
                 ],
@@ -530,6 +548,48 @@ class _MatchesHomeTab extends StatelessWidget {
             Icon(icon, size: 15, color: color),
             const SizedBox(width: 4),
             Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: color)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Primary CTA variant — solid filled pill with white text/icon. Used for
+  /// the main action on a card (e.g. "Score" on a live match).
+  Widget _primaryActionButton(
+    String label,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.35),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 15, color: Colors.white),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
           ],
         ),
       ),

@@ -74,7 +74,7 @@ class _TournamentPointsScreenState extends State<TournamentPointsScreen> {
           children: [
             Stack(
               children: [
-                const ProteaHeader(height: 160),
+                const ProteaHeader(height: 120),
                 Positioned(
                   top: MediaQuery.of(context).padding.top + 8,
                   left: 8,
@@ -138,7 +138,7 @@ class _TournamentPointsScreenState extends State<TournamentPointsScreen> {
             // Table
             Expanded(
               child: _loading
-                  ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen))
+                  ? Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen))
                   : _standings.isEmpty
                       ? Center(child: Text('No standings data yet',
                           style: GoogleFonts.poppins(color: AppTheme.ts(context))))
@@ -165,7 +165,7 @@ class _TournamentPointsScreenState extends State<TournamentPointsScreen> {
           // Header row
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: AppTheme.primaryGreen,
               borderRadius: BorderRadius.vertical(top: Radius.circular(7)),
             ),

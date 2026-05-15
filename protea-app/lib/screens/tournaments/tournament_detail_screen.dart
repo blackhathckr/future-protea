@@ -62,15 +62,15 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
       body: SafeArea(
         top: false,
         child: _loading
-            ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen))
+            ? Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen))
             : _tournament == null
-                ? const Center(child: Text('Tournament not found'))
+                ? Center(child: Text('Tournament not found'))
                 : SingleChildScrollView(
                     child: Column(
                       children: [
                         Stack(
                           children: [
-                            const ProteaHeader(height: 160),
+                            const ProteaHeader(height: 120),
                             Positioned(
                               top: MediaQuery.of(context).padding.top + 8,
                               right: 8,
@@ -104,7 +104,7 @@ class _TournamentDetailScreenState extends State<TournamentDetailScreen> {
                                           color: AppTheme.accentGold.withValues(alpha: 0.15),
                                           shape: BoxShape.circle,
                                         ),
-                                        child: const Icon(Icons.emoji_events, size: 36, color: AppTheme.accentGold),
+                                        child: Icon(Icons.emoji_events, size: 36, color: AppTheme.accentGold),
                                       ),
                                       const SizedBox(width: 16),
                                       Expanded(

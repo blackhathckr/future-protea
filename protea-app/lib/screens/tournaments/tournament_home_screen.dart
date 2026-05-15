@@ -59,7 +59,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen> {
             // ── Header ──────────────────────────────────────────────────
             Stack(
               children: [
-                const ProteaHeader(height: 160),
+                const ProteaHeader(height: 120),
                 Positioned(
                   top: MediaQuery.of(context).padding.top + 8,
                   right: 8,
@@ -100,7 +100,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen> {
             // ── Tournament lists ──────────────────────────────────────────
             Expanded(
               child: _loading
-                  ? const LoadingState(label: 'Loading tournaments...')
+                  ? LoadingState(label: 'Loading tournaments...')
                   : RefreshIndicator(
                       color: AppTheme.accentGold,
                       onRefresh: _loadTournaments,
@@ -109,7 +109,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen> {
                         children: [
                           if (current.isNotEmpty) ...[
                             Container(
-                              decoration: const BoxDecoration(
+                              decoration: BoxDecoration(
                                 border: Border(left: BorderSide(color: AppTheme.primaryGreen, width: 4)),
                               ),
                               padding: const EdgeInsets.only(left: 8),
@@ -140,7 +140,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen> {
                           ],
                           if (upcoming.isNotEmpty) ...[
                             Container(
-                              decoration: const BoxDecoration(
+                              decoration: BoxDecoration(
                                 border: Border(left: BorderSide(color: AppTheme.primaryGreen, width: 4)),
                               ),
                               padding: const EdgeInsets.only(left: 8),

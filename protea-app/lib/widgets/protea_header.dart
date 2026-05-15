@@ -6,7 +6,19 @@ class ProteaHeader extends StatelessWidget {
   final double height;
   final bool showLogo;
 
-  const ProteaHeader({super.key, this.height = 200, this.showLogo = true});
+  /// Logo height as a fraction of `height`. `0.9` gives a hero-feel logo that
+  /// visibly straddles the green-to-white boundary (about 35% of the logo
+  /// drops below the curve into the body area). Horizontal clearance is still
+  /// preserved — at typical phone widths the icons on either side never
+  /// overlap the logo.
+  final double logoScale;
+
+  const ProteaHeader({
+    super.key,
+    this.height = 200,
+    this.showLogo = true,
+    this.logoScale = 0.9,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +37,7 @@ class ProteaHeader extends StatelessWidget {
           // 1. Green gradient background
           Container(
             height: greenHeight,
-            decoration: const BoxDecoration(gradient: AppTheme.headerGradient),
+            decoration: BoxDecoration(gradient: AppTheme.headerGradient),
           ),
           // 2. Gold curve - sits at the boundary between green and white
           Positioned(
@@ -39,15 +51,17 @@ class ProteaHeader extends StatelessWidget {
               ),
             ),
           ),
-          // 3. Logo - centered, overlapping BOTH green and white areas
-          //    Sits ON TOP of the gold curve (higher z-index)
+          // 3. Logo - hero element straddling the green/white boundary.
+          //    Roughly 65% of the logo sits in the green band, 35% drops
+          //    below the gold curve into the body area — gives the UI a
+          //    centered focal point between header and content.
           if (showLogo)
             Positioned(
-              top: statusBarHeight,
+              top: greenHeight - height * logoScale * 0.65,
               left: 0,
               right: 0,
               child: Center(
-                child: ProteaLogo(size: height * 0.95),
+                child: ProteaLogo(size: height * logoScale),
               ),
             ),
         ],

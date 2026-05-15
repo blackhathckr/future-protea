@@ -61,7 +61,7 @@ class _PlayerDetailScreenState extends State<PlayerDetailScreen>
             flexibleSpace: FlexibleSpaceBar(
               collapseMode: CollapseMode.pin,
               background: Container(
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   gradient: AppTheme.headerGradient,
                 ),
                 child: SafeArea(
@@ -135,7 +135,7 @@ class _PlayerDetailScreenState extends State<PlayerDetailScreen>
           ),
         ],
         body: _loading
-            ? const Center(
+            ? Center(
                 child: CircularProgressIndicator(color: AppTheme.primaryGreen))
             : TabBarView(
                 controller: _tabCtrl,
@@ -606,7 +606,7 @@ class _RunGraphPainter extends CustomPainter {
 
       // Draw run label
       final tp = TextPainter(
-        text: TextSpan(text: '${runs[i]}', style: const TextStyle(fontSize: 9, color: AppTheme.primaryGreen, fontWeight: FontWeight.bold)),
+        text: TextSpan(text: '${runs[i]}', style: TextStyle(fontSize: 9, color: AppTheme.primaryGreen, fontWeight: FontWeight.bold)),
         textDirection: ui.TextDirection.ltr,
       )..layout();
       tp.paint(canvas, Offset(x - tp.width / 2, y - 14));

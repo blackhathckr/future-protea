@@ -64,11 +64,11 @@ class NewsDetailScreen extends StatelessWidget {
                       image,
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => Container(
-                        decoration: const BoxDecoration(gradient: AppTheme.headerGradient),
+                        decoration: BoxDecoration(gradient: AppTheme.headerGradient),
                       ),
                     )
                   else
-                    Container(decoration: const BoxDecoration(gradient: AppTheme.headerGradient)),
+                    Container(decoration: BoxDecoration(gradient: AppTheme.headerGradient)),
                   const DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -121,7 +121,7 @@ class NewsDetailScreen extends StatelessWidget {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      const Icon(Icons.access_time, size: 14, color: AppTheme.textSecondary),
+                      Icon(Icons.access_time, size: 14, color: AppTheme.textSecondary),
                       const SizedBox(width: 4),
                       Text(
                         _formatDate(publishedAt),
@@ -129,7 +129,7 @@ class NewsDetailScreen extends StatelessWidget {
                       ),
                       if (author.isNotEmpty) ...[
                         const SizedBox(width: 12),
-                        const Icon(Icons.person_outline, size: 14, color: AppTheme.textSecondary),
+                        Icon(Icons.person_outline, size: 14, color: AppTheme.textSecondary),
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
@@ -148,7 +148,7 @@ class NewsDetailScreen extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: AppTheme.primaryGreen.withOpacity(0.07),
                         borderRadius: BorderRadius.circular(10),
-                        border: const Border(
+                        border: Border(
                           left: BorderSide(color: AppTheme.primaryGreen, width: 3),
                         ),
                       ),
@@ -182,7 +182,7 @@ class NewsDetailScreen extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.language, color: AppTheme.primaryGreen),
+                          Icon(Icons.language, color: AppTheme.primaryGreen),
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(

@@ -99,7 +99,7 @@ class _PlayersHomeScreenState extends State<PlayersHomeScreen> {
             // ── Header ──────────────────────────────────────────────────
             Stack(
               children: [
-                const ProteaHeader(height: 160),
+                const ProteaHeader(height: 120),
                 Positioned(
                   top: MediaQuery.of(context).padding.top + 8,
                   right: 8,
@@ -116,7 +116,7 @@ class _PlayersHomeScreenState extends State<PlayersHomeScreen> {
                   Container(
                     width: 4, height: 22,
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
+                      gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [AppTheme.accentGold, AppTheme.primaryGreen],
@@ -205,7 +205,7 @@ class _PlayersHomeScreenState extends State<PlayersHomeScreen> {
             // ── List ─────────────────────────────────────────────────────
             Expanded(
               child: _loading
-                  ? const LoadingState(label: 'Loading players…', size: 90)
+                  ? LoadingState(label: 'Loading players…', size: 90)
                   : filtered.isEmpty
                       ? EmptyState(
                           message: _searchCtrl.text.isNotEmpty
@@ -459,7 +459,7 @@ class _EditButton extends StatelessWidget {
         onTap: onTap,
         child: Ink(
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
+            gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [AppTheme.primaryGreen, AppTheme.darkGreen],
@@ -507,7 +507,7 @@ class _PlayerAvatar extends StatelessWidget {
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [AppTheme.accentGold, AppTheme.primaryGreen],

@@ -7,6 +7,7 @@ import '../../shared/utils/snackbar_utils.dart';
 import '../../providers/theme_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/protea_header.dart';
+import '../../widgets/theme_toggle.dart';
 import '../core/home_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -107,7 +108,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide:
-            const BorderSide(color: AppTheme.primaryGreen, width: 2),
+            BorderSide(color: AppTheme.primaryGreen, width: 2),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
@@ -136,7 +137,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               // ── Header banner ──────────────────────────────────────
               Stack(
                 children: [
-                  const ProteaHeader(height: 185),
+                  const ProteaHeader(height: 120),
                   Positioned(
                     top: MediaQuery.of(context).padding.top + 8,
                     left: 8,
@@ -148,14 +149,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Positioned(
                     top: MediaQuery.of(context).padding.top + 8,
                     right: 8,
-                    child: Consumer<ThemeProvider>(
-                      builder: (context, theme, _) => IconButton(
-                        icon: Icon(
-                          theme.isDark ? Icons.light_mode : Icons.dark_mode,
-                          color: Colors.white,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Consumer<ThemeProvider>(
+                          builder: (context, theme, _) => IconButton(
+                            icon: Icon(
+                              theme.isDark ? Icons.light_mode : Icons.dark_mode,
+                              color: Colors.white,
+                            ),
+                            onPressed: theme.toggle,
+                          ),
                         ),
-                        onPressed: theme.toggle,
-                      ),
+                        const AppearanceButton(),
+                      ],
                     ),
                   ),
                 ],
@@ -290,7 +297,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                           ),
                                         ),
                                         if (selected)
-                                          const Icon(
+                                          Icon(
                                             Icons.check_circle,
                                             color: AppTheme.primaryGreen,
                                             size: 20,
@@ -391,7 +398,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   builder: (context, child) =>
                                       Theme(
                                     data: Theme.of(context).copyWith(
-                                      colorScheme: const ColorScheme.light(
+                                      colorScheme: ColorScheme.light(
                                         primary: AppTheme.primaryGreen,
                                       ),
                                     ),
@@ -418,7 +425,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 ),
                                 child: Row(
                                   children: [
-                                    const Icon(Icons.cake_outlined,
+                                    Icon(Icons.cake_outlined,
                                         color: AppTheme.primaryGreen,
                                         size: 20),
                                     const SizedBox(width: 12),

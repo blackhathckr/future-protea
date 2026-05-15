@@ -172,16 +172,16 @@ class _TeamRegisteredScreenState extends State<TeamRegisteredScreen> {
       body: SafeArea(
         top: false,
         child: _loading
-            ? const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen))
+            ? Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen))
             : _team == null
-                ? const Center(child: Text('Team not found'))
+                ? Center(child: Text('Team not found'))
                 : SingleChildScrollView(
                     child: Column(
                       children: [
                         // ── Header ──────────────────────────────────────────
                         Stack(
                           children: [
-                            const ProteaHeader(height: 160),
+                            const ProteaHeader(height: 120),
                             Positioned(
                               top: MediaQuery.of(context).padding.top + 8,
                               left: 8,
@@ -241,11 +241,11 @@ class _TeamRegisteredScreenState extends State<TeamRegisteredScreen> {
                                                     child: Image.network(
                                                       ApiService.getPhotoUrl(_team!.logoUrl!),
                                                       fit: BoxFit.cover,
-                                                      errorBuilder: (_, __, ___) => const Icon(
+                                                      errorBuilder: (_, __, ___) => Icon(
                                                           Icons.shield, size: 40, color: AppTheme.primaryGreen),
                                                     ),
                                                   )
-                                                : const Icon(Icons.shield_outlined, size: 40, color: AppTheme.primaryGreen),
+                                                : Icon(Icons.shield_outlined, size: 40, color: AppTheme.primaryGreen),
                                           ),
                                           if (canEdit)
                                             Positioned(
@@ -258,7 +258,7 @@ class _TeamRegisteredScreenState extends State<TeamRegisteredScreen> {
                                                   shape: BoxShape.circle,
                                                   border: Border.all(color: Colors.white, width: 1.5),
                                                 ),
-                                                child: const Icon(Icons.camera_alt,
+                                                child: Icon(Icons.camera_alt,
                                                     color: AppTheme.darkGreen, size: 12),
                                               ),
                                             ),
@@ -515,7 +515,7 @@ class _TeamRegisteredScreenState extends State<TeamRegisteredScreen> {
                                   color: AppTheme.accentAmber.withValues(alpha: 0.15),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: const Icon(Icons.bar_chart_rounded,
+                                child: Icon(Icons.bar_chart_rounded,
                                     color: AppTheme.accentAmber, size: 22),
                               ),
                               title: Text('Team Stats',

@@ -120,7 +120,7 @@ class _FeederCreateMatchScreenState extends State<FeederCreateMatchScreen> {
               const SectionLabel('Teams'),
               const SizedBox(height: 12),
               if (_loadingTeams)
-                const Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen))
+                Center(child: CircularProgressIndicator(color: AppTheme.primaryGreen))
               else if (_teams.isEmpty)
                 Text('No teams found. Please create teams first.',
                     style: GoogleFonts.poppins(fontSize: 13, color: AppTheme.wicketRed))

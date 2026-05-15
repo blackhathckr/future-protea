@@ -197,7 +197,7 @@ class _SelectPlayingXIScreenState extends State<SelectPlayingXIScreen> {
                 // Header
                 Stack(
                   children: [
-                    const ProteaHeader(height: 90),
+                    const ProteaHeader(height: 115),
                     Positioned(
                       top: MediaQuery.of(context).padding.top + 6,
                       left: 4,
@@ -210,9 +210,9 @@ class _SelectPlayingXIScreenState extends State<SelectPlayingXIScreen> {
                 ),
 
                 if (_loading)
-                  const Expanded(child: Center(child: CircularProgressIndicator()))
+                  Expanded(child: Center(child: CircularProgressIndicator()))
                 else if (_match == null)
-                  const Expanded(child: Center(child: Text('Match not found')))
+                  Expanded(child: Center(child: Text('Match not found')))
                 else ...[
                   // Title
                   Padding(

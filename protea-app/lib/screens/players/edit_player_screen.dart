@@ -140,7 +140,7 @@ class _EditPlayerScreenState extends State<EditPlayerScreen> {
                     color: AppTheme.primaryGreen.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.camera_alt, color: AppTheme.primaryGreen),
+                  child: Icon(Icons.camera_alt, color: AppTheme.primaryGreen),
                 ),
                 title: const Text('Take Photo'),
                 onTap: () {
@@ -155,7 +155,7 @@ class _EditPlayerScreenState extends State<EditPlayerScreen> {
                     color: AppTheme.primaryGreen.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.photo_library, color: AppTheme.primaryGreen),
+                  child: Icon(Icons.photo_library, color: AppTheme.primaryGreen),
                 ),
                 title: const Text('Choose from Gallery'),
                 onTap: () {
@@ -326,7 +326,7 @@ class _EditPlayerScreenState extends State<EditPlayerScreen> {
             children: [
               Stack(
                 children: [
-                  const ProteaHeader(height: 175),
+                  const ProteaHeader(height: 120),
                   Positioned(
                     top: MediaQuery.of(context).padding.top + 8,
                     left: 8,
@@ -383,11 +383,11 @@ class _EditPlayerScreenState extends State<EditPlayerScreen> {
                                     right: 0,
                                     child: Container(
                                       padding: const EdgeInsets.all(6),
-                                      decoration: const BoxDecoration(
+                                      decoration: BoxDecoration(
                                         color: AppTheme.accentGold,
                                         shape: BoxShape.circle,
                                       ),
-                                      child: const Icon(Icons.camera_alt, size: 16, color: AppTheme.textPrimary),
+                                      child: Icon(Icons.camera_alt, size: 16, color: AppTheme.textPrimary),
                                     ),
                                   ),
                                 ],

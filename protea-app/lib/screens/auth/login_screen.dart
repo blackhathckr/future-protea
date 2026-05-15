@@ -6,6 +6,7 @@ import '../../shared/utils/snackbar_utils.dart';
 import '../../providers/theme_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/protea_header.dart';
+import '../../widgets/theme_toggle.dart';
 import '../core/home_screen.dart';
 import '../landing/landing_screen.dart';
 import '../guest/guest_live_screen.dart';
@@ -61,7 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
               // ── Header banner ──────────────────────────────────────
               Stack(
                 children: [
-                  const ProteaHeader(height: 200),
+                  const ProteaHeader(height: 125),
                   Positioned(
                     top: MediaQuery.of(context).padding.top + 8,
                     left: 8,
@@ -77,14 +78,20 @@ class _LoginScreenState extends State<LoginScreen> {
                   Positioned(
                     top: MediaQuery.of(context).padding.top + 8,
                     right: 8,
-                    child: Consumer<ThemeProvider>(
-                      builder: (context, theme, _) => IconButton(
-                        icon: Icon(
-                          theme.isDark ? Icons.light_mode : Icons.dark_mode,
-                          color: Colors.white,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Consumer<ThemeProvider>(
+                          builder: (context, theme, _) => IconButton(
+                            icon: Icon(
+                              theme.isDark ? Icons.light_mode : Icons.dark_mode,
+                              color: Colors.white,
+                            ),
+                            onPressed: theme.toggle,
+                          ),
                         ),
-                        onPressed: theme.toggle,
-                      ),
+                        const AppearanceButton(),
+                      ],
                     ),
                   ),
                 ],
@@ -135,7 +142,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               decoration: InputDecoration(
                                 labelText: 'Email',
                                 hintText: 'you@example.com',
-                                prefixIcon: const Icon(
+                                prefixIcon: Icon(
                                     Icons.email_outlined,
                                     color: AppTheme.primaryGreen),
                                 border: OutlineInputBorder(
@@ -149,7 +156,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(
+                                  borderSide: BorderSide(
                                       color: AppTheme.primaryGreen, width: 2),
                                 ),
                                 filled: true,
@@ -169,7 +176,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               decoration: InputDecoration(
                                 labelText: 'Password',
                                 hintText: '••••••••',
-                                prefixIcon: const Icon(
+                                prefixIcon: Icon(
                                     Icons.lock_outline,
                                     color: AppTheme.primaryGreen),
                                 suffixIcon: IconButton(
@@ -194,7 +201,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: const BorderSide(
+                                  borderSide: BorderSide(
                                       color: AppTheme.primaryGreen, width: 2),
                                 ),
                                 filled: true,
@@ -244,7 +251,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       borderRadius: BorderRadius.circular(14)),
                                 ),
                                 child: _loading
-                                    ? const SizedBox(
+                                    ? SizedBox(
                                         width: 22,
                                         height: 22,
                                         child: CircularProgressIndicator(
@@ -323,7 +330,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           builder: (_) => const RegisterScreen()),
                     ),
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(
+                      side: BorderSide(
                           color: AppTheme.primaryGreen, width: 2),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14)),

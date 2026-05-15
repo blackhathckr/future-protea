@@ -54,7 +54,7 @@ class _ViewerHomeState extends State<ViewerHome> with SingleTickerProviderStateM
       appBar: AppBar(
         title: Row(
           children: [
-            const Icon(Icons.sports_cricket, color: AppTheme.accentGold, size: 28),
+            Icon(Icons.sports_cricket, color: AppTheme.accentGold, size: 28),
             const SizedBox(width: 8),
             const Text('Future Protea'),
           ],
@@ -99,7 +99,7 @@ class _ViewerHomeState extends State<ViewerHome> with SingleTickerProviderStateM
         ),
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppTheme.accentGold))
+          ? Center(child: CircularProgressIndicator(color: AppTheme.accentGold))
           : RefreshIndicator(
               onRefresh: _loadMatches,
               child: TabBarView(
