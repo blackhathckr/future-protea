@@ -10,6 +10,7 @@ import '../../providers/auth_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../shared/widgets/loading_state.dart';
 import '../../shared/widgets/empty_state.dart';
+import '../../widgets/notification_bell.dart';
 import '../../widgets/protea_header.dart';
 import '../../widgets/theme_toggle.dart';
 import 'match_detail_screen.dart';
@@ -152,6 +153,7 @@ class _ViewerHomeScreenState extends State<ViewerHomeScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      const NotificationBell(iconSize: 22),
                       const ThemeToggleButton(),
                       IconButton(
                         icon: const Icon(Icons.logout, color: Colors.white, size: 22),

@@ -5,6 +5,7 @@ import '../../services/api_service.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/notification_bell.dart';
 import '../../widgets/protea_header.dart';
 import '../players/players_home_screen.dart';
 import '../teams/teams_home_screen.dart';
@@ -16,6 +17,9 @@ import '../viewer/viewer_home_screen.dart';
 import '../player_profile/player_home.dart';
 import '../feeder/feeder_home.dart';
 import '../admin/admin_home.dart';
+import '../coach/coach_home.dart';
+import '../umpire/umpire_home.dart';
+import '../tournament_organiser/tournament_organiser_home.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -48,6 +52,24 @@ class HomeScreen extends StatelessWidget {
     // Show admin-focused screen for admins
     if (role == 'admin') {
       return const AdminHome();
+    }
+
+    // Coach / Team Selector — BRD §6.7: read-only Stats, Super Stars,
+    // Scorecard, Player Profile / Career Stats.
+    if (role == 'coach') {
+      return const CoachHome();
+    }
+
+    // Umpire / Field Official — BRD §6.4: data-only role, recorded by the
+    // scorer during innings setup. This is a read-only verification surface.
+    if (role == 'umpire') {
+      return const UmpireHome();
+    }
+
+    // Tournament Organiser / Event Admin — BRD §6.8: create & manage
+    // tournaments, fixtures, points table, NRR, knockouts.
+    if (role == 'tournament_organiser') {
+      return const TournamentOrganiserHome();
     }
 
 
@@ -114,6 +136,7 @@ class HomeScreen extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      const NotificationBell(),
                       Consumer<ThemeProvider>(
                         builder: (context, theme, _) => IconButton(
                           icon: Icon(
@@ -225,6 +248,9 @@ class HomeScreen extends StatelessWidget {
       case 'player': return AppTheme.upcomingBlue;
       case 'viewer': return AppTheme.accentAmber;
       case 'admin': return AppTheme.team2Color;
+      case 'coach': return AppTheme.upcomingBlue;
+      case 'umpire': return const Color(0xFF6A1B9A);
+      case 'tournament_organiser': return const Color(0xFFE65100);
       default: return AppTheme.textSecondary;
     }
   }
@@ -235,6 +261,9 @@ class HomeScreen extends StatelessWidget {
       case 'player': return 'Player';
       case 'viewer': return 'Viewer';
       case 'admin': return 'Admin';
+      case 'coach': return 'Coach / Team Selector';
+      case 'umpire': return 'Umpire';
+      case 'tournament_organiser': return 'Tournament Organiser';
       default: return role;
     }
   }

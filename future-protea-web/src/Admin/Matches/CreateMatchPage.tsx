@@ -53,12 +53,25 @@ export function CreateMatchPage() {
       setLoading(true)
       await MatchService.createMatch({
         ...formData,
-        tournament_id: formData.tournament_id || undefined,
+        // Radix Select can't have an item with value="", so the "None" option
+        // uses the "__none__" sentinel below. Translate it back to undefined
+        // for the API.
+        tournament_id:
+          formData.tournament_id && formData.tournament_id !== '__none__'
+            ? formData.tournament_id
+            : undefined,
       })
       toast.success('Match created successfully')
       navigate('/matches')
-    } catch (error) {
-      toast.error('Failed to create match')
+    } catch (error: any) {
+      // Surface the actual server error so 403 / 400 / 500 are distinguishable.
+      const message =
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        error?.message ||
+        'Failed to create match'
+      toast.error(message)
+      console.error('Create match failed:', error?.response?.data || error)
     } finally {
       setLoading(false)
     }
@@ -152,14 +165,16 @@ export function CreateMatchPage() {
               <div className="space-y-2">
                 <Label htmlFor="tournament">Tournament (Optional)</Label>
                 <Select
-                  value={formData.tournament_id}
+                  value={formData.tournament_id || '__none__'}
                   onValueChange={(v) => setFormData({ ...formData, tournament_id: v })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select tournament" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">None</SelectItem>
+                    {/* Radix Select forbids value=""; use a sentinel and
+                        translate it back to undefined on submit. */}
+                    <SelectItem value="__none__">None</SelectItem>
                     {tournaments.map((t) => (
                       <SelectItem key={t.id} value={t.id}>
                         {t.name}

@@ -543,3 +543,161 @@ model AuditLog {
 
   @@map("audit_log")
 }
+
+// ─────────────────────────────────────────────
+// ADMIN: PERMISSIONS & ROLES
+// ─────────────────────────────────────────────
+
+model Permission {
+  id          String   @id @default(cuid())
+  name        String   @unique @db.VarChar(100) // e.g. "matches.create"
+  resource    String   @db.VarChar(50)          // e.g. "matches"
+  action      String   @db.VarChar(50)          // e.g. "create"
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  roles       RolePermission[]
+
+  @@map("permissions")
+}
+
+// A "role" here is just the role string (e.g. "admin", "scorer") with a
+// configurable description, max-users cap, and bag of permissions.
+model RoleConfig {
+  id          String   @id @default(cuid())
+  name        String   @unique @db.VarChar(50) // matches User.role / UserRole.role string
+  description String?  @db.Text
+  maxUsers    Int?     @map("max_users")
+  isSystem    Boolean  @default(false) @map("is_system")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  permissions RolePermission[]
+
+  @@map("role_configs")
+}
+
+model RolePermission {
+  id            String   @id @default(cuid())
+  roleId        String   @map("role_id")
+  permissionId  String   @map("permission_id")
+  grantedAt     DateTime @default(now()) @map("granted_at")
+
+  role          RoleConfig @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission    Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+// ─────────────────────────────────────────────
+// ADMIN: NOTIFICATIONS & ANNOUNCEMENTS
+// ─────────────────────────────────────────────
+
+model Notification {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  title       String   @db.VarChar(255)
+  message     String   @db.Text
+  type        String   @default("info") @db.VarChar(20) // info / success / warning / error
+  category    String?  @db.VarChar(50)                  // match / tournament / system / announcement
+  link        String?  @db.VarChar(500)
+  metadata    Json?
+  isRead      Boolean  @default(false) @map("is_read")
+  readAt      DateTime? @map("read_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([userId, isRead])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model Announcement {
+  id            String   @id @default(cuid())
+  title         String   @db.VarChar(255)
+  content       String   @db.Text
+  targetRoles   String[] @map("target_roles") // empty = everyone
+  isActive      Boolean  @default(true) @map("is_active")
+  publishedAt   DateTime? @map("published_at")
+  expiresAt     DateTime? @map("expires_at")
+  createdById   String?  @map("created_by_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive, publishedAt])
+  @@map("announcements")
+}
+
+// ─────────────────────────────────────────────
+// ADMIN: SUPPORT TICKETS
+// ─────────────────────────────────────────────
+
+model SupportTicket {
+  id            String   @id @default(cuid())
+  subject       String   @db.VarChar(255)
+  description   String   @db.Text
+  category      String?  @db.VarChar(50)
+  status        String   @default("open") @db.VarChar(20)   // open / in_progress / resolved / closed
+  priority      String   @default("normal") @db.VarChar(20) // low / normal / high / urgent
+  reporterId    String?  @map("reporter_id")
+  reporterEmail String?  @map("reporter_email") @db.VarChar(255)
+  assignedToId  String?  @map("assigned_to_id")
+  escalated     Boolean  @default(false)
+  escalationReason String? @map("escalation_reason") @db.Text
+  resolvedAt    DateTime? @map("resolved_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  responses     TicketResponse[]
+
+  @@index([status, priority])
+  @@index([assignedToId])
+  @@map("support_tickets")
+}
+
+model TicketResponse {
+  id          String   @id @default(cuid())
+  ticketId    String   @map("ticket_id")
+  authorId    String?  @map("author_id")
+  authorName  String?  @map("author_name") @db.VarChar(255)
+  message     String   @db.Text
+  isInternal  Boolean  @default(false) @map("is_internal")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  ticket      SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId, createdAt])
+  @@map("ticket_responses")
+}
+
+// ─────────────────────────────────────────────
+// ADMIN: SYSTEM SETTINGS & MAINTENANCE
+// ─────────────────────────────────────────────
+
+model SystemSetting {
+  id          String   @id @default(cuid())
+  key         String   @unique @db.VarChar(100)
+  value       String   @db.Text
+  description String?  @db.Text
+  category    String?  @db.VarChar(50)
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  updatedBy   String?  @map("updated_by")
+
+  @@map("system_settings")
+}
+
+model MaintenanceWindow {
+  id          String   @id @default(cuid())
+  title       String   @db.VarChar(255)
+  description String?  @db.Text
+  startsAt    DateTime @map("starts_at")
+  endsAt      DateTime @map("ends_at")
+  status      String   @default("scheduled") @db.VarChar(20) // scheduled / active / completed / cancelled
+  affectsServices String[] @map("affects_services")
+  createdById String?  @map("created_by_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@index([startsAt])
+  @@map("maintenance_windows")
+}

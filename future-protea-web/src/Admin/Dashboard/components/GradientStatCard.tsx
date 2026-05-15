@@ -74,12 +74,21 @@ export function GradientStatCard({
               </div>
             </div>
             {lottieAnimation ? (
-              <div className="h-12 w-12 ml-4 flex-shrink-0">
-                <Lottie animationData={lottieAnimation} loop className="w-full h-full" />
+              // Same h-12 footprint so the card height doesn't change. The
+              // Lottie is absolutely positioned and scaled so it visually
+              // overflows its layout box without pushing siblings around.
+              <div className="relative h-12 w-12 ml-4 flex-shrink-0">
+                <div className="absolute inset-0 m-auto scale-[2.3] origin-center pointer-events-none">
+                  <Lottie animationData={lottieAnimation} loop className="w-full h-full" />
+                </div>
               </div>
             ) : svgPath ? (
-              <div className="h-12 w-12 ml-4 flex-shrink-0 flex items-center justify-center">
-                <img src={svgPath} alt={title} className="h-full w-full object-contain" />
+              <div className="relative h-12 w-12 ml-4 flex-shrink-0">
+                <img
+                  src={svgPath}
+                  alt={title}
+                  className="absolute inset-0 m-auto h-full w-full object-contain scale-[2.3] origin-center pointer-events-none"
+                />
               </div>
             ) : (
               <div 

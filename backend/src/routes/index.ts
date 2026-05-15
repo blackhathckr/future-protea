@@ -8,6 +8,8 @@ import tournamentRoutes from './tournamentRoutes';
 import liveScoreRoutes from './liveScoreRoutes';
 import publicRoutes from './publicRoutes';
 import notificationRoutes from './notificationRoutes';
+import adminRoutes from './adminRoutes';
+import analyticsRoutes from './analyticsRoutes';
 
 const router = Router();
 
@@ -19,5 +21,10 @@ router.use('/tournaments', tournamentRoutes);
 router.use('/live', liveScoreRoutes);
 router.use('/public', publicRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/analytics', analyticsRoutes);
+
+// Admin user-management gateway — handles users, roles, permissions,
+// announcements, support tickets, system settings, audit logs.
+router.use('/users', adminRoutes);
 
 export default router;

@@ -8,6 +8,7 @@ import { ArrowLeft, Edit, Trophy, Plus, Calendar, Activity, Users, Trash2, Uploa
 import { TournamentService, type Fixture, type Standing, type TournamentStats } from '@/services/cricket/tournament.service'
 import { TeamService, type Team } from '@/services/cricket/team.service'
 import { toast } from 'sonner'
+import { confirm } from '@/lib/confirm'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -148,7 +149,9 @@ export function TournamentDetailsPage() {
   }
 
   const handleDeleteTournament = async () => {
-    if (!id || !confirm('Are you sure you want to delete this tournament?')) return
+    if (!id) return
+    const ok = await confirm({ title: 'Delete this tournament?', description: 'Fixtures, standings, and stats will be removed.', confirmLabel: 'Delete' })
+    if (!ok) return
     try {
       setDeletingTournament(true)
       await TournamentService.deleteTournament(id)

@@ -10,6 +10,7 @@ import '../../shared/widgets/loading_state.dart';
 import '../../shared/utils/snackbar_utils.dart';
 import '../../providers/theme_provider.dart';
 import '../../theme/app_theme.dart';
+import '../support/support_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -624,6 +625,70 @@ class _ProfileScreenState extends State<ProfileScreen>
                             ),
                           ),
                         ).animate().fadeIn(duration: 350.ms, delay: 100.ms),
+
+                        // ── Help & Support card ─────────────────────────────
+                        const SizedBox(height: 16),
+                        Card(
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12),
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const SupportScreen()),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 44,
+                                    height: 44,
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.primaryGreen
+                                          .withValues(alpha: 0.10),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(
+                                      Icons.help_outline,
+                                      color: AppTheme.primaryGreen,
+                                      size: 22,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Help & Support',
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w700,
+                                            color:
+                                                AppTheme.tp(context),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          'Raise a ticket, view past tickets, or contact us.',
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 11,
+                                            color: AppTheme.ts(context),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.chevron_right,
+                                    color: AppTheme.ts(context),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ).animate().fadeIn(duration: 350.ms, delay: 200.ms),
                       ],
                     ),
                   ),

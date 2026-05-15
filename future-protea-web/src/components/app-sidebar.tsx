@@ -91,9 +91,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <div className="flex items-center gap-3 p-2">
-              <img src="/Future_Protea_Logo.png" alt="Future Protea" className="h-10 w-10" />
-              <div className="text-lg font-bold text-primary">Future Protea</div>
+            {/* Wrapper keeps the same h-12 footprint as the original layout so
+                the sidebar header / nav below stays in place. The image is
+                absolutely positioned and scaled up so it visually overflows
+                the wrapper without affecting siblings. */}
+            <div className="relative flex items-center justify-center h-12 overflow-visible">
+              <img
+                src="/images/web_logo.png"
+                alt="Future Protea"
+                className="absolute inset-0 m-auto h-12 w-auto scale-[2.6] origin-center pointer-events-none"
+              />
             </div>
           </SidebarMenuItem>
         </SidebarMenu>

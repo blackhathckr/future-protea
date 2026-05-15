@@ -9,6 +9,7 @@ import '../../services/api_service.dart';
 import '../../providers/auth_provider.dart';
 import '../../shared/utils/snackbar_utils.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/notification_bell.dart';
 import '../../widgets/protea_header.dart';
 import '../../widgets/theme_toggle.dart';
 import '../viewer/match_detail_screen.dart';
@@ -136,6 +137,7 @@ class _PlayerHomeState extends State<PlayerHome> {
                               else if (_currentIndex == 0) { setState(() => _dashboardReloadTrigger++); }
                             },
                           ),
+                        const NotificationBell(iconSize: 22),
                         const ThemeToggleButton(),
                         IconButton(
                           icon: const Icon(Icons.logout, color: Colors.white, size: 22),

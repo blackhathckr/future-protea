@@ -1,7 +1,7 @@
 import { motion } from "framer-motion"
 import { useNavigate } from "react-router-dom"
+import { useQuery } from "@tanstack/react-query"
 import {
-  IconCreditCard,
   IconDotsVertical,
   IconLogout,
   IconNotification,
@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/sidebar"
 import { useAuth } from "@/contexts/AuthContext"
 import { Badge } from "@/components/ui/badge"
+import { NotificationService } from "@/services/notification.service"
 
 export function NavUser({
   user,
@@ -37,8 +38,20 @@ export function NavUser({
   }
 }) {
   const { isMobile } = useSidebar()
-  const { logout } = useAuth()
+  const { logout, isAuthenticated } = useAuth()
   const navigate = useNavigate()
+
+  // Real-time unread notification count. Polls every 30s while the user is
+  // logged in; the query is auto-disabled on logout so we don't spam the API.
+  const { data: unreadData } = useQuery({
+    queryKey: ['notifications', 'unread-count'],
+    queryFn: () => NotificationService.getUnreadCount(),
+    enabled: isAuthenticated,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
+    staleTime: 15_000,
+  })
+  const unreadCount = unreadData?.data?.count ?? 0
 
   const getInitials = (name: string) => {
     return name
@@ -111,14 +124,14 @@ export function NavUser({
                 <IconUserCircle className="mr-2" />
                 My Profile
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate("/subscriptions")} className="cursor-pointer">
-                <IconCreditCard className="mr-2" />
-                Subscriptions
-              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate("/notifications")} className="cursor-pointer">
                 <IconNotification className="mr-2" />
                 Notifications
-                <Badge className="ml-auto bg-primary/10 text-primary hover:bg-primary/10 text-xs">3</Badge>
+                {unreadCount > 0 && (
+                  <Badge className="ml-auto bg-primary/10 text-primary hover:bg-primary/10 text-xs">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </Badge>
+                )}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => navigate("/settings")} className="cursor-pointer">
                 <IconSettings className="mr-2" />

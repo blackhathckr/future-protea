@@ -65,16 +65,22 @@ const getTeamById = async (req: AuthRequest, res: Response): Promise<void> => {
 const createTeam = async (req: AuthRequest, res: Response): Promise<void> => {
   const { team_name, team_type, school_name, club_name, team_code } = req.body;
   try {
+    if (!team_name || !team_type) {
+      res.status(400).json({ error: 'team_name and team_type are required' });
+      return;
+    }
+
     const count = await prisma.team.count();
-    const teamCode = `TEAM-${String(count + 1).padStart(4, '0')}`;
+    const generatedTeamCode = `TEAM-${String(count + 1).padStart(4, '0')}`;
+    
     const team = await prisma.team.create({
       data: {
-        teamCode:   team_code || teamCode,
-        teamName:   team_name,
-        teamType:   team_type,
-        schoolName: school_name || null,
-        clubName:   club_name   || null,
-        createdBy:  req.user.id,
+        teamName: team_name,
+        teamType: team_type,
+        ...(team_code && { teamCode: team_code }),
+        ...(school_name && { schoolName: school_name }),
+        ...(club_name && { clubName: club_name }),
+        createdBy: req.user.id,
       },
     });
     res.status(201).json(toSnake(team));
@@ -84,6 +90,7 @@ const createTeam = async (req: AuthRequest, res: Response): Promise<void> => {
       res.status(400).json({ error: 'Team code already taken' });
       return;
     }
+    console.error('Create team error:', err.message);
     res.status(500).json({ error: err.message });
   }
 };
@@ -200,15 +207,58 @@ const getTeamStats = async (req: AuthRequest, res: Response): Promise<void> => {
 const addPlayerToTeam = async (req: AuthRequest, res: Response): Promise<void> => {
   const { player_id } = req.body;
   try {
+    // Check if player_id is a User ID or RegisteredPlayer ID
+    // First, try to find a RegisteredPlayer with this ID
+    let registeredPlayerId = player_id;
+    
+    const existingRegisteredPlayer = await prisma.registeredPlayer.findUnique({
+      where: { id: player_id },
+    });
+
+    if (!existingRegisteredPlayer) {
+      // If not found, assume it's a User ID and try to find linked RegisteredPlayer
+      const linkedPlayer = await prisma.registeredPlayer.findFirst({
+        where: { linkedUserId: player_id },
+      });
+
+      if (linkedPlayer) {
+        registeredPlayerId = linkedPlayer.id;
+      } else {
+        // Create a new RegisteredPlayer entry for this User
+        const user = await prisma.user.findUnique({
+          where: { id: player_id },
+        });
+
+        if (!user) {
+          res.status(404).json({ error: 'Player not found' });
+          return;
+        }
+
+        const newRegisteredPlayer = await prisma.registeredPlayer.create({
+          data: {
+            name: user.name,
+            email: user.email,
+            linkedUserId: user.id,
+            dateOfBirth: user.dateOfBirth,
+            battingStyle: user.battingStyle,
+            bowlingStyle: user.bowlingStyle,
+          },
+        });
+
+        registeredPlayerId = newRegisteredPlayer.id;
+      }
+    }
+
     await prisma.teamPlayer.create({
       data: {
         teamId: req.params.id as string,
-        playerId: player_id,
+        playerId: registeredPlayerId,
       },
     });
     res.status(201).json({ message: 'Player added to team' });
   } catch (error: unknown) {
     const err = error as { code?: string; message: string };
+    console.error('Add player to team error:', err.message);
     if (err.code === 'P2002') {
       res.status(400).json({ error: 'Player already in team' });
       return;

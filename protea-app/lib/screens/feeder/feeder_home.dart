@@ -8,6 +8,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../theme/app_theme.dart';
 import '../../shared/utils/snackbar_utils.dart';
+import '../../widgets/notification_bell.dart';
 import '../../widgets/protea_header.dart';
 import '../viewer/match_detail_screen.dart';
 import '../viewer/upcoming_match_detail_screen.dart';
@@ -235,6 +236,7 @@ class _MatchesHomeTab extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      const NotificationBell(),
                       Consumer<ThemeProvider>(
                         builder: (context, theme, _) => IconButton(
                           icon: Icon(

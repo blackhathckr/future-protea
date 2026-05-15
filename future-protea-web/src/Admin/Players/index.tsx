@@ -9,9 +9,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Plus, Edit, Trash2, Users, Search, CheckCircle, XCircle } from 'lucide-react'
+import { Plus, Edit, Trash2, Users, Search, CheckCircle, XCircle, Eye } from 'lucide-react'
 import { PlayerService, type Player } from '@/services/cricket/player.service'
 import { toast } from 'sonner'
+import { confirm } from '@/lib/confirm'
 
 export function PlayersPage() {
   const navigate = useNavigate()
@@ -36,8 +37,9 @@ export function PlayersPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this player?')) return
-    
+    const ok = await confirm({ title: 'Delete this player?', confirmLabel: 'Delete' })
+    if (!ok) return
+
     try {
       await PlayerService.deletePlayer(id)
       toast.success('Player deleted successfully')
@@ -217,11 +219,20 @@ function PlayerCard({
               Approve
             </Button>
           )}
+          {player.approved && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => navigate(`/players/${player.id}/journey`)}
+              className="flex-1"
+            >
+              <Eye className="h-4 w-4 mr-1" /> Journey
+            </Button>
+          )}
           <Button
             size="sm"
             variant="outline"
             onClick={() => navigate(`/players/${player.id}/edit`)}
-            className={!player.approved ? '' : 'flex-1'}
           >
             <Edit className="h-4 w-4" />
           </Button>

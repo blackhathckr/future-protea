@@ -8,6 +8,7 @@ import { ArrowLeft, UserPlus, Shield, UserMinus, ShieldAlert, Edit } from 'lucid
 import { TeamService, type TeamStats } from '@/services/cricket/team.service'
 import { PlayerService, type Player } from '@/services/cricket/player.service'
 import { toast } from 'sonner'
+import { confirm } from '@/lib/confirm'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -80,7 +81,8 @@ export function TeamDetailsPage() {
 
   const handleRemovePlayer = async (playerId: string) => {
     if (!id) return
-    if (!confirm('Are you sure you want to remove this player from the team?')) return
+    const ok = await confirm({ title: 'Remove this player from the team?', confirmLabel: 'Remove' })
+    if (!ok) return
     try {
       await TeamService.removePlayerFromTeam(id, playerId)
       toast.success('Player removed')
@@ -90,7 +92,7 @@ export function TeamDetailsPage() {
     }
   }
 
-  const handleToggleRole = async (playerId: string, currentRole: string, toggle: 'captain' | 'wk') => {
+  const handleToggleRole = async (playerId: string, _currentRole: string, toggle: 'captain' | 'wk') => {
     if (!id) return
     try {
       if (toggle === 'captain') {
@@ -100,7 +102,7 @@ export function TeamDetailsPage() {
       }
       toast.success('Role updated')
       loadTeamData(id)
-    } catch (error) {
+    } catch {
       toast.error('Failed to update role')
     }
   }

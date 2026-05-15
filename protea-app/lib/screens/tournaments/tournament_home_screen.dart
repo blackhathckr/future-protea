@@ -27,7 +27,7 @@ class _TournamentHomeScreenState extends State<TournamentHomeScreen> {
 
   bool get _canManage {
     final role = context.read<AuthProvider>().role;
-    return role == 'admin';
+    return role == 'admin' || role == 'tournament_organiser';
   }
 
   @override

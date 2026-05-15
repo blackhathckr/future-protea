@@ -9,7 +9,7 @@ import '../models/team.dart';
 import '../models/tournament.dart';
 
 class ApiService {
-  static const String baseUrl = 'https://eustolia-jural-unaspiringly.ngrok-free.dev/api';
+  static const String baseUrl = 'https://isolatable-babyishly-teresa.ngrok-free.dev/api';
   // static const String baseUrl = 'http://10.66.199.18:5000/api'; // Local fallback
 
   static Future<String?> _getToken() async {
@@ -40,7 +40,7 @@ class ApiService {
     String? dateOfBirth,
   }) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/register'),
+      Uri.parse('$baseUrl/auth/register'),
       headers: {'Content-Type': 'application/json', 'ngrok-skip-browser-warning': '69420', 'User-Agent': 'Mozilla/5.0'},
       body: jsonEncode({
         'name': name,
@@ -65,7 +65,7 @@ class ApiService {
 
   static Future<Map<String, dynamic>> login(String email, String password) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/login'),
+      Uri.parse('$baseUrl/auth/login'),
       headers: {'Content-Type': 'application/json', 'ngrok-skip-browser-warning': '69420', 'User-Agent': 'Mozilla/5.0'},
       body: jsonEncode({'email': email, 'password': password}),
     );
@@ -125,7 +125,7 @@ class ApiService {
     if (bowlingStyle != null) body['bowling_style'] = bowlingStyle;
 
     final response = await http.put(
-      Uri.parse('$baseUrl/profile'),
+      Uri.parse('$baseUrl/auth/profile'),
       headers: headers,
       body: jsonEncode(body),
     );
@@ -142,7 +142,7 @@ class ApiService {
     final token = await _getToken();
     final request = http.MultipartRequest(
       'POST',
-      Uri.parse('$baseUrl/profile/photo'),
+      Uri.parse('$baseUrl/auth/profile/photo'),
     );
     request.headers['Authorization'] = 'Bearer $token';
     request.headers['ngrok-skip-browser-warning'] = '69420';
@@ -162,7 +162,7 @@ class ApiService {
   static Future<User> deleteProfilePhoto() async {
     final headers = await _headers();
     final response = await http.delete(
-      Uri.parse('$baseUrl/profile/photo'),
+      Uri.parse('$baseUrl/auth/profile/photo'),
       headers: headers,
     );
     if (response.statusCode == 200) {
@@ -180,7 +180,7 @@ class ApiService {
   }) async {
     final headers = await _headers();
     final response = await http.post(
-      Uri.parse('$baseUrl/change-password'),
+      Uri.parse('$baseUrl/auth/change-password'),
       headers: headers,
       body: jsonEncode({
         'current_password': currentPassword,
@@ -195,7 +195,7 @@ class ApiService {
 
   static Future<void> forgotPassword(String email) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/forgot-password'),
+      Uri.parse('$baseUrl/auth/forgot-password'),
       headers: {'Content-Type': 'application/json', 'ngrok-skip-browser-warning': '69420', 'User-Agent': 'Mozilla/5.0'},
       body: jsonEncode({'email': email}),
     );
@@ -211,7 +211,7 @@ class ApiService {
     required String newPassword,
   }) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/reset-password'),
+      Uri.parse('$baseUrl/auth/reset-password'),
       headers: {'Content-Type': 'application/json', 'ngrok-skip-browser-warning': '69420', 'User-Agent': 'Mozilla/5.0'},
       body: jsonEncode({
         'email': email,
@@ -343,7 +343,7 @@ class ApiService {
   static Future<void> approvePlayer(String matchPlayerId, {String status = 'approved', int? team}) async {
     final headers = await _headers();
     final response = await http.put(
-      Uri.parse('$baseUrl/match-players/$matchPlayerId/approve'),
+      Uri.parse('$baseUrl/matches/match-players/$matchPlayerId/approve'),
       headers: headers,
       body: jsonEncode({'status': status, 'team': team}),
     );
@@ -526,7 +526,7 @@ class ApiService {
 
   static Future<List<Player>> getRegisteredPlayers({String? search}) async {
     final headers = await _headers();
-    String url = '$baseUrl/registered-players';
+    String url = '$baseUrl/players/registered-players';
     if (search != null && search.isNotEmpty) url += '?search=$search';
     final response = await http.get(Uri.parse(url), headers: headers);
     if (response.statusCode == 200) {
@@ -564,7 +564,7 @@ class ApiService {
   }) async {
     final headers = await _headers();
     final response = await http.post(
-      Uri.parse('$baseUrl/registered-players'),
+      Uri.parse('$baseUrl/players/registered-players'),
       headers: headers,
       body: jsonEncode({
         'name': name,
@@ -603,7 +603,7 @@ class ApiService {
   static Future<Player> updatePlayer(String id, Map<String, dynamic> updates) async {
     final headers = await _headers();
     final response = await http.put(
-      Uri.parse('$baseUrl/registered-players/$id'),
+      Uri.parse('$baseUrl/players/registered-players/$id'),
       headers: headers,
       body: jsonEncode(updates),
     );
@@ -615,7 +615,7 @@ class ApiService {
 
   static Future<Player> uploadPlayerPhoto(String playerId, String filePath) async {
     final token = await _getToken();
-    final uri = Uri.parse('$baseUrl/registered-players/$playerId/photo');
+    final uri = Uri.parse('$baseUrl/players/registered-players/$playerId/photo');
     final request = http.MultipartRequest('POST', uri);
     request.headers['Authorization'] = 'Bearer $token';
     request.headers['ngrok-skip-browser-warning'] = '69420';
@@ -632,7 +632,7 @@ class ApiService {
   static Future<Player> deletePlayerPhoto(String playerId) async {
     final headers = await _headers();
     final response = await http.delete(
-      Uri.parse('$baseUrl/registered-players/$playerId/photo'),
+      Uri.parse('$baseUrl/players/registered-players/$playerId/photo'),
       headers: headers,
     );
     if (response.statusCode == 200) {
@@ -644,7 +644,7 @@ class ApiService {
   static Future<void> deletePlayer(String playerId) async {
     final headers = await _headers();
     final response = await http.delete(
-      Uri.parse('$baseUrl/registered-players/$playerId'),
+      Uri.parse('$baseUrl/players/registered-players/$playerId'),
       headers: headers,
     );
     if (response.statusCode != 200) {
@@ -655,7 +655,7 @@ class ApiService {
   static Future<String> backfillPlayerAccounts() async {
     final headers = await _headers();
     final response = await http.post(
-      Uri.parse('$baseUrl/registered-players/backfill-accounts'),
+      Uri.parse('$baseUrl/players/registered-players/backfill-accounts'),
       headers: headers,
     );
     if (response.statusCode == 200) {

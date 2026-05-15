@@ -627,21 +627,142 @@ const getAllPlayers = async (_req: AuthRequest, res: Response): Promise<void> =>
 
 const getTopPlayers = async (_req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const players = await prisma.user.findMany({
-      where: { role: 'player', approved: true },
+    // Get top run scorers
+    const topRunScorers = await prisma.$queryRaw`
+      SELECT 
+        rp.id as player_id,
+        rp.name as player_name,
+        COUNT(DISTINCT b.match_id) as matches_played,
+        COALESCE(SUM(b.runs), 0) as total_runs
+      FROM registered_players rp
+      LEFT JOIN batsmen b ON rp.id = b.player_id
+      WHERE rp.linked_user_id IS NOT NULL
+      GROUP BY rp.id, rp.name
+      ORDER BY total_runs DESC
+      LIMIT 5
+    `;
+
+    // Get top wicket takers
+    const topWicketTakers = await prisma.$queryRaw`
+      SELECT 
+        rp.id as player_id,
+        rp.name as player_name,
+        COUNT(DISTINCT b.match_id) as matches_played,
+        COALESCE(SUM(b.wickets), 0) as total_wickets
+      FROM registered_players rp
+      LEFT JOIN bowlers b ON rp.id = b.player_id
+      WHERE rp.linked_user_id IS NOT NULL
+      GROUP BY rp.id, rp.name
+      ORDER BY total_wickets DESC
+      LIMIT 5
+    `;
+
+    res.json({
+      top_run_scorers: topRunScorers,
+      top_wicket_takers: topWicketTakers,
+    });
+  } catch (error: unknown) {
+    const err = error as { message: string };
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const createPlayer = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { name, email, password, phone, date_of_birth, batting_style, bowling_style, playing_role } = req.body;
+  try {
+    if (!name || !email || !password) {
+      res.status(400).json({ error: 'Name, email, and password are required' });
+      return;
+    }
+
+    const bcrypt = require('bcryptjs');
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashedPassword,
+        role: 'player',
+        phone: phone || null,
+        dateOfBirth: date_of_birth ? new Date(date_of_birth) : null,
+        battingStyle: batting_style || null,
+        bowlingStyle: bowling_style || null,
+        approved: false,
+        userRoles: {
+          create: [{ role: 'player' }],
+        },
+      },
       select: {
         id: true,
         name: true,
         email: true,
+        role: true,
+        phone: true,
         battingStyle: true,
         bowlingStyle: true,
+        approved: true,
+        createdAt: true,
       },
-      orderBy: { createdAt: 'asc' },
-      take: 5,
     });
-    res.json(toSnake(players));
+
+    res.status(201).json(toSnake(user));
+  } catch (error: unknown) {
+    const err = error as { code?: string; message: string };
+    console.error('Create player error:', err.message);
+    if (err.code === 'P2002') {
+      res.status(400).json({ error: 'Email already exists' });
+      return;
+    }
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const updatePlayer = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { id } = req.params;
+  const { name, phone, date_of_birth, batting_style, bowling_style, playing_role } = req.body;
+  try {
+    const user = await prisma.user.update({
+      where: { id },
+      data: {
+        ...(name && { name }),
+        ...(phone !== undefined && { phone: phone || null }),
+        ...(date_of_birth && { dateOfBirth: new Date(date_of_birth) }),
+        ...(batting_style !== undefined && { battingStyle: batting_style || null }),
+        ...(bowling_style !== undefined && { bowlingStyle: bowling_style || null }),
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        phone: true,
+        battingStyle: true,
+        bowlingStyle: true,
+        approved: true,
+        createdAt: true,
+      },
+    });
+
+    res.json(toSnake(user));
   } catch (error: unknown) {
     const err = error as { message: string };
+    console.error('Update player error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const deletePlayer = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { id } = req.params;
+  try {
+    await prisma.user.delete({
+      where: { id },
+    });
+
+    res.json({ message: 'Player deleted successfully' });
+  } catch (error: unknown) {
+    const err = error as { message: string };
+    console.error('Delete player error:', err.message);
     res.status(500).json({ error: err.message });
   }
 };
@@ -654,4 +775,7 @@ export default {
   getMyProfile,
   getAllPlayers,
   getTopPlayers,
+  createPlayer,
+  updatePlayer,
+  deletePlayer,
 };

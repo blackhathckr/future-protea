@@ -178,7 +178,16 @@ export function LoginPage() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, delay: 0.3 }}
         >
-          <img src="/Future_Protea_Logo.png" alt="Future Protea" className="h-24 w-24 mx-auto mb-8" />
+          {/* Footprint stays h-28 so the Lottie / heading below don't move.
+              The image is absolutely centered and scaled up so it visually
+              zooms in height without affecting layout. */}
+          <div className="relative h-28 mt-6 mb-10">
+            <img
+              src="/images/web_logo.png"
+              alt="Future Protea"
+              className="absolute inset-0 m-auto h-28 w-auto scale-[2.0] origin-center pointer-events-none"
+            />
+          </div>
 
           <div className="w-80 h-80 mx-auto">
             {cricketAnimation && <Lottie animationData={cricketAnimation} loop className="w-full h-full" />}

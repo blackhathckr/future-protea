@@ -10,6 +10,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/notification_bell.dart';
 import '../../widgets/protea_header.dart';
 import '../players/register_player_screen.dart';
 import '../profile/profile_screen.dart';
@@ -213,6 +214,7 @@ class _AdminDashboardState extends State<AdminDashboard> with TickerProviderStat
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
+              const NotificationBell(),
               Consumer<ThemeProvider>(
                 builder: (context, theme, _) => IconButton(
                   icon: Icon(

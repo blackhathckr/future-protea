@@ -470,6 +470,55 @@ const uploadTournamentLogo = async (req: AuthRequest, res: Response): Promise<vo
   }
 };
 
+const deleteTournamentLogo = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const tournamentId = req.params.id as string;
+    const tournament = await prisma.tournament.findUnique({ where: { id: tournamentId } });
+    if (!tournament) {
+      res.status(404).json({ error: 'Tournament not found' });
+      return;
+    }
+
+    if (tournament.logoUrl && tournament.logoUrl.includes('supabase') && supabaseStorage.isConfigured()) {
+      try { await supabaseStorage.deleteFile(tournament.logoUrl); } catch (_) {}
+    }
+
+    const updated = await prisma.tournament.update({
+      where: { id: tournamentId },
+      data: { logoUrl: null },
+    });
+
+    res.json(toSnake(updated));
+  } catch (error: unknown) {
+    const err = error as { message: string };
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const deleteTournament = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const tournamentId = req.params.id as string;
+    const tournament = await prisma.tournament.findUnique({ where: { id: tournamentId } });
+    if (!tournament) {
+      res.status(404).json({ error: 'Tournament not found' });
+      return;
+    }
+
+    if (tournament.logoUrl && tournament.logoUrl.includes('supabase') && supabaseStorage.isConfigured()) {
+      try { await supabaseStorage.deleteFile(tournament.logoUrl); } catch (_) {}
+    }
+
+    await prisma.tournament.delete({
+      where: { id: tournamentId },
+    });
+
+    res.json({ message: 'Tournament deleted successfully' });
+  } catch (error: unknown) {
+    const err = error as { message: string };
+    res.status(500).json({ error: err.message });
+  }
+};
+
 export default {
   getTournaments,
   getTournamentById,
@@ -481,4 +530,6 @@ export default {
   getTournamentStandings,
   getTournamentStats,
   uploadTournamentLogo,
+  deleteTournamentLogo,
+  deleteTournament,
 };

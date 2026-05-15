@@ -191,12 +191,15 @@ class _FallbackLogo extends StatelessWidget {
   }
 }
 
-/// A scaffold-like wrapper with the protea header
+/// A scaffold-like wrapper with the protea header.
+/// `actions` are rendered in the top-right of the header — typically a
+/// notification bell, theme toggle, or both.
 class ProteaScaffold extends StatelessWidget {
   final String? title;
   final Widget body;
   final double headerHeight;
   final bool showBackButton;
+  final List<Widget>? actions;
   final Widget? floatingActionButton;
   final Widget? bottomNavigationBar;
 
@@ -206,6 +209,7 @@ class ProteaScaffold extends StatelessWidget {
     required this.body,
     this.headerHeight = 220,
     this.showBackButton = false,
+    this.actions,
     this.floatingActionButton,
     this.bottomNavigationBar,
   });
@@ -230,6 +234,12 @@ class ProteaScaffold extends StatelessWidget {
                       icon: const Icon(Icons.arrow_back, color: Colors.white),
                       onPressed: () => Navigator.pop(context),
                     ),
+                  ),
+                if (actions != null && actions!.isNotEmpty)
+                  Positioned(
+                    top: MediaQuery.of(context).padding.top + 4,
+                    right: 4,
+                    child: Row(mainAxisSize: MainAxisSize.min, children: actions!),
                   ),
                 if (title != null)
                   Positioned(

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Shield, X } from 'lucide-react'
 import { toast } from 'sonner'
+import { confirm } from '@/lib/confirm'
 import { TeamService } from '@/services/cricket/team.service'
 
 interface TeamLogoUploadProps {
@@ -56,7 +57,8 @@ export function TeamLogoUpload({ teamId, currentLogoUrl, onLogoChange, onLogoDel
 
   const handleDelete = async () => {
     if (teamId && currentLogoUrl) {
-      if (!confirm('Are you sure you want to delete this logo?')) return
+      const ok = await confirm({ title: 'Delete this logo?', confirmLabel: 'Delete' })
+      if (!ok) return
       try {
         setIsUploading(true)
         await TeamService.deleteTeamLogo(teamId)

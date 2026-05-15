@@ -607,12 +607,28 @@ const getScorecard = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+const deleteMatch = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const matchId = req.params.id as string;
+    
+    await prisma.match.delete({
+      where: { id: matchId },
+    });
+
+    res.json({ message: 'Match deleted successfully' });
+  } catch (error: unknown) {
+    const err = error as { message: string };
+    res.status(500).json({ error: err.message });
+  }
+};
+
 export default {
   getLiveMatches,
   getMatches,
   getMatchById,
   createMatch,
   updateMatch,
+  deleteMatch,
   setupInnings,
   endInnings,
   getScorecard,

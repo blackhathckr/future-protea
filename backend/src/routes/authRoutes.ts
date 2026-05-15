@@ -7,6 +7,7 @@ const router = Router();
 
 router.post('/register', authController.register as any);
 router.post('/login', authController.login as any);
+router.post('/refresh', authController.refreshToken as any);
 router.get('/me', authenticate, authController.getMe as any);
 router.put('/profile', authenticate, authController.updateProfile as any);
 router.post('/profile/photo', authenticate, upload.single('photo'), authController.uploadProfilePhoto as any);

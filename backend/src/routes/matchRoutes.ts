@@ -8,8 +8,9 @@ const router = Router();
 
 router.get('/', authenticate, matchController.getMatches as any);
 router.get('/:id', authenticate, matchController.getMatchById as any);
-router.post('/', authenticate, authorize(['feeder']), matchController.createMatch as any);
-router.put('/:id', authenticate, authorize(['feeder']), matchController.updateMatch as any);
+router.post('/', authenticate, authorize(['feeder', 'admin']), matchController.createMatch as any);
+router.put('/:id', authenticate, authorize(['feeder', 'admin']), matchController.updateMatch as any);
+router.delete('/:id', authenticate, authorize(['feeder', 'admin']), matchController.deleteMatch as any);
 router.get('/:id/scorecard', authenticate, matchController.getScorecard as any);
 
 router.post('/:id/join', authenticate, authorize(['player']), matchPlayerController.joinMatch as any);

@@ -5,6 +5,7 @@ import prisma from '../config/database';
 import toSnake from '../utils/toSnake';
 import supabaseStorage from '../services/supabaseStorage';
 import { AuthRequest } from '../middleware/auth';
+import { AUTO_APPROVED_ROLES, isValidRole, VALID_ROLES, type Role } from '../utils/roles';
 
 const USER_SELECT = {
   id: true,
@@ -22,21 +23,41 @@ const USER_SELECT = {
 } as const;
 
 const register = async (req: AuthRequest, res: Response): Promise<void> => {
-  const { name, email, password, role, phone, batting_style, bowling_style } = req.body;
+  const { name, email, password, role, phone, date_of_birth, batting_style, bowling_style, playing_role } = req.body;
   try {
+    if (!name || !email || !password) {
+      res.status(400).json({ error: 'Name, email, and password are required' });
+      return;
+    }
+
+    // Validate role against the BRD-aligned whitelist. An unspecified role
+    // defaults to 'player'; an invalid role is rejected with 400.
+    let resolvedRole: Role;
+    if (role == null || role === '') {
+      resolvedRole = 'player';
+    } else if (isValidRole(role)) {
+      resolvedRole = role;
+    } else {
+      res.status(400).json({
+        error: `Invalid role "${role}". Valid roles: ${VALID_ROLES.join(', ')}`,
+      });
+      return;
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
-        role,
+        role: resolvedRole,
         phone: phone || null,
+        dateOfBirth: date_of_birth ? new Date(date_of_birth) : null,
         battingStyle: batting_style || null,
         bowlingStyle: bowling_style || null,
-        approved: role !== 'player',
+        approved: AUTO_APPROVED_ROLES.has(resolvedRole),
         userRoles: {
-          create: [{ role }],
+          create: [{ role: resolvedRole }],
         },
       },
       select: USER_SELECT,
@@ -48,6 +69,7 @@ const register = async (req: AuthRequest, res: Response): Promise<void> => {
     res.status(201).json({ token, user: toSnake(user) });
   } catch (error: unknown) {
     const err = error as { code?: string; message: string };
+    console.error('Register error:', err.message);
     if (err.code === 'P2002') {
       res.status(400).json({ error: 'Email already exists' });
       return;
@@ -59,6 +81,11 @@ const register = async (req: AuthRequest, res: Response): Promise<void> => {
 const login = async (req: AuthRequest, res: Response): Promise<void> => {
   const { email, password } = req.body;
   try {
+    if (!prisma) {
+      res.status(500).json({ error: 'Database connection failed' });
+      return;
+    }
+
     let user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       res.status(400).json({ error: 'User not found' });
@@ -76,13 +103,19 @@ const login = async (req: AuthRequest, res: Response): Promise<void> => {
       data: { lastLogin: new Date() },
     });
 
-    const userRoleRows = await prisma.userRole.findMany({
-      where: { userId: user.id },
-      select: { role: true },
-    });
-    const roles = userRoleRows.length > 0
-      ? userRoleRows.map((r) => r.role)
-      : [user.role];
+    let roles = [user.role];
+    try {
+      const userRoleRows = await prisma.userRole.findMany({
+        where: { userId: user.id },
+        select: { role: true },
+      });
+      if (userRoleRows && userRoleRows.length > 0) {
+        roles = userRoleRows.map((r) => r.role);
+      }
+    } catch (roleError: unknown) {
+      console.warn('Failed to fetch user roles:', (roleError as Error).message);
+      // Continue with default role if userRole fetch fails
+    }
 
     const token = jwt.sign(
       { id: user.id, role: user.role, roles, name: user.name },
@@ -107,6 +140,7 @@ const login = async (req: AuthRequest, res: Response): Promise<void> => {
     });
   } catch (error: unknown) {
     const err = error as { message: string };
+    console.error('Login error:', err.message);
     res.status(500).json({ error: err.message });
   }
 };
@@ -296,4 +330,56 @@ const resetPassword = async (req: AuthRequest, res: Response): Promise<void> => 
   }
 };
 
-export default { register, login, getMe, updateProfile, uploadProfilePhoto, deleteProfilePhoto, changePassword, forgotPassword, resetPassword };
+const refreshToken = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    // Get refresh token from cookies
+    const refreshToken = req.cookies?.refreshToken;
+    if (!refreshToken) {
+      res.status(401).json({ error: 'No refresh token provided' });
+      return;
+    }
+
+    // Verify refresh token
+    jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET as string, async (err: any, decoded: any) => {
+      if (err) {
+        res.status(401).json({ error: 'Invalid refresh token' });
+        return;
+      }
+
+      const userId = decoded.id;
+      const user = await prisma.user.findUnique({ where: { id: userId } });
+      if (!user) {
+        res.status(401).json({ error: 'User not found' });
+        return;
+      }
+
+      // Generate new access token
+      let roles = [user.role];
+      try {
+        const userRoleRows = await prisma.userRole.findMany({
+          where: { userId: user.id },
+          select: { role: true },
+        });
+        if (userRoleRows && userRoleRows.length > 0) {
+          roles = userRoleRows.map((r) => r.role);
+        }
+      } catch (roleError: unknown) {
+        console.warn('Failed to fetch user roles:', (roleError as Error).message);
+      }
+
+      const newAccessToken = jwt.sign(
+        { id: user.id, role: user.role, roles, name: user.name },
+        process.env.JWT_SECRET as string,
+        { expiresIn: '15m' }
+      );
+
+      res.json({ accessToken: newAccessToken });
+    });
+  } catch (error: unknown) {
+    const err = error as { message: string };
+    console.error('Refresh token error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export default { register, login, getMe, updateProfile, uploadProfilePhoto, deleteProfilePhoto, changePassword, forgotPassword, resetPassword, refreshToken };
