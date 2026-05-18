@@ -15,8 +15,11 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { GradientStatCard } from './components/GradientStatCard'
 import liveCricketAnimation from './assets/live_cricket.json'
+import upcomingMatchesAnimation from './assets/upcoming_matches.json'
+import completedMatchAnimation from './assets/completed_match.json'
 import cricketAnimateSvg from './assets/cricket-animate.svg'
 import activeMatchSvg from './assets/active_match.svg'
+import totalTeamsSvg from './assets/total_teams.svg'
 import crickterBanner from './assets/crickter_banner.png'
 import { MatchService, type Match } from '@/services/cricket/match.service'
 import { TournamentService } from '@/services/cricket/tournament.service'
@@ -180,9 +183,9 @@ export function DashboardPage() {
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <GradientStatCard title="Live Matches" value={stats.liveMatches} icon={Activity} lottieAnimation={liveCricketAnimation} trend={{ value: 12, isPositive: true }} onClick={() => navigate('/matches?tab=live')} />
-        <GradientStatCard title="Upcoming Matches" value={stats.upcomingMatches} icon={Calendar} onClick={() => navigate('/matches?tab=upcoming')} />
-        <GradientStatCard title="Completed Matches" value={stats.completedMatches} icon={Trophy} trend={{ value: 8, isPositive: true }} onClick={() => navigate('/matches?tab=completed')} />
-        <GradientStatCard title="Total Teams" value={stats.totalTeams} icon={Shield} onClick={() => navigate('/teams')} />
+        <GradientStatCard title="Upcoming Matches" value={stats.upcomingMatches} icon={Calendar} lottieAnimation={upcomingMatchesAnimation} onClick={() => navigate('/matches?tab=upcoming')} />
+        <GradientStatCard title="Completed Matches" value={stats.completedMatches} icon={Trophy} lottieAnimation={completedMatchAnimation} trend={{ value: 8, isPositive: true }} onClick={() => navigate('/matches?tab=completed')} />
+        <GradientStatCard title="Total Teams" value={stats.totalTeams} icon={Shield} svgPath={totalTeamsSvg} onClick={() => navigate('/teams')} />
         <GradientStatCard title="Total Players" value={stats.totalPlayers} icon={Users} svgPath={cricketAnimateSvg} trend={{ value: 15, isPositive: true }} onClick={() => navigate('/players')} />
         <GradientStatCard title="Active Tournaments" value={stats.activeTournaments} icon={Target} svgPath={activeMatchSvg} onClick={() => navigate('/tournaments')} />
       </div>
